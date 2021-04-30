@@ -61,4 +61,20 @@ charset = utf-7
             }
         }
     }
+
+    #[test]
+    fn parse_invalid_syntax() {
+        // Arrange
+        let config = r###"
+[*
+charset = utf-8
+charset = utf-7
+"###;
+
+        // Act
+        let conf = Ini::load_from_str(config);
+
+        // Assert
+        assert!(conf.is_err());
+    }
 }
