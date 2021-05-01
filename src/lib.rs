@@ -53,6 +53,7 @@ charset = utf-7
         // Assert
         let star = conf.section(Some("*")).unwrap();
         assert!(star.contains_key("charset"));
+        assert_eq!(2, star.get_all("charset").count());
 
         for (sec, prop) in &conf {
             println!("Section: {:?}", sec);
