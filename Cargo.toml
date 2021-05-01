@@ -1,5 +1,5 @@
 [package]
-name = "ecfgr"
+name = "editorconfiger"
 version = "0.1.0"
 authors = ["egoroff <egoroff@gmail.com>"]
 edition = "2018"
