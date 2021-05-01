@@ -23,7 +23,7 @@ fn compare(cmd: &ArgMatches) {
 }
 
 fn build_cli() -> App<'static, 'static> {
-    return App::new("editorconfiger")
+    return App::new("ecr")
         .version(crate_version!())
         .author("egoroff <egoroff@gmail.com>")
         .about(".editorconfig files tool")
