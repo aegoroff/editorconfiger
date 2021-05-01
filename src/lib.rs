@@ -7,7 +7,7 @@ mod tests {
     #[test]
     fn parse() {
         // Arrange
-        let config = r###"# Editor configuration, see http://editorconfig.org
+        let config = r###"# Editor configuration
 root = true
 
 [*]
