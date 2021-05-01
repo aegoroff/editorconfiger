@@ -33,7 +33,7 @@ fn build_cli() -> App<'static, 'static> {
                 .about("Validate single .editorconfig file")
                 .arg(
                     Arg::with_name("PATH")
-                        .help("Sets directory path to .editorconfig file")
+                        .help("Path to .editorconfig file")
                         .required(true)
                         .index(1),
                 ),
@@ -44,12 +44,12 @@ fn build_cli() -> App<'static, 'static> {
                 .about("Compare two .editorconfig files")
                 .arg(
                     Arg::with_name("FILE1")
-                        .help("Sets directory path to the first .editorconfig file")
+                        .help("Path to the first .editorconfig file")
                         .required(true)
                         .index(1),
                 ).arg(
                 Arg::with_name("FILE2")
-                    .help("Sets directory path to the second .editorconfig file")
+                    .help("Path to the second .editorconfig file")
                     .required(true)
                     .index(2),
             ),
