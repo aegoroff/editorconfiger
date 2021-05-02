@@ -23,27 +23,29 @@ fn validate_file(cmd: &ArgMatches) {
 
 fn validate_path(cmd: &ArgMatches) {
     let path = cmd.value_of("PATH").unwrap();
+    let only_problems = cmd.is_present("problems");
     let results = editorconfiger::validate_all(path);
     for (f, r) in results {
-        let result;
         if r.duplicate_properties.is_empty() && r.duplicate_sections.is_empty() {
-            result = Green.paint("valid")
+            if !only_problems {
+                println!(" {} {}", f, Green.paint("valid"));
+            }
         } else {
-            result = Red.paint("invalid")
+            println!(" {} {}", f, Red.paint("invalid"));
         }
-        println!(" {} {}", f, result);
+
         if !r.duplicate_sections.is_empty() {
-            println!("  Duplicate sections:");
+            println!("   Duplicate sections:");
             for section in r.duplicate_sections {
-                println!("    {}", section);
+                println!("     {}", section);
             }
         }
         if !r.duplicate_properties.is_empty() {
-            println!("  Duplicate properties:");
+            println!("   Duplicate properties:");
             for (section, duplicates) in r.duplicate_properties {
-                println!("    [{}]:", section);
+                println!("     [{}]:", section);
                 for property in duplicates {
-                    println!("      {}", property);
+                    println!("       {}", property);
                 }
             }
         }
@@ -79,6 +81,14 @@ fn build_cli() -> App<'static, 'static> {
                         .help("Path directory that contains .editorconfig files")
                         .required(true)
                         .index(1),
+                )
+                .arg(
+                    Arg::with_name("problems")
+                        .long("problems")
+                        .short("p")
+                        .takes_value(false)
+                        .help("Show only files with problems. Correct files will not be shown.")
+                        .required(false),
                 ),
         )
         .subcommand(
