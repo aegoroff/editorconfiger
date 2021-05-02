@@ -39,8 +39,8 @@ pub fn validate_one<V: Validator>(path: &str, validator: &V) {
         Ok(c) => {
             let result = validate(&c);
             validator.success(path, result.duplicate_sections, result.duplicate_properties);
-        },
-        Err(e) => validator.error(path, &e.to_string())
+        }
+        Err(e) => validator.error(path, &e.to_string()),
     }
 }
 
@@ -64,9 +64,7 @@ fn validate(conf: &Ini) -> ValidationResult {
             .collect();
 
         if !duplicate_pops.is_empty() {
-            let v = dup_props
-                .entry(sk)
-                .or_insert(Vec::<&str>::new());
+            let v = dup_props.entry(sk).or_insert(Vec::<&str>::new());
             v.append(&mut duplicate_pops)
         }
     }

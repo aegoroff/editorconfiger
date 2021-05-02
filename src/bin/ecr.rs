@@ -1,6 +1,6 @@
 use ansi_term::Colour::{Green, Red};
 use clap::{App, Arg, ArgMatches, SubCommand};
-use editorconfiger::{Validator};
+use editorconfiger::Validator;
 use std::collections::BTreeMap;
 
 #[macro_use]
@@ -44,9 +44,7 @@ struct PrintValidation {
 
 impl PrintValidation {
     fn new(only_problems: bool) -> Self {
-        Self {
-            only_problems
-        }
+        Self { only_problems }
     }
 }
 
