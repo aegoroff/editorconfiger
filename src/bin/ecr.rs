@@ -26,12 +26,27 @@ fn validate_path(cmd: &ArgMatches) {
     let results = editorconfiger::validate_all(path);
     for (f, r) in results {
         let result;
-        if r {
+        if r.duplicate_properties.is_empty() && r.duplicate_sections.is_empty() {
             result = Green.paint("valid")
         } else {
             result = Red.paint("invalid")
         }
         println!(" {} {}", f, result);
+        if !r.duplicate_sections.is_empty() {
+            println!("  Duplicate sections:");
+            for section in r.duplicate_sections {
+                println!("    {}", section);
+            }
+        }
+        if !r.duplicate_properties.is_empty() {
+            println!("  Duplicate properties:");
+            for (section, duplicates) in r.duplicate_properties {
+                println!("    [{}]:", section);
+                for property in duplicates {
+                    println!("      {}", property);
+                }
+            }
+        }
     }
 }
 

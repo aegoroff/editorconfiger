@@ -7,9 +7,14 @@ use std::collections::{BTreeMap, HashMap};
 
 const EDITOR_CONFIG: &str = ".editorconfig";
 
-pub fn validate_all(path: &str) -> BTreeMap<String, bool> {
+pub struct ValidationResult {
+    pub duplicate_sections: Vec<String>,
+    pub duplicate_properties: HashMap<String, Vec<String>>,
+}
+
+pub fn validate_all(path: &str) -> BTreeMap<String, ValidationResult> {
     let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
-    let results: BTreeMap<String, bool> = iter
+    let results: BTreeMap<String, ValidationResult> = iter
         .into_iter()
         .filter(Result::is_ok)
         .map(Result::unwrap)
@@ -24,14 +29,14 @@ pub fn validate_all(path: &str) -> BTreeMap<String, bool> {
     results
 }
 
-fn validate(conf: Ini) -> bool {
+fn validate(conf: Ini) -> ValidationResult {
     let mut sect_count = HashMap::new();
     let mut dup_props = HashMap::new();
     for (sec, prop) in &conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
 
-        let mut duplicate_pops: Vec<&str> = prop
+        let mut duplicate_pops: Vec<String> = prop
             .iter()
             .map(|(k, _)| k)
             .fold(HashMap::new(), |mut h, s| {
@@ -40,17 +45,27 @@ fn validate(conf: Ini) -> bool {
             })
             .iter()
             .filter(|(_, v)| **v > 1)
-            .map(|(k, _)| *k)
+            .map(|(k, _)| String::from(*k))
             .collect();
 
         if !duplicate_pops.is_empty() {
-            let v = dup_props.entry(sk).or_insert(Vec::<&str>::new());
+            let v = dup_props
+                .entry(String::from(sk))
+                .or_insert(Vec::<String>::new());
             v.append(&mut duplicate_pops)
         }
     }
 
-    let dup_sect = sect_count.iter().filter(|(_, v)| **v > 1).count();
-    dup_sect == 0 && dup_props.is_empty()
+    let dup_sect: Vec<String> = sect_count
+        .iter()
+        .filter(|(_, v)| **v > 1)
+        .map(|(k, _)| String::from(*k))
+        .collect();
+
+    ValidationResult {
+        duplicate_sections: dup_sect,
+        duplicate_properties: dup_props,
+    }
 }
 
 #[cfg(test)]
@@ -79,7 +94,8 @@ trim_trailing_whitespace = false"###;
         let valid = validate(conf);
 
         // Assert
-        assert!(valid);
+        assert!(valid.duplicate_properties.is_empty());
+        assert!(valid.duplicate_sections.is_empty());
     }
 
     #[test]
@@ -105,7 +121,8 @@ trim_trailing_whitespace = false"###;
         let valid = validate(conf);
 
         // Assert
-        assert!(!valid);
+        assert!(!valid.duplicate_properties.is_empty());
+        assert!(valid.duplicate_sections.is_empty());
     }
 
     #[test]
@@ -124,7 +141,8 @@ trim_trailing_whitespace = false"###;
         let valid = validate(conf);
 
         // Assert
-        assert!(!valid);
+        assert!(!valid.duplicate_properties.is_empty());
+        assert!(valid.duplicate_sections.is_empty());
     }
 
     #[test]
@@ -146,7 +164,8 @@ trim_trailing_whitespace = true"###;
         let valid = validate(conf);
 
         // Assert
-        assert!(!valid);
+        assert!(valid.duplicate_properties.is_empty());
+        assert!(!valid.duplicate_sections.is_empty());
     }
 
     #[test]
