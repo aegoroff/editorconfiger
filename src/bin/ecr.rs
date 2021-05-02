@@ -29,7 +29,7 @@ fn validate_path(cmd: &ArgMatches) {
         if r {
             result = Green.paint("valid")
         } else {
-            result = Red.paint("valid")
+            result = Red.paint("invalid")
         }
         println!(" {} {}", f, result);
     }
