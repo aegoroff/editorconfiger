@@ -12,6 +12,7 @@ rust-ini = "0.17"
 clap = "2"
 ansi_term = "0.12"
 prettytable-rs = "^0.8"
+jwalk = "0.6"
 
 [[bin]]
 name = "ecr"

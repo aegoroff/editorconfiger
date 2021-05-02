@@ -1,7 +1,9 @@
+use ansi_term::Colour::{Green, Red};
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 #[macro_use]
 extern crate clap;
+extern crate ansi_term;
 
 fn main() {
     let app = build_cli();
@@ -9,13 +11,28 @@ fn main() {
 
     match matches.subcommand() {
         ("c", Some(cmd)) => compare(cmd),
-        ("v", Some(cmd)) => validate(cmd),
+        ("v", Some(cmd)) => validate_file(cmd),
+        ("va", Some(cmd)) => validate_path(cmd),
         _ => {}
     }
 }
 
-fn validate(cmd: &ArgMatches) {
+fn validate_file(cmd: &ArgMatches) {
     // TODO: implement
+}
+
+fn validate_path(cmd: &ArgMatches) {
+    let path = cmd.value_of("PATH").unwrap();
+    let results = editorconfiger::validate_all(path);
+    for (f, r) in results {
+        let result;
+        if r {
+            result = Green.paint("valid")
+        } else {
+            result = Red.paint("valid")
+        }
+        println!(" {} {}", f, result);
+    }
 }
 
 fn compare(cmd: &ArgMatches) {
@@ -34,6 +51,17 @@ fn build_cli() -> App<'static, 'static> {
                 .arg(
                     Arg::with_name("PATH")
                         .help("Path to .editorconfig file")
+                        .required(true)
+                        .index(1),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("va")
+                .aliases(&["validate-all"])
+                .about("Validate all found .editorconfig files in a directory and all its children")
+                .arg(
+                    Arg::with_name("PATH")
+                        .help("Path directory that contains .editorconfig files")
                         .required(true)
                         .index(1),
                 ),

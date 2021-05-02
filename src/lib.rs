@@ -1,12 +1,28 @@
 extern crate ini;
+extern crate jwalk;
 
 use ini::Ini;
-use std::collections::HashMap;
-
-pub type AnyError = Box<dyn std::error::Error>;
-pub type Result<T> = core::result::Result<T, AnyError>;
+use jwalk::WalkDir;
+use std::collections::{BTreeMap, HashMap};
 
 const EDITOR_CONFIG: &str = ".editorconfig";
+
+pub fn validate_all(path: &str) -> BTreeMap<String, bool> {
+    let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
+    let results: BTreeMap<String, bool> = iter
+        .into_iter()
+        .filter(Result::is_ok)
+        .map(Result::unwrap)
+        .filter(|f| f.file_type().is_file())
+        .map(|f| f.path().to_str().unwrap_or("").to_string())
+        .filter(|p| p.ends_with(EDITOR_CONFIG))
+        .map(|p| (String::from(p.as_str()), Ini::load_from_file(p.as_str())))
+        .filter(|(_, ini)| ini.is_ok())
+        .map(|(p, ini)| (p, ini.unwrap()))
+        .map(|(p, ini)| (p, validate(ini)))
+        .collect();
+    results
+}
 
 fn validate(conf: Ini) -> bool {
     let mut sect_count = HashMap::new();
