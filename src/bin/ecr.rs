@@ -47,11 +47,12 @@ fn build_cli() -> App<'static, 'static> {
                         .help("Path to the first .editorconfig file")
                         .required(true)
                         .index(1),
-                ).arg(
-                Arg::with_name("FILE2")
-                    .help("Path to the second .editorconfig file")
-                    .required(true)
-                    .index(2),
-            ),
+                )
+                .arg(
+                    Arg::with_name("FILE2")
+                        .help("Path to the second .editorconfig file")
+                        .required(true)
+                        .index(2),
+                ),
         );
 }
