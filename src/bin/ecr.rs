@@ -1,6 +1,7 @@
 use ansi_term::Colour::{Green, Red};
 use clap::{App, Arg, ArgMatches, SubCommand};
-use editorconfiger::ValidationResult;
+use editorconfiger::{Validator};
+use std::collections::BTreeMap;
 
 #[macro_use]
 extern crate clap;
@@ -20,50 +21,68 @@ fn main() {
 
 fn validate_file(cmd: &ArgMatches) {
     let path = cmd.value_of("PATH").unwrap();
-    let result = editorconfiger::validate_one(path);
-    match result {
-        Ok(res) => print_validation_result(path, res, false),
-        Err(err) => println!(" Error: {}", Red.paint(err.to_string())),
-    }
+    let printer = PrintValidation::new(false);
+    editorconfiger::validate_one(path, &printer);
 }
 
 fn validate_folder(cmd: &ArgMatches) {
     let path = cmd.value_of("PATH").unwrap();
     let only_problems = cmd.is_present("problems");
-    let results = editorconfiger::validate_all(path);
-    for (f, r) in results {
-        print_validation_result(&f, r, only_problems)
-    }
-}
-
-fn print_validation_result(f: &str, r: ValidationResult, only_problems: bool) {
-    if r.duplicate_properties.is_empty() && r.duplicate_sections.is_empty() {
-        if !only_problems {
-            println!(" {} {}", f, Green.paint("valid"));
-        }
-        return;
-    }
-
-    println!(" {} {}", f, Red.paint("invalid"));
-    if !r.duplicate_sections.is_empty() {
-        println!("   Duplicate sections:");
-        for section in r.duplicate_sections {
-            println!("     {}", section);
-        }
-    }
-    if !r.duplicate_properties.is_empty() {
-        println!("   Duplicate properties:");
-        for (section, duplicates) in r.duplicate_properties {
-            println!("     [{}]:", section);
-            for property in duplicates {
-                println!("       {}", property);
-            }
-        }
-    }
+    let printer = PrintValidation::new(only_problems);
+    let results = editorconfiger::validate_all(path, &printer);
+    println!();
+    println!("  Total .editorconfig files found: {}", results);
 }
 
 fn compare(cmd: &ArgMatches) {
     // TODO: implement
+}
+
+struct PrintValidation {
+    only_problems: bool,
+}
+
+impl PrintValidation {
+    fn new(only_problems: bool) -> Self {
+        Self {
+            only_problems
+        }
+    }
+}
+
+impl Validator for PrintValidation {
+    fn success(&self, path: &str, sections: Vec<&str>, keys: BTreeMap<&str, Vec<&str>>) {
+        if keys.is_empty() && sections.is_empty() {
+            if !self.only_problems {
+                println!(" {} {}", path, Green.paint("valid"));
+            }
+            return;
+        }
+
+        println!(" {} {}", path, Red.paint("invalid"));
+        if !sections.is_empty() {
+            println!("   Duplicate sections:");
+            for section in sections {
+                println!("     {}", section);
+            }
+        }
+        if !keys.is_empty() {
+            println!("   Duplicate properties:");
+            for (section, duplicates) in keys {
+                println!("     [{}]:", section);
+                for property in duplicates {
+                    println!("       {}", property);
+                }
+            }
+        }
+        println!();
+    }
+
+    fn error(&self, path: &str, err: &str) {
+        println!(" {}", path);
+        println!("  Error: {}", Red.paint(err));
+        println!();
+    }
 }
 
 fn build_cli() -> App<'static, 'static> {

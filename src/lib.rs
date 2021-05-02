@@ -9,40 +9,49 @@ pub type AnyError = Box<dyn std::error::Error>;
 
 const EDITOR_CONFIG: &str = ".editorconfig";
 
-pub struct ValidationResult {
-    pub duplicate_sections: Vec<String>,
-    pub duplicate_properties: HashMap<String, Vec<String>>,
+pub trait Validator {
+    fn success(&self, path: &str, sections: Vec<&str>, keys: BTreeMap<&str, Vec<&str>>);
+    fn error(&self, path: &str, err: &str);
 }
 
-pub fn validate_all(path: &str) -> BTreeMap<String, ValidationResult> {
+struct ValidationResult<'a> {
+    duplicate_sections: Vec<&'a str>,
+    duplicate_properties: BTreeMap<&'a str, Vec<&'a str>>,
+}
+
+pub fn validate_all<V: Validator>(path: &str, validator: &V) -> usize {
     let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
-    let results: BTreeMap<String, ValidationResult> = iter
+    let results = iter
         .into_iter()
         .filter(Result::is_ok)
         .map(Result::unwrap)
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path().to_str().unwrap_or("").to_string())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
-        .map(|p| (String::from(p.as_str()), validate_one(p.as_str())))
-        .filter(|(_, res)| res.is_ok())
-        .map(|(p, res)| (p, res.unwrap()))
-        .collect();
+        .inspect(|p| validate_one(&p, validator))
+        .count();
     results
 }
 
-pub fn validate_one(path: &str) -> Result<ValidationResult, AnyError> {
-    let conf = Ini::load_from_file(path)?;
-    Ok(validate(conf))
+pub fn validate_one<V: Validator>(path: &str, validator: &V) {
+    let conf = Ini::load_from_file(path);
+    match conf {
+        Ok(c) => {
+            let result = validate(&c);
+            validator.success(path, result.duplicate_sections, result.duplicate_properties);
+        },
+        Err(e) => validator.error(path, &e.to_string())
+    }
 }
 
-fn validate(conf: Ini) -> ValidationResult {
+fn validate(conf: &Ini) -> ValidationResult {
     let mut sect_count = HashMap::new();
-    let mut dup_props = HashMap::new();
-    for (sec, prop) in &conf {
+    let mut dup_props = BTreeMap::new();
+    for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
 
-        let mut duplicate_pops: Vec<String> = prop
+        let mut duplicate_pops: Vec<&str> = prop
             .iter()
             .map(|(k, _)| k)
             .fold(HashMap::new(), |mut h, s| {
@@ -51,21 +60,21 @@ fn validate(conf: Ini) -> ValidationResult {
             })
             .iter()
             .filter(|(_, v)| **v > 1)
-            .map(|(k, _)| String::from(*k))
+            .map(|(k, _)| *k)
             .collect();
 
         if !duplicate_pops.is_empty() {
             let v = dup_props
-                .entry(String::from(sk))
-                .or_insert(Vec::<String>::new());
+                .entry(sk)
+                .or_insert(Vec::<&str>::new());
             v.append(&mut duplicate_pops)
         }
     }
 
-    let dup_sect: Vec<String> = sect_count
+    let dup_sect: Vec<&str> = sect_count
         .iter()
         .filter(|(_, v)| **v > 1)
-        .map(|(k, _)| String::from(*k))
+        .map(|(k, _)| *k)
         .collect();
 
     ValidationResult {
@@ -97,7 +106,7 @@ trim_trailing_whitespace = false"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
-        let valid = validate(conf);
+        let valid = validate(&conf);
 
         // Assert
         assert!(valid.duplicate_properties.is_empty());
@@ -124,7 +133,7 @@ trim_trailing_whitespace = false"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
-        let valid = validate(conf);
+        let valid = validate(&conf);
 
         // Assert
         assert!(!valid.duplicate_properties.is_empty());
@@ -144,7 +153,7 @@ trim_trailing_whitespace = false"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
-        let valid = validate(conf);
+        let valid = validate(&conf);
 
         // Assert
         assert!(!valid.duplicate_properties.is_empty());
@@ -167,7 +176,7 @@ trim_trailing_whitespace = true"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
-        let valid = validate(conf);
+        let valid = validate(&conf);
 
         // Assert
         assert!(valid.duplicate_properties.is_empty());
