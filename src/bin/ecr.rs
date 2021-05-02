@@ -13,7 +13,7 @@ fn main() {
     match matches.subcommand() {
         ("c", Some(cmd)) => compare(cmd),
         ("v", Some(cmd)) => validate_file(cmd),
-        ("va", Some(cmd)) => validate_path(cmd),
+        ("va", Some(cmd)) => validate_folder(cmd),
         _ => {}
     }
 }
@@ -23,11 +23,11 @@ fn validate_file(cmd: &ArgMatches) {
     let result = editorconfiger::validate_one(path);
     match result {
         Ok(res) => print_validation_result(path, res, false),
-        Err(err) => println!(" Error: {}", Red.paint(err.to_string()))
+        Err(err) => println!(" Error: {}", Red.paint(err.to_string())),
     }
 }
 
-fn validate_path(cmd: &ArgMatches) {
+fn validate_folder(cmd: &ArgMatches) {
     let path = cmd.value_of("PATH").unwrap();
     let only_problems = cmd.is_present("problems");
     let results = editorconfiger::validate_all(path);
@@ -41,10 +41,10 @@ fn print_validation_result(f: &str, r: ValidationResult, only_problems: bool) {
         if !only_problems {
             println!(" {} {}", f, Green.paint("valid"));
         }
-    } else {
-        println!(" {} {}", f, Red.paint("invalid"));
+        return;
     }
 
+    println!(" {} {}", f, Red.paint("invalid"));
     if !r.duplicate_sections.is_empty() {
         println!("   Duplicate sections:");
         for section in r.duplicate_sections {
