@@ -1,5 +1,6 @@
 use ansi_term::Colour::{Green, Red};
 use clap::{App, Arg, ArgMatches, SubCommand};
+use editorconfiger::ValidationResult;
 
 #[macro_use]
 extern crate clap;
@@ -18,7 +19,12 @@ fn main() {
 }
 
 fn validate_file(cmd: &ArgMatches) {
-    // TODO: implement
+    let path = cmd.value_of("PATH").unwrap();
+    let result = editorconfiger::validate_one(path);
+    match result {
+        Ok(res) => print_validation_result(path, res, false),
+        Err(err) => println!(" Error: {}", Red.paint(err.to_string()))
+    }
 }
 
 fn validate_path(cmd: &ArgMatches) {
@@ -26,27 +32,31 @@ fn validate_path(cmd: &ArgMatches) {
     let only_problems = cmd.is_present("problems");
     let results = editorconfiger::validate_all(path);
     for (f, r) in results {
-        if r.duplicate_properties.is_empty() && r.duplicate_sections.is_empty() {
-            if !only_problems {
-                println!(" {} {}", f, Green.paint("valid"));
-            }
-        } else {
-            println!(" {} {}", f, Red.paint("invalid"));
-        }
+        print_validation_result(&f, r, only_problems)
+    }
+}
 
-        if !r.duplicate_sections.is_empty() {
-            println!("   Duplicate sections:");
-            for section in r.duplicate_sections {
-                println!("     {}", section);
-            }
+fn print_validation_result(f: &str, r: ValidationResult, only_problems: bool) {
+    if r.duplicate_properties.is_empty() && r.duplicate_sections.is_empty() {
+        if !only_problems {
+            println!(" {} {}", f, Green.paint("valid"));
         }
-        if !r.duplicate_properties.is_empty() {
-            println!("   Duplicate properties:");
-            for (section, duplicates) in r.duplicate_properties {
-                println!("     [{}]:", section);
-                for property in duplicates {
-                    println!("       {}", property);
-                }
+    } else {
+        println!(" {} {}", f, Red.paint("invalid"));
+    }
+
+    if !r.duplicate_sections.is_empty() {
+        println!("   Duplicate sections:");
+        for section in r.duplicate_sections {
+            println!("     {}", section);
+        }
+    }
+    if !r.duplicate_properties.is_empty() {
+        println!("   Duplicate properties:");
+        for (section, duplicates) in r.duplicate_properties {
+            println!("     [{}]:", section);
+            for property in duplicates {
+                println!("       {}", property);
             }
         }
     }

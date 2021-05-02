@@ -5,6 +5,8 @@ use ini::Ini;
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, HashMap};
 
+pub type AnyError = Box<dyn std::error::Error>;
+
 const EDITOR_CONFIG: &str = ".editorconfig";
 
 pub struct ValidationResult {
@@ -21,12 +23,16 @@ pub fn validate_all(path: &str) -> BTreeMap<String, ValidationResult> {
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path().to_str().unwrap_or("").to_string())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
-        .map(|p| (String::from(p.as_str()), Ini::load_from_file(p.as_str())))
-        .filter(|(_, ini)| ini.is_ok())
-        .map(|(p, ini)| (p, ini.unwrap()))
-        .map(|(p, ini)| (p, validate(ini)))
+        .map(|p| (String::from(p.as_str()), validate_one(p.as_str())))
+        .filter(|(_, res)| res.is_ok())
+        .map(|(p, res)| (p, res.unwrap()))
         .collect();
     results
+}
+
+pub fn validate_one(path: &str) -> Result<ValidationResult, AnyError> {
+    let conf = Ini::load_from_file(path)?;
+    Ok(validate(conf))
 }
 
 fn validate(conf: Ini) -> ValidationResult {
