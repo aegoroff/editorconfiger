@@ -1,8 +1,137 @@
 extern crate ini;
 
+use ini::Ini;
+use std::collections::HashMap;
+
+pub type AnyError = Box<dyn std::error::Error>;
+pub type Result<T> = core::result::Result<T, AnyError>;
+
+const EDITOR_CONFIG: &str = ".editorconfig";
+
+fn validate(conf: Ini) -> bool {
+    let mut sect_count = HashMap::new();
+    let mut dup_props = HashMap::new();
+    for (sec, prop) in &conf {
+        let sk = sec.unwrap_or("root");
+        *sect_count.entry(sk).or_insert(0) += 1;
+
+        let mut duplicate_pops: Vec<&str> = prop
+            .iter()
+            .map(|(k, _)| k)
+            .fold(HashMap::new(), |mut h, s| {
+                *h.entry(s).or_insert(0) += 1;
+                h
+            })
+            .iter()
+            .filter(|(_, v)| **v > 1)
+            .map(|(k, _)| *k)
+            .collect();
+
+        if !duplicate_pops.is_empty() {
+            let v = dup_props.entry(sk).or_insert(Vec::<&str>::new());
+            v.append(&mut duplicate_pops)
+        }
+    }
+
+    let dup_sect = sect_count.iter().filter(|(_, v)| **v > 1).count();
+    dup_sect == 0 && dup_props.is_empty()
+}
+
 #[cfg(test)]
 mod tests {
-    use ini::Ini;
+    use super::*;
+
+    #[test]
+    fn validate_success() {
+        // Arrange
+        let config = r###"# Editor configuration
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false"###;
+        let conf = Ini::load_from_str(config).unwrap();
+
+        // Act
+        let valid = validate(conf);
+
+        // Assert
+        assert!(valid);
+    }
+
+    #[test]
+    fn validate_fail_duplicate_keys_in_not_root() {
+        // Arrange
+        let config = r###"# Editor configuration
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+trim_trailing_whitespace = false
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false"###;
+        let conf = Ini::load_from_str(config).unwrap();
+
+        // Act
+        let valid = validate(conf);
+
+        // Assert
+        assert!(!valid);
+    }
+
+    #[test]
+    fn validate_fail_duplicate_keys_in_root() {
+        // Arrange
+        let config = r###"# Editor configuration
+root = true
+root = false
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false"###;
+        let conf = Ini::load_from_str(config).unwrap();
+
+        // Act
+        let valid = validate(conf);
+
+        // Assert
+        assert!(!valid);
+    }
+
+    #[test]
+    fn validate_fail_duplicate_sections() {
+        // Arrange
+        let config = r###"# Editor configuration
+root = true
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+
+[*.md]
+max_line_length = on
+trim_trailing_whitespace = true"###;
+        let conf = Ini::load_from_str(config).unwrap();
+
+        // Act
+        let valid = validate(conf);
+
+        // Assert
+        assert!(!valid);
+    }
 
     #[test]
     fn parse() {
