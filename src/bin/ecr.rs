@@ -7,6 +7,8 @@ use std::collections::BTreeMap;
 extern crate clap;
 extern crate ansi_term;
 
+const PATH: &'static str = "PATH";
+
 fn main() {
     let app = build_cli();
     let matches = app.get_matches();
@@ -20,13 +22,13 @@ fn main() {
 }
 
 fn validate_file(cmd: &ArgMatches) {
-    let path = cmd.value_of("PATH").unwrap();
+    let path = cmd.value_of(PATH).unwrap();
     let visitor = ValidationVisitor::new(false);
     editorconfiger::validate_one(path, &visitor);
 }
 
 fn validate_folder(cmd: &ArgMatches) {
-    let path = cmd.value_of("PATH").unwrap();
+    let path = cmd.value_of(PATH).unwrap();
     let only_problems = cmd.is_present("problems");
     let visitor = ValidationVisitor::new(only_problems);
     let results = editorconfiger::validate_all(path, &visitor);
@@ -93,7 +95,7 @@ fn build_cli() -> App<'static, 'static> {
                 .aliases(&["validate"])
                 .about("Validate single .editorconfig file")
                 .arg(
-                    Arg::with_name("PATH")
+                    Arg::with_name(PATH)
                         .help("Path to .editorconfig file")
                         .required(true)
                         .index(1),
@@ -104,7 +106,7 @@ fn build_cli() -> App<'static, 'static> {
                 .aliases(&["validate-all"])
                 .about("Validate all found .editorconfig files in a directory and all its children")
                 .arg(
-                    Arg::with_name("PATH")
+                    Arg::with_name(PATH)
                         .help("Path directory that contains .editorconfig files")
                         .required(true)
                         .index(1),
