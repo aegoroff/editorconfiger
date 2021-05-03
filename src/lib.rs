@@ -9,12 +9,15 @@ pub type AnyError = Box<dyn std::error::Error>;
 
 const EDITOR_CONFIG: &str = ".editorconfig";
 
-pub trait Visitor {
-    fn success(&self, path: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>);
+pub trait Errorer {
     fn error(&self, path: &str, err: &str);
 }
 
-pub fn validate_all<V: Visitor>(path: &str, visitor: &V) -> usize {
+pub trait Visitor {
+    fn visit(&self, path: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>);
+}
+
+pub fn validate_all<V: Visitor, E: Errorer>(path: &str, visitor: &V, err: &E) -> usize {
     let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
     let results = iter
         .into_iter()
@@ -23,16 +26,16 @@ pub fn validate_all<V: Visitor>(path: &str, visitor: &V) -> usize {
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path().to_str().unwrap_or("").to_string())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
-        .inspect(|p| validate_one(&p, visitor))
+        .inspect(|p| validate_one(&p, visitor, err))
         .count();
     results
 }
 
-pub fn validate_one<V: Visitor>(path: &str, visitor: &V) {
+pub fn validate_one<V: Visitor, E: Errorer>(path: &str, visitor: &V, err: &E) {
     let conf = Ini::load_from_file(path);
     match conf {
         Ok(c) => validate(&c, path, visitor),
-        Err(e) => visitor.error(path, &e.to_string()),
+        Err(e) => err.error(path, &e.to_string()),
     }
 }
 
@@ -67,7 +70,7 @@ fn validate<V: Visitor>(conf: &Ini, path: &str, visitor: &V) {
         .map(|(k, _)| *k)
         .collect();
 
-    visitor.success(path, dup_sect, dup_props);
+    visitor.visit(path, dup_sect, dup_props);
 }
 
 #[cfg(test)]
@@ -94,11 +97,9 @@ mod tests {
     where
         F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
     {
-        fn success(&self, _: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
+        fn visit(&self, _: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
             (self.assert)(dup_sect, dup_props);
         }
-
-        fn error(&self, _: &str, _: &str) {}
     }
 
     #[test]

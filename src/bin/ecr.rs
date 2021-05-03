@@ -1,6 +1,6 @@
 use ansi_term::Colour::{Green, Red};
 use clap::{App, Arg, ArgMatches, SubCommand};
-use editorconfiger::Visitor;
+use editorconfiger::{Errorer, Visitor};
 use std::collections::BTreeMap;
 
 #[macro_use]
@@ -24,14 +24,16 @@ fn main() {
 fn validate_file(cmd: &ArgMatches) {
     let path = cmd.value_of(PATH).unwrap();
     let visitor = ValidationVisitor::new(false);
-    editorconfiger::validate_one(path, &visitor);
+    let err = ConsoleError {};
+    editorconfiger::validate_one(path, &visitor, &err);
 }
 
 fn validate_folder(cmd: &ArgMatches) {
     let path = cmd.value_of(PATH).unwrap();
     let only_problems = cmd.is_present("problems");
     let visitor = ValidationVisitor::new(only_problems);
-    let results = editorconfiger::validate_all(path, &visitor);
+    let err = ConsoleError {};
+    let results = editorconfiger::validate_all(path, &visitor, &err);
     println!();
     println!("  Total .editorconfig files found: {}", results);
 }
@@ -51,7 +53,7 @@ impl ValidationVisitor {
 }
 
 impl Visitor for ValidationVisitor {
-    fn success(&self, path: &str, dup_sects: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
+    fn visit(&self, path: &str, dup_sects: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
         if dup_props.is_empty() && dup_sects.is_empty() {
             if !self.only_problems {
                 println!(" {} {}", path, Green.paint("valid"));
@@ -77,7 +79,11 @@ impl Visitor for ValidationVisitor {
         }
         println!();
     }
+}
 
+struct ConsoleError {}
+
+impl Errorer for ConsoleError {
     fn error(&self, path: &str, err: &str) {
         println!(" {}", path);
         println!("  Error: {}", Red.paint(err));
