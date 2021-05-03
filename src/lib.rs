@@ -77,19 +77,32 @@ mod tests {
     #[test]
     fn validate_success() {
         // Arrange
-        let config = r###"# Editor configuration
+        let config = r###"
 root = true
-
 [*]
-charset = utf-8
-indent_style = space
-indent_size = 2
-insert_final_newline = true
-trim_trailing_whitespace = true
+a = b
+c = d
 
 [*.md]
-max_line_length = off
-trim_trailing_whitespace = false"###;
+e = f"###;
+        let conf = Ini::load_from_str(config).unwrap();
+
+        // Act
+        let valid = validate(&conf);
+
+        // Assert
+        assert!(valid.duplicate_properties.is_empty());
+        assert!(valid.duplicate_sections.is_empty());
+    }
+
+    #[test]
+    fn validate_success_inline_comments() {
+        // Arrange
+        let config = r###"
+[*]
+a = b # comment 1
+c = d # comment 2
+"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
@@ -103,20 +116,15 @@ trim_trailing_whitespace = false"###;
     #[test]
     fn validate_fail_duplicate_keys_in_not_root() {
         // Arrange
-        let config = r###"# Editor configuration
+        let config = r###"
 root = true
-
 [*]
-charset = utf-8
-indent_style = space
-indent_size = 2
-insert_final_newline = true
-trim_trailing_whitespace = true
-trim_trailing_whitespace = false
+a = b
+a = e
+c = d
 
 [*.md]
-max_line_length = off
-trim_trailing_whitespace = false"###;
+e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
@@ -130,13 +138,16 @@ trim_trailing_whitespace = false"###;
     #[test]
     fn validate_fail_duplicate_keys_in_root() {
         // Arrange
-        let config = r###"# Editor configuration
+        let config = r###"
 root = true
 root = false
 
+[*]
+a = b
+c = d
+
 [*.md]
-max_line_length = off
-trim_trailing_whitespace = false"###;
+e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
@@ -150,16 +161,15 @@ trim_trailing_whitespace = false"###;
     #[test]
     fn validate_fail_duplicate_sections() {
         // Arrange
-        let config = r###"# Editor configuration
+        let config = r###"
 root = true
 
-[*.md]
-max_line_length = off
-trim_trailing_whitespace = false
+[*]
+a = b
+c = d
 
-[*.md]
-max_line_length = on
-trim_trailing_whitespace = true"###;
+[*]
+e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
 
         // Act
@@ -168,103 +178,5 @@ trim_trailing_whitespace = true"###;
         // Assert
         assert!(valid.duplicate_properties.is_empty());
         assert!(!valid.duplicate_sections.is_empty());
-    }
-
-    #[test]
-    fn parse() {
-        // Arrange
-        let config = r###"# Editor configuration
-root = true
-
-[*]
-charset = utf-8
-indent_style = space
-indent_size = 2
-insert_final_newline = true
-trim_trailing_whitespace = true
-
-[*.md]
-max_line_length = off
-trim_trailing_whitespace = false"###;
-
-        // Act
-        let conf = Ini::load_from_str(config).unwrap();
-
-        // Assert
-        let star = conf.section(Some("*")).unwrap();
-        assert!(star.contains_key("charset"));
-        let md = conf.section(Some("*.md")).unwrap();
-        assert!(md.contains_key("max_line_length"));
-
-        for (sec, prop) in &conf {
-            println!("Section: {:?}", sec);
-            for (key, value) in prop.iter() {
-                println!("{:?}:{:?}", key, value);
-            }
-        }
-    }
-
-    #[test]
-    fn parse_with_duplicate_values() {
-        // Arrange
-        let config = r###"
-[*]
-charset = utf-8
-charset = utf-7
-"###;
-
-        // Act
-        let conf = Ini::load_from_str(config).unwrap();
-
-        // Assert
-        let star = conf.section(Some("*")).unwrap();
-        assert!(star.contains_key("charset"));
-        assert_eq!(2, star.get_all("charset").count());
-
-        for (sec, prop) in &conf {
-            println!("Section: {:?}", sec);
-            for (key, value) in prop.iter() {
-                println!("{:?}:{:?}", key, value);
-            }
-        }
-    }
-
-    #[test]
-    fn parse_complex_section_name() {
-        // Arrange
-        let config = r###"
-[*.{js,jsx,ts,tsx,vue}]
-indent_style = space
-indent_size = 2
-trim_trailing_whitespace = true
-insert_final_newline = true
-"###;
-
-        // Act
-        let conf = Ini::load_from_str(config).unwrap();
-
-        // Assert
-        for (sec, prop) in &conf {
-            println!("Section: {:?}", sec);
-            for (key, value) in prop.iter() {
-                println!("{:?}:{:?}", key, value);
-            }
-        }
-    }
-
-    #[test]
-    fn parse_invalid_syntax() {
-        // Arrange
-        let config = r###"
-[*
-charset = utf-8
-charset = utf-7
-"###;
-
-        // Act
-        let conf = Ini::load_from_str(config);
-
-        // Assert
-        assert!(conf.is_err());
     }
 }
