@@ -74,6 +74,33 @@ fn validate<V: Visitor>(conf: &Ini, path: &str, visitor: &V) {
 mod tests {
     use super::*;
 
+    struct TestVisitor<F>
+    where
+        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+    {
+        assert: F,
+    }
+
+    impl<F> TestVisitor<F>
+    where
+        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+    {
+        fn new(assert: F) -> Self {
+            Self { assert }
+        }
+    }
+
+    impl<F> Visitor for TestVisitor<F>
+    where
+        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+    {
+        fn success(&self, _: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
+            (self.assert)(dup_sect, dup_props);
+        }
+
+        fn error(&self, _: &str, _: &str) {}
+    }
+
     #[test]
     fn validate_success() {
         // Arrange
@@ -86,13 +113,13 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
+        let visitor = TestVisitor::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
+            assert!(props.is_empty());
+            assert!(sect.is_empty());
+        });
 
         // Act
-        let valid = validate(&conf);
-
-        // Assert
-        assert!(valid.duplicate_properties.is_empty());
-        assert!(valid.duplicate_sections.is_empty());
+        validate(&conf, "", &visitor);
     }
 
     #[test]
@@ -104,13 +131,13 @@ a = b # comment 1
 c = d # comment 2
 "###;
         let conf = Ini::load_from_str(config).unwrap();
+        let visitor = TestVisitor::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
+            assert!(props.is_empty());
+            assert!(sect.is_empty());
+        });
 
         // Act
-        let valid = validate(&conf);
-
-        // Assert
-        assert!(valid.duplicate_properties.is_empty());
-        assert!(valid.duplicate_sections.is_empty());
+        validate(&conf, "", &visitor);
     }
 
     #[test]
@@ -126,13 +153,13 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
+        let visitor = TestVisitor::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
+            assert!(!props.is_empty());
+            assert!(sect.is_empty());
+        });
 
         // Act
-        let valid = validate(&conf);
-
-        // Assert
-        assert!(!valid.duplicate_properties.is_empty());
-        assert!(valid.duplicate_sections.is_empty());
+        validate(&conf, "", &visitor);
     }
 
     #[test]
@@ -149,13 +176,13 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
+        let visitor = TestVisitor::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
+            assert!(!props.is_empty());
+            assert!(sect.is_empty());
+        });
 
         // Act
-        let valid = validate(&conf);
-
-        // Assert
-        assert!(!valid.duplicate_properties.is_empty());
-        assert!(valid.duplicate_sections.is_empty());
+        validate(&conf, "", &visitor);
     }
 
     #[test]
@@ -171,12 +198,12 @@ c = d
 [*]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
+        let visitor = TestVisitor::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
+            assert!(props.is_empty());
+            assert!(!sect.is_empty());
+        });
 
         // Act
-        let valid = validate(&conf);
-
-        // Assert
-        assert!(valid.duplicate_properties.is_empty());
-        assert!(!valid.duplicate_sections.is_empty());
+        validate(&conf, "", &visitor);
     }
 }
