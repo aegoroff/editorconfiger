@@ -14,11 +14,6 @@ pub trait Visitor {
     fn error(&self, path: &str, err: &str);
 }
 
-struct ValidationResult<'a> {
-    duplicate_sections: Vec<&'a str>,
-    duplicate_properties: BTreeMap<&'a str, Vec<&'a str>>,
-}
-
 pub fn validate_all<V: Visitor>(path: &str, visitor: &V) -> usize {
     let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
     let results = iter
@@ -36,15 +31,12 @@ pub fn validate_all<V: Visitor>(path: &str, visitor: &V) -> usize {
 pub fn validate_one<V: Visitor>(path: &str, visitor: &V) {
     let conf = Ini::load_from_file(path);
     match conf {
-        Ok(c) => {
-            let result = validate(&c);
-            visitor.success(path, result.duplicate_sections, result.duplicate_properties);
-        }
+        Ok(c) => validate(&c, path, visitor),
         Err(e) => visitor.error(path, &e.to_string()),
     }
 }
 
-fn validate(conf: &Ini) -> ValidationResult {
+fn validate<V: Visitor>(conf: &Ini, path: &str, visitor: &V) {
     let mut sect_count = HashMap::new();
     let mut dup_props = BTreeMap::new();
     for (sec, prop) in conf {
@@ -75,10 +67,7 @@ fn validate(conf: &Ini) -> ValidationResult {
         .map(|(k, _)| *k)
         .collect();
 
-    ValidationResult {
-        duplicate_sections: dup_sect,
-        duplicate_properties: dup_props,
-    }
+    visitor.success(path, dup_sect, dup_props);
 }
 
 #[cfg(test)]
