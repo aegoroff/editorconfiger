@@ -1,6 +1,6 @@
 use ansi_term::Colour::{Green, Red};
 use clap::{App, Arg, ArgMatches, SubCommand};
-use editorconfiger::Validator;
+use editorconfiger::Visitor;
 use std::collections::BTreeMap;
 
 #[macro_use]
@@ -21,15 +21,15 @@ fn main() {
 
 fn validate_file(cmd: &ArgMatches) {
     let path = cmd.value_of("PATH").unwrap();
-    let printer = PrintValidation::new(false);
-    editorconfiger::validate_one(path, &printer);
+    let visitor = ValidationVisitor::new(false);
+    editorconfiger::validate_one(path, &visitor);
 }
 
 fn validate_folder(cmd: &ArgMatches) {
     let path = cmd.value_of("PATH").unwrap();
     let only_problems = cmd.is_present("problems");
-    let printer = PrintValidation::new(only_problems);
-    let results = editorconfiger::validate_all(path, &printer);
+    let visitor = ValidationVisitor::new(only_problems);
+    let results = editorconfiger::validate_all(path, &visitor);
     println!();
     println!("  Total .editorconfig files found: {}", results);
 }
@@ -38,19 +38,19 @@ fn compare(cmd: &ArgMatches) {
     // TODO: implement
 }
 
-struct PrintValidation {
+struct ValidationVisitor {
     only_problems: bool,
 }
 
-impl PrintValidation {
+impl ValidationVisitor {
     fn new(only_problems: bool) -> Self {
         Self { only_problems }
     }
 }
 
-impl Validator for PrintValidation {
-    fn success(&self, path: &str, sections: Vec<&str>, keys: BTreeMap<&str, Vec<&str>>) {
-        if keys.is_empty() && sections.is_empty() {
+impl Visitor for ValidationVisitor {
+    fn success(&self, path: &str, dup_sects: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
+        if dup_props.is_empty() && dup_sects.is_empty() {
             if !self.only_problems {
                 println!(" {} {}", path, Green.paint("valid"));
             }
@@ -58,15 +58,15 @@ impl Validator for PrintValidation {
         }
 
         println!(" {} {}", path, Red.paint("invalid"));
-        if !sections.is_empty() {
+        if !dup_sects.is_empty() {
             println!("   Duplicate sections:");
-            for section in sections {
+            for section in dup_sects {
                 println!("     {}", section);
             }
         }
-        if !keys.is_empty() {
+        if !dup_props.is_empty() {
             println!("   Duplicate properties:");
-            for (section, duplicates) in keys {
+            for (section, duplicates) in dup_props {
                 println!("     [{}]:", section);
                 for property in duplicates {
                     println!("       {}", property);

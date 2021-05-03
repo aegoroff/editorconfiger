@@ -9,8 +9,8 @@ pub type AnyError = Box<dyn std::error::Error>;
 
 const EDITOR_CONFIG: &str = ".editorconfig";
 
-pub trait Validator {
-    fn success(&self, path: &str, sections: Vec<&str>, keys: BTreeMap<&str, Vec<&str>>);
+pub trait Visitor {
+    fn success(&self, path: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>);
     fn error(&self, path: &str, err: &str);
 }
 
@@ -19,7 +19,7 @@ struct ValidationResult<'a> {
     duplicate_properties: BTreeMap<&'a str, Vec<&'a str>>,
 }
 
-pub fn validate_all<V: Validator>(path: &str, validator: &V) -> usize {
+pub fn validate_all<V: Visitor>(path: &str, visitor: &V) -> usize {
     let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
     let results = iter
         .into_iter()
@@ -28,19 +28,19 @@ pub fn validate_all<V: Validator>(path: &str, validator: &V) -> usize {
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path().to_str().unwrap_or("").to_string())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
-        .inspect(|p| validate_one(&p, validator))
+        .inspect(|p| validate_one(&p, visitor))
         .count();
     results
 }
 
-pub fn validate_one<V: Validator>(path: &str, validator: &V) {
+pub fn validate_one<V: Visitor>(path: &str, visitor: &V) {
     let conf = Ini::load_from_file(path);
     match conf {
         Ok(c) => {
             let result = validate(&c);
-            validator.success(path, result.duplicate_sections, result.duplicate_properties);
+            visitor.success(path, result.duplicate_sections, result.duplicate_properties);
         }
-        Err(e) => validator.error(path, &e.to_string()),
+        Err(e) => visitor.error(path, &e.to_string()),
     }
 }
 
