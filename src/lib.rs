@@ -124,6 +124,24 @@ e = f"###;
     }
 
     #[test]
+    fn validate_success_brakets_in_section_name() {
+        // Arrange
+        let config = r###"
+[[*]]
+a = b
+c = d
+"###;
+        let conf = Ini::load_from_str(config).unwrap();
+        let visitor = TestVisitor::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
+            assert!(props.is_empty());
+            assert!(sect.is_empty());
+        });
+
+        // Act
+        validate(&conf, "", &visitor);
+    }
+
+    #[test]
     fn validate_success_inline_comments() {
         // Arrange
         let config = r###"
