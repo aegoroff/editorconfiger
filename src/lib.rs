@@ -38,11 +38,26 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
 }
 
 pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &V, err: &E) {
+    if let Some(c) = read_from_file(path, err) {
+        validate(&c, path, formatter)
+    }
+}
+
+pub fn compare<E: Errorer>(path1: &str, path2: &str, err: &E) {
+    if let Some(c1) = read_from_file(path1, err) {
+        if let Some(c2) = read_from_file(path2, err) {
+            compare_files(&c1, &c2, path1, path2);
+        }
+    }
+}
+
+fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
     let conf = Ini::load_from_file(path);
     match conf {
-        Ok(c) => validate(&c, path, formatter),
+        Ok(c) => return Some(c),
         Err(e) => err.error(path, &e.to_string()),
     }
+    None
 }
 
 fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
@@ -77,6 +92,10 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         .collect();
 
     formatter.format(path, dup_sect, dup_props);
+}
+
+fn compare_files(conf1: &Ini, conf2: &Ini, path1: &str, path2: &str) {
+    // TODO: Implement files comparison
 }
 
 #[cfg(test)]

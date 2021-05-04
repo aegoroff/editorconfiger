@@ -37,7 +37,10 @@ fn validate_folder(cmd: &ArgMatches) {
 }
 
 fn compare(cmd: &ArgMatches) {
-    // TODO: implement
+    let path1 = cmd.value_of("FILE1").unwrap();
+    let path2 = cmd.value_of("FILE2").unwrap();
+    let err = Error {};
+    editorconfiger::compare(path1, path2, &err);
 }
 
 fn build_cli() -> App<'static, 'static> {
