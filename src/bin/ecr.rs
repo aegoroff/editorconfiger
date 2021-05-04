@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
-use editorconfiger::console::{ConsoleError, ConsoleFormatter};
+use editorconfiger::console::{Error, Formatter};
 
 #[macro_use]
 extern crate clap;
@@ -21,16 +21,16 @@ fn main() {
 
 fn validate_file(cmd: &ArgMatches) {
     let path = cmd.value_of(PATH).unwrap();
-    let formatter = ConsoleFormatter::new(false);
-    let err = ConsoleError {};
+    let formatter = Formatter::new(false);
+    let err = Error {};
     editorconfiger::validate_one(path, &formatter, &err);
 }
 
 fn validate_folder(cmd: &ArgMatches) {
     let path = cmd.value_of(PATH).unwrap();
     let only_problems = cmd.is_present("problems");
-    let formatter = ConsoleFormatter::new(only_problems);
-    let err = ConsoleError {};
+    let formatter = Formatter::new(only_problems);
+    let err = Error {};
     let results = editorconfiger::validate_all(path, &formatter, &err);
     println!();
     println!("  Total .editorconfig files found: {}", results);

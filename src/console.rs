@@ -2,17 +2,17 @@ use crate::{Errorer, ValidationFormatter};
 use ansi_term::Colour::{Green, Red};
 use std::collections::BTreeMap;
 
-pub struct ConsoleFormatter {
+pub struct Formatter {
     only_problems: bool,
 }
 
-impl ConsoleFormatter {
+impl Formatter {
     pub fn new(only_problems: bool) -> Self {
         Self { only_problems }
     }
 }
 
-impl ValidationFormatter for ConsoleFormatter {
+impl ValidationFormatter for Formatter {
     fn format(&self, path: &str, dup_sects: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
         if dup_props.is_empty() && dup_sects.is_empty() {
             if !self.only_problems {
@@ -41,9 +41,9 @@ impl ValidationFormatter for ConsoleFormatter {
     }
 }
 
-pub struct ConsoleError {}
+pub struct Error {}
 
-impl Errorer for ConsoleError {
+impl Errorer for Error {
     fn error(&self, path: &str, err: &str) {
         println!(" {}", path);
         println!("  Error: {}", Red.paint(err));
