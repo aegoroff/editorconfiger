@@ -15,6 +15,13 @@ pub trait Errorer {
     fn error(&self, path: &str, err: &str);
 }
 
+#[derive(Debug, Clone)]
+pub struct CompareItem<'input> {
+    pub key: &'input str,
+    pub first_value: Option<&'input str>,
+    pub second_value: Option<&'input str>,
+}
+
 pub trait ValidationFormatter {
     fn format(&self, path: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>);
 }
@@ -95,10 +102,31 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 }
 
 fn compare_files(conf1: &Ini, conf2: &Ini) {
-    for (s1, p1) in conf1 {
+    let mut result = BTreeMap::new();
+    for (s1, props1) in conf1 {
         let sk1 = s1.unwrap_or("");
         if sk1 != "" {
-            let p2 = conf2.section(s1);
+            let mut props2 : HashMap<&str, &str> = HashMap::new();
+            for p2 in conf2.section(s1) {
+                props2 = p2.iter().fold(HashMap::new(), |mut h, (k, v)| {
+                    h.entry(k).or_insert(v);
+                    h
+                });
+            }
+            let mut  items : Vec<CompareItem> = Vec::new();
+            for (k1, v1) in props1.iter() {
+                let v2 = match props2.get(k1) {
+                    Some(v) => Some(*v),
+                    None => None
+                };
+                let item = CompareItem {
+                    key: k1,
+                    first_value: Some(v1),
+                    second_value: v2,
+                };
+                items.push(item);
+            }
+            result.insert(sk1, items);
         }
     }
 }
@@ -108,15 +136,15 @@ mod tests {
     use super::*;
 
     struct TestFormatter<F>
-    where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+        where
+            F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
     {
         assert: F,
     }
 
     impl<F> TestFormatter<F>
-    where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+        where
+            F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
     {
         fn new(assert: F) -> Self {
             Self { assert }
@@ -124,8 +152,8 @@ mod tests {
     }
 
     impl<F> ValidationFormatter for TestFormatter<F>
-    where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+        where
+            F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
     {
         fn format(&self, _: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
             (self.assert)(dup_sect, dup_props);
@@ -254,5 +282,25 @@ e = f"###;
 
         // Act
         validate(&conf, "", &formatter);
+    }
+
+    #[test]
+    fn compare_plain() {
+        // Arrange
+        let config1 = r###"
+[*]
+a = b
+c = d
+"###;
+        let config2 = r###"
+[*]
+a = b1
+c = d2
+"###;
+        let conf1 = Ini::load_from_str(config1).unwrap();
+        let conf2 = Ini::load_from_str(config2).unwrap();
+
+        // Act
+        compare_files(&conf1, &conf2);
     }
 }
