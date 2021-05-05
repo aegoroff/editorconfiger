@@ -1,5 +1,6 @@
-use crate::{Errorer, ValidationFormatter, ComparisonFormatter, CompareItem};
+use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter};
 use ansi_term::Colour::{Green, Red};
+use prettytable::{format, Table};
 use std::collections::BTreeMap;
 
 pub struct Formatter {
@@ -54,7 +55,16 @@ impl Errorer for Error {
 pub struct Comparator {}
 
 impl ComparisonFormatter for Comparator {
-    fn format(&self, _: BTreeMap<&str, Vec<CompareItem>>) {
-        todo!()
+    fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
+        let mut table = Table::new();
+        for (sect, values) in result {
+            table.add_row(row![bFH3->sect]);
+            for value in values {
+                table.add_row(row![bF->value.key,
+                    bF->value.first_value.unwrap_or_default(),
+                    bF->value.second_value.unwrap_or_default()]);
+            }
+        }
+        table.printstd();
     }
 }

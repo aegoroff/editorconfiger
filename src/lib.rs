@@ -6,6 +6,8 @@ extern crate jwalk;
 use ini::Ini;
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, HashMap, HashSet};
+#[macro_use]
+extern crate prettytable;
 
 pub type AnyError = Box<dyn std::error::Error>;
 
@@ -54,7 +56,12 @@ pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &
     }
 }
 
-pub fn compare<E: Errorer, F: ComparisonFormatter>(path1: &str, path2: &str, err: &E, formatter: &F) {
+pub fn compare<E: Errorer, F: ComparisonFormatter>(
+    path1: &str,
+    path2: &str,
+    err: &E,
+    formatter: &F,
+) {
     if let Some(c1) = read_from_file(path1, err) {
         if let Some(c2) = read_from_file(path2, err) {
             compare_files(&c1, &c2, formatter);
