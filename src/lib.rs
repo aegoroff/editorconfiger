@@ -46,7 +46,7 @@ pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &
 pub fn compare<E: Errorer>(path1: &str, path2: &str, err: &E) {
     if let Some(c1) = read_from_file(path1, err) {
         if let Some(c2) = read_from_file(path2, err) {
-            compare_files(&c1, &c2, path1, path2);
+            compare_files(&c1, &c2);
         }
     }
 }
@@ -94,8 +94,13 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     formatter.format(path, dup_sect, dup_props);
 }
 
-fn compare_files(conf1: &Ini, conf2: &Ini, path1: &str, path2: &str) {
-    // TODO: Implement files comparison
+fn compare_files(conf1: &Ini, conf2: &Ini) {
+    for (s1, p1) in conf1 {
+        let sk1 = s1.unwrap_or("");
+        if sk1 != "" {
+            let p2 = conf2.section(s1);
+        }
+    }
 }
 
 #[cfg(test)]

@@ -40,6 +40,8 @@ fn compare(cmd: &ArgMatches) {
     let path1 = cmd.value_of("FILE1").unwrap();
     let path2 = cmd.value_of("FILE2").unwrap();
     let err = Error {};
+    println!(" FILE #1: {}", path1);
+    println!(" FILE #2: {}", path1);
     editorconfiger::compare(path1, path2, &err);
 }
 
