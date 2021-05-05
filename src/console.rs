@@ -58,7 +58,7 @@ impl ComparisonFormatter for Comparator {
     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
         let mut table = Table::new();
         for (sect, values) in result {
-            table.add_row(row![bFH3->sect]);
+            table.add_row(row![bF->sect, bF->"FILE #1", bF->"FILE #2"]);
             for value in values {
                 table.add_row(row![bF->value.key,
                     bF->value.first_value.unwrap_or_default(),
