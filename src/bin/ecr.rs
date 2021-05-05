@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
-use editorconfiger::console::{Error, Formatter};
+use editorconfiger::console::{Error, Formatter, Comparator};
 
 #[macro_use]
 extern crate clap;
@@ -42,7 +42,8 @@ fn compare(cmd: &ArgMatches) {
     let err = Error {};
     println!(" FILE #1: {}", path1);
     println!(" FILE #2: {}", path1);
-    editorconfiger::compare(path1, path2, &err);
+    let cmp = Comparator{};
+    editorconfiger::compare(path1, path2, &err, &cmp);
 }
 
 fn build_cli() -> App<'static, 'static> {

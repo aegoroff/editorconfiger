@@ -1,4 +1,4 @@
-use crate::{Errorer, ValidationFormatter};
+use crate::{Errorer, ValidationFormatter, ComparisonFormatter, CompareItem};
 use ansi_term::Colour::{Green, Red};
 use std::collections::BTreeMap;
 
@@ -48,5 +48,13 @@ impl Errorer for Error {
         println!(" {}", path);
         println!("  Error: {}", Red.paint(err));
         println!();
+    }
+}
+
+pub struct Comparator {}
+
+impl ComparisonFormatter for Comparator {
+    fn format(&self, _: BTreeMap<&str, Vec<CompareItem>>) {
+        todo!()
     }
 }
