@@ -57,12 +57,25 @@ pub struct Comparator {}
 impl ComparisonFormatter for Comparator {
     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
         let mut table = Table::new();
+        let format = format::FormatBuilder::new()
+            .column_separator(' ')
+            .borders(' ')
+            .separators(
+                &[format::LinePosition::Title, format::LinePosition::Intern],
+                format::LineSeparator::new('-', ' ', ' ', ' '),
+            )
+            .indent(0)
+            .padding(0, 0)
+            .build();
+        table.set_format(format);
+
+        table.set_titles(row![bF->"", bF->"FILE #1", bF->"FILE #2"]);
         for (sect, values) in result {
-            table.add_row(row![bF->sect, bF->"FILE #1", bF->"FILE #2"]);
+            table.add_row(row![bFH3=>sect]);
             for value in values {
-                table.add_row(row![bF->value.key,
-                    bF->value.first_value.unwrap_or_default(),
-                    bF->value.second_value.unwrap_or_default()]);
+                table.add_row(row![value.key,
+                    value.first_value.unwrap_or_default(),
+                    value.second_value.unwrap_or_default()]);
             }
         }
         table.printstd();

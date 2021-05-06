@@ -154,6 +154,28 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
             result.insert(sk1, items);
         }
     }
+    let mut missing: BTreeMap<&str, Vec<CompareItem>> = conf2
+        .iter()
+        .filter(|(s, _)| {
+            let k = s.unwrap_or_default();
+            k != "" && !result.contains_key(k)
+        })
+        .map(|(s, p)| {
+            let k = s.unwrap_or_default();
+            let items: Vec<CompareItem> = p
+                .iter()
+                .map(|(k, v)| CompareItem {
+                    key: k,
+                    first_value: None,
+                    second_value: Some(v),
+                })
+                .collect();
+            (k, items)
+        })
+        .collect();
+
+    result.append(&mut missing);
+
     formatter.format(result);
 }
 
