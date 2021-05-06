@@ -405,4 +405,29 @@ d = d2
         // Act
         compare_files(&conf1, &conf2, &formatter);
     }
+
+    #[test]
+    fn compare_sections_different() {
+        // Arrange
+        let config1 = r###"
+[x]
+a = b
+c = d
+"###;
+        let config2 = r###"
+[y]
+a = b1
+d = d2
+"###;
+        let conf1 = Ini::load_from_str(config1).unwrap();
+        let conf2 = Ini::load_from_str(config2).unwrap();
+        let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
+            assert_eq!(2, res.len());
+            assert_eq!(2, res.get("x").unwrap().len());
+            assert_eq!(2, res.get("x").unwrap().len());
+        });
+
+        // Act
+        compare_files(&conf1, &conf2, &formatter);
+    }
 }
