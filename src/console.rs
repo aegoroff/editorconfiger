@@ -73,9 +73,15 @@ impl ComparisonFormatter for Comparator {
         for (sect, values) in result {
             table.add_row(row![bFH3=>sect]);
             for value in values {
-                table.add_row(row![value.key,
-                    value.first_value.unwrap_or_default(),
-                    value.second_value.unwrap_or_default()]);
+                let v1 = value.first_value.unwrap_or_default();
+                let v2 = value.second_value.unwrap_or_default();
+                if v1 != v2 && v1 != "" && v2 != "" {
+                    table.add_row(row![value.key, Fy->v1, Fy->v2]);
+                } else if v1 != v2 {
+                    table.add_row(row![value.key, Fg->v1, Fg->v2]);
+                } else {
+                    table.add_row(row![value.key, v1, v2]);
+                }
             }
         }
         table.printstd();
