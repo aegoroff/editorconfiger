@@ -75,7 +75,7 @@ impl ComparisonFormatter for Comparator {
             for value in values {
                 let v1 = value.first_value.unwrap_or_default();
                 let v2 = value.second_value.unwrap_or_default();
-                if v1 != v2 && v1 != "" && v2 != "" {
+                if v1 != v2 && !v1.is_empty() && !v2.is_empty() {
                     table.add_row(row![value.key, Fy->v1, Fy->v2]);
                 } else if v1 != v2 {
                     table.add_row(row![value.key, Fg->v1, Fg->v2]);

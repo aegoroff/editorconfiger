@@ -38,7 +38,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
     err: &E,
 ) -> usize {
     let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
-    let results = iter
+    iter
         .into_iter()
         .filter(Result::is_ok)
         .map(Result::unwrap)
@@ -46,8 +46,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .map(|f| f.path().to_str().unwrap_or("").to_string())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
         .inspect(|p| validate_one(&p, formatter, err))
-        .count();
-    results
+        .count()
 }
 
 pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &V, err: &E) {
@@ -98,7 +97,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
             .collect();
 
         if !duplicate_pops.is_empty() {
-            let v = dup_props.entry(sk).or_insert(Vec::<&str>::new());
+            let v = dup_props.entry(sk).or_insert_with(Vec::<&str>::new);
             v.append(&mut duplicate_pops)
         }
     }
@@ -127,10 +126,7 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
         // To use later in filter
         let mut added: HashSet<&str> = HashSet::new();
         for (k1, v1) in props1.iter() {
-            let v2 = match props2.get(k1) {
-                Some(v) => Some(*v),
-                None => None,
-            };
+            let v2 = props2.get(k1).copied();
             let item = CompareItem {
                 key: k1,
                 first_value: Some(v1),
