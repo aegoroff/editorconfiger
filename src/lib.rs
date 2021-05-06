@@ -115,51 +115,47 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
     let mut result = BTreeMap::new();
     for (s1, props1) in conf1 {
-        let sk1 = s1.unwrap_or("");
-        if sk1 != "" {
-            let mut props2: HashMap<&str, &str> = HashMap::new();
-            for p2 in conf2.section(s1) {
-                props2 = p2.iter().fold(HashMap::new(), |mut h, (k, v)| {
-                    h.entry(k).or_insert(v);
-                    h
-                });
-            }
-            let mut items: Vec<CompareItem> = Vec::new();
-            let mut added: HashSet<&str> = HashSet::new();
-            for (k1, v1) in props1.iter() {
-                let v2 = match props2.get(k1) {
-                    Some(v) => Some(*v),
-                    None => None,
-                };
-                let item = CompareItem {
-                    key: k1,
-                    first_value: Some(v1),
-                    second_value: v2,
-                };
-                added.insert(k1);
-                items.push(item);
-            }
-
-            items.extend(
-                props2
-                    .iter()
-                    .filter(|(k, _)| !added.contains(**k))
-                    .map(|(k, v)| CompareItem {
-                        key: *k,
-                        first_value: None,
-                        second_value: Some(*v),
-                    }),
-            );
-
-            result.insert(sk1, items);
+        let sk1 = s1.unwrap_or_default();
+        let mut props2: HashMap<&str, &str> = HashMap::new();
+        for p2 in conf2.section(s1) {
+            props2 = p2.iter().fold(HashMap::new(), |mut h, (k, v)| {
+                h.entry(k).or_insert(v);
+                h
+            });
         }
+        let mut items: Vec<CompareItem> = Vec::new();
+        // To use later in filter
+        let mut added: HashSet<&str> = HashSet::new();
+        for (k1, v1) in props1.iter() {
+            let v2 = match props2.get(k1) {
+                Some(v) => Some(*v),
+                None => None,
+            };
+            let item = CompareItem {
+                key: k1,
+                first_value: Some(v1),
+                second_value: v2,
+            };
+            added.insert(k1);
+            items.push(item);
+        }
+
+        items.extend(
+            props2
+                .iter()
+                .filter(|(k, _)| !added.contains(**k))
+                .map(|(k, v)| CompareItem {
+                    key: *k,
+                    first_value: None,
+                    second_value: Some(*v),
+                }),
+        );
+
+        result.insert(sk1, items);
     }
     let mut missing: BTreeMap<&str, Vec<CompareItem>> = conf2
         .iter()
-        .filter(|(s, _)| {
-            let k = s.unwrap_or_default();
-            k != "" && !result.contains_key(k)
-        })
+        .filter(|(s, _)| !result.contains_key(s.unwrap_or_default()))
         .map(|(s, p)| {
             let k = s.unwrap_or_default();
             let items: Vec<CompareItem> = p
@@ -376,6 +372,36 @@ c = d2
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
             assert_eq!(2, res.get("*").unwrap().len());
+        });
+
+        // Act
+        compare_files(&conf1, &conf2, &formatter);
+    }
+
+    #[test]
+    fn compare_plain_with_general() {
+        // Arrange
+        let config1 = r###"
+root = true
+
+[*]
+a = b
+c = d
+"###;
+        let config2 = r###"
+root = true
+
+[*]
+a = b1
+c = d2
+"###;
+        let conf1 = Ini::load_from_str(config1).unwrap();
+        let conf2 = Ini::load_from_str(config2).unwrap();
+
+        let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
+            assert_eq!(2, res.len());
+            assert_eq!(2, res.get("*").unwrap().len());
+            assert_eq!(1, res.get("").unwrap().len());
         });
 
         // Act
