@@ -5,7 +5,7 @@ use editorconfiger::console::{Comparator, Error, Formatter};
 extern crate clap;
 extern crate ansi_term;
 
-const PATH: &'static str = "PATH";
+const PATH: &str = "PATH";
 
 fn main() {
     let app = build_cli();

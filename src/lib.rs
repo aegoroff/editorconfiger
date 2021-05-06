@@ -116,7 +116,7 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
     for (s1, props1) in conf1 {
         let sk1 = s1.unwrap_or_default();
         let mut props2: HashMap<&str, &str> = HashMap::new();
-        for p2 in conf2.section(s1) {
+        if let Some(p2) = conf2.section(s1) {
             props2 = p2.iter().fold(HashMap::new(), |mut h, (k, v)| {
                 h.entry(k).or_insert(v);
                 h
