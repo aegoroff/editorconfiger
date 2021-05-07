@@ -5,7 +5,7 @@ extern crate jwalk;
 
 use ini::Ini;
 use jwalk::WalkDir;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap};
 #[macro_use]
 extern crate prettytable;
 
@@ -123,8 +123,6 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
             });
         }
         let mut items: Vec<CompareItem> = Vec::new();
-        // To use later in filter
-        let mut added: HashSet<&str> = HashSet::new();
         for (k1, v1) in props1.iter() {
             let v2 = props2.get(k1).copied();
             let item = CompareItem {
@@ -132,14 +130,13 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
                 first_value: Some(v1),
                 second_value: v2,
             };
-            added.insert(k1);
             items.push(item);
         }
 
         items.extend(
             props2
                 .iter()
-                .filter(|(k, _)| !added.contains(**k))
+                .filter(|(k, _)| !props1.contains_key(**k))
                 .map(|(k, v)| CompareItem {
                     key: *k,
                     first_value: None,
