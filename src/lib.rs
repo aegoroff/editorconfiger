@@ -153,7 +153,6 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
         .iter()
         .filter(|(s, _)| !result.contains_key(s.unwrap_or_default()))
         .map(|(s, p)| {
-            let k = s.unwrap_or_default();
             let items: Vec<CompareItem> = p
                 .iter()
                 .map(|(k, v)| CompareItem {
@@ -162,7 +161,7 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
                     second_value: Some(v),
                 })
                 .collect();
-            (k, items)
+            (s.unwrap_or_default(), items)
         })
         .collect();
 
