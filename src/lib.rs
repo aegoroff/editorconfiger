@@ -3,7 +3,7 @@ pub mod console;
 extern crate ini;
 extern crate jwalk;
 
-use ini::Ini;
+use ini::{Ini, Properties};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, HashMap};
 #[macro_use]
@@ -114,34 +114,28 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
     let mut result = BTreeMap::new();
+    let empty = &Properties::new();
     for (s1, props1) in conf1 {
-        let mut props2: HashMap<&str, &str> = HashMap::new();
-        if let Some(p2) = conf2.section(s1) {
-            props2 = p2.iter().fold(HashMap::new(), |mut h, (k, v)| {
-                h.entry(k).or_insert(v);
-                h
-            });
-        }
+        let props2 = conf2.section(s1).unwrap_or(empty);
 
-        let mut items: Vec<CompareItem> = props1
+        let items: Vec<CompareItem> = props1
             .iter()
             .map(|(k1, v1)| CompareItem {
                 key: k1,
                 first_value: Some(v1),
-                second_value: props2.get(k1).copied(),
+                second_value: props2.get(k1),
             })
+            .chain(
+                props2
+                    .iter()
+                    .filter(|(k, _)| !props1.contains_key(k))
+                    .map(|(k, v)| CompareItem {
+                        key: k,
+                        first_value: None,
+                        second_value: Some(v),
+                    }),
+            )
             .collect();
-
-        items.extend(
-            props2
-                .iter()
-                .filter(|(k, _)| !props1.contains_key(**k))
-                .map(|(k, v)| CompareItem {
-                    key: *k,
-                    first_value: None,
-                    second_value: Some(*v),
-                }),
-        );
 
         result.insert(s1.unwrap_or_default(), items);
     }
