@@ -113,49 +113,51 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 }
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
-    let mut result = BTreeMap::new();
     let empty = &Properties::new();
-    for (s1, props1) in conf1 {
-        let props2 = conf2.section(s1).unwrap_or(empty);
 
-        let items: Vec<CompareItem> = props1
+    let result: BTreeMap<&str, Vec<CompareItem>> =
+        conf1
             .iter()
-            .map(|(k1, v1)| CompareItem {
-                key: k1,
-                first_value: Some(v1),
-                second_value: props2.get(k1),
+            .map(|(s1, props1)| {
+                let props2 = conf2.section(s1).unwrap_or(empty);
+                (s1, props1, props2)
+            })
+            .map(|(s1, props1, props2)| {
+                let items: Vec<CompareItem> =
+                    props1
+                        .iter()
+                        .map(|(k1, v1)| CompareItem {
+                            key: k1,
+                            first_value: Some(v1),
+                            second_value: props2.get(k1),
+                        })
+                        .chain(props2.iter().filter(|(k, _)| !props1.contains_key(k)).map(
+                            |(k, v)| CompareItem {
+                                key: k,
+                                first_value: None,
+                                second_value: Some(v),
+                            },
+                        ))
+                        .collect();
+                (s1.unwrap_or_default(), items)
             })
             .chain(
-                props2
+                conf2
                     .iter()
-                    .filter(|(k, _)| !props1.contains_key(k))
-                    .map(|(k, v)| CompareItem {
-                        key: k,
-                        first_value: None,
-                        second_value: Some(v),
+                    .filter(|(s, _)| conf1.section(*s).is_none())
+                    .map(|(s, p)| {
+                        let items: Vec<CompareItem> = p
+                            .iter()
+                            .map(|(k, v)| CompareItem {
+                                key: k,
+                                first_value: None,
+                                second_value: Some(v),
+                            })
+                            .collect();
+                        (s.unwrap_or_default(), items)
                     }),
             )
             .collect();
-
-        result.insert(s1.unwrap_or_default(), items);
-    }
-    let mut missing: BTreeMap<&str, Vec<CompareItem>> = conf2
-        .iter()
-        .filter(|(s, _)| !result.contains_key(s.unwrap_or_default()))
-        .map(|(s, p)| {
-            let items: Vec<CompareItem> = p
-                .iter()
-                .map(|(k, v)| CompareItem {
-                    key: k,
-                    first_value: None,
-                    second_value: Some(v),
-                })
-                .collect();
-            (s.unwrap_or_default(), items)
-        })
-        .collect();
-
-    result.append(&mut missing);
 
     formatter.format(result);
 }
