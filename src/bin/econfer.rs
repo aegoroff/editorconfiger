@@ -47,7 +47,7 @@ fn compare(cmd: &ArgMatches) {
 }
 
 fn build_cli() -> App<'static, 'static> {
-    return App::new("econfer")
+    return App::new(crate_name!())
         .version(crate_version!())
         .author("egoroff <egoroff@gmail.com>")
         .about(".editorconfig files tool")
