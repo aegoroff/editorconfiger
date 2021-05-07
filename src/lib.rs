@@ -115,7 +115,6 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
     let mut result = BTreeMap::new();
     for (s1, props1) in conf1 {
-        let sk1 = s1.unwrap_or_default();
         let mut props2: HashMap<&str, &str> = HashMap::new();
         if let Some(p2) = conf2.section(s1) {
             props2 = p2.iter().fold(HashMap::new(), |mut h, (k, v)| {
@@ -123,16 +122,15 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
                 h
             });
         }
-        let mut items: Vec<CompareItem> = Vec::new();
-        for (k1, v1) in props1.iter() {
-            let v2 = props2.get(k1).copied();
-            let item = CompareItem {
+
+        let mut items: Vec<CompareItem> = props1
+            .iter()
+            .map(|(k1, v1)| CompareItem {
                 key: k1,
                 first_value: Some(v1),
-                second_value: v2,
-            };
-            items.push(item);
-        }
+                second_value: props2.get(k1).copied(),
+            })
+            .collect();
 
         items.extend(
             props2
@@ -145,7 +143,7 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
                 }),
         );
 
-        result.insert(sk1, items);
+        result.insert(s1.unwrap_or_default(), items);
     }
     let mut missing: BTreeMap<&str, Vec<CompareItem>> = conf2
         .iter()
