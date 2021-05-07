@@ -38,8 +38,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
     err: &E,
 ) -> usize {
     let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
-    iter
-        .into_iter()
+    iter.into_iter()
         .filter(Result::is_ok)
         .map(Result::unwrap)
         .filter(|f| f.file_type().is_file())
@@ -97,8 +96,10 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
             .collect();
 
         if !duplicate_pops.is_empty() {
-            let v = dup_props.entry(sk).or_insert_with(Vec::<&str>::new);
-            v.append(&mut duplicate_pops)
+            dup_props
+                .entry(sk)
+                .or_insert_with(Vec::<&str>::new)
+                .append(&mut duplicate_pops);
         }
     }
 
