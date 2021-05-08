@@ -48,6 +48,7 @@ mod tests {
         assert!(!parse("{f1.e1,.f1.e1}").is_empty());
         assert!(!parse("test/*").is_empty());
         assert!(!parse("test/**/*").is_empty());
+        assert!(!parse("test/{p1,p2}/*").is_empty());
     }
 
     #[test]
