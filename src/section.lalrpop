@@ -34,6 +34,7 @@ Word : String = {
 
 Full : String = {
     <n:Word> "." <e:Word> => format!("{}.{}", n, e),
+    "." <n:Word> "." <e:Word> => format!(".{}.{}", n, e),
     "." <e:Word> => format!(".{}", e),
 }
 

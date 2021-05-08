@@ -1,24 +1,5 @@
-
-/*
-Variants
-    *.e1
-    **.std
-    *.{e1}
-    **.[e1]
-    *.{e1,e2}
-    *.{e1,e2,f1.e1}
-    {*.e1,*.e2}
-    {f1,f2}.e1
-    {f1,f2}
-    {f1,.f2}
-    {f1.e1,*.e1}
-    f.e1
-    f1
-    *.*
-    *
-*/
-
 use lalrpop_util::lexer::Token;
+use std::path::PathBuf;
 
 lalrpop_mod!(
     #[allow(clippy::all)]
@@ -28,7 +9,10 @@ lalrpop_mod!(
 
 pub fn parse(string: &str) -> Vec<String> {
     let parser = section::DefinesParser::new();
-    let result : Result<Vec<String>, lalrpop_util::ParseError<usize, Token<'_>, &'static str>> = parser.parse(string);
+    let path = PathBuf::from(string);
+    let file = path.file_name().unwrap_or_default().to_str().unwrap_or("*");
+    let result: Result<Vec<String>, lalrpop_util::ParseError<usize, Token<'_>, &'static str>> =
+        parser.parse(file);
     if result.is_ok() {
         result.unwrap()
     } else {
@@ -44,27 +28,29 @@ mod tests {
     #[test]
     fn parse_success() {
         // Arrange
-        let parser = section::DefinesParser::new();
 
         // Assert
-        assert!(parser.parse("22").is_ok());
-        assert!(parser.parse("*.e1").is_ok());
-        assert!(parser.parse("**.e1").is_ok());
-        assert!(parser.parse("*.{e1}").is_ok());
-        assert!(parser.parse("*.[ch]").is_ok());
-        assert!(parser.parse("f.e1").is_ok());
-        assert!(parser.parse("f1").is_ok());
-        assert!(parser.parse("*.*").is_ok());
-        assert!(parser.parse("*").is_ok());
-        assert!(parser.parse("**").is_ok());
-        assert!(parser.parse("*.{e1,e2}").is_ok());
-        assert!(parser.parse("*.{e1,e2,f1.e1}").is_ok());
-        assert!(parser.parse("{*.e1,*.e2}").is_ok());
-        assert!(parser.parse("{f1,f2}.e1").is_ok());
-        assert!(parser.parse("{f1,f2}").is_ok());
-        assert!(parser.parse("{f1,.f2}").is_ok());
-        assert!(parser.parse("{f1.e1,*.e1}").is_ok());
-        assert!(parser.parse("{f1.e1,*.f1.e1}").is_ok());
+        assert!(!parse("22").is_empty());
+        assert!(!parse("*.e1").is_empty());
+        assert!(!parse("**.e1").is_empty());
+        assert!(!parse("*.{e1}").is_empty());
+        assert!(!parse("*.[ch]").is_empty());
+        assert!(!parse("f.e1").is_empty());
+        assert!(!parse("f1").is_empty());
+        assert!(!parse("*.*").is_empty());
+        assert!(!parse("*").is_empty());
+        assert!(!parse("**").is_empty());
+        assert!(!parse("*.{e1,e2}").is_empty());
+        assert!(!parse("*.{e1,e2,f1.e1}").is_empty());
+        assert!(!parse("{*.e1,*.e2}").is_empty());
+        assert!(!parse("{f1,f2}.e1").is_empty());
+        assert!(!parse("{f1,f2}").is_empty());
+        assert!(!parse("{f1,.f2}").is_empty());
+        assert!(!parse("{f1.e1,*.e1}").is_empty());
+        assert!(!parse("{f1.e1,*.f1.e1}").is_empty());
+        assert!(!parse("{f1.e1,.f1.e1}").is_empty());
+        assert!(!parse("test/*").is_empty());
+        assert!(!parse("test/**/*").is_empty());
     }
 
     #[test]
@@ -73,7 +59,8 @@ mod tests {
         let parser = section::DefinesParser::new();
 
         // Act
-        let result : Result<Vec<String>, lalrpop_util::ParseError<usize, Token<'_>, &'static str>> = parser.parse("*.{e1}");
+        let result: Result<Vec<String>, lalrpop_util::ParseError<usize, Token<'_>, &'static str>> =
+            parser.parse("*.{e1}");
 
         // Assert
         let data = result.unwrap();
@@ -87,6 +74,19 @@ mod tests {
 
         // Act
         let result = parse("*.{e1, e2}");
+
+        // Assert
+        assert_eq!(2, result.len());
+        assert_eq!("*.e1", result[0]);
+        assert_eq!("*.e2", result[1]);
+    }
+
+    #[test]
+    fn parse_path_get_data_many() {
+        // Arrange
+
+        // Act
+        let result = parse("test/*.{e1, e2}");
 
         // Assert
         assert_eq!(2, result.len());

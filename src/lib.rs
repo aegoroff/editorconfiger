@@ -1,6 +1,6 @@
 pub mod console;
-mod similar;
 mod sect;
+mod similar;
 
 #[macro_use]
 extern crate lalrpop_util;
