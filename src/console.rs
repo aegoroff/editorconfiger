@@ -1,5 +1,6 @@
 use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter};
 use ansi_term::Colour::{Green, Red};
+use prettytable::format::TableFormat;
 use prettytable::{format, Table};
 use std::collections::BTreeMap;
 
@@ -57,20 +58,14 @@ pub struct Comparator {}
 impl ComparisonFormatter for Comparator {
     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
         let mut table = Table::new();
-        let format = format::FormatBuilder::new()
-            .column_separator(' ')
-            .borders(' ')
-            .separators(
-                &[format::LinePosition::Title, format::LinePosition::Intern],
-                format::LineSeparator::new('-', ' ', ' ', ' '),
-            )
-            .indent(0)
-            .padding(0, 0)
-            .build();
-        table.set_format(format);
-
+        table.set_format(Comparator::new_compare_format());
         table.set_titles(row![bF->"", bF->"FILE #1", bF->"FILE #2"]);
+
         for (sect, values) in result {
+            if !sect.is_empty() {
+                table.add_row(row![H3=>""]);
+            }
+
             table.add_row(row![bFH3=>sect]);
             for value in values {
                 let v1 = value.first_value.unwrap_or_default();
@@ -84,6 +79,22 @@ impl ComparisonFormatter for Comparator {
                 }
             }
         }
+        table.add_row(row![H3=>""]);
         table.printstd();
+    }
+}
+
+impl Comparator {
+    fn new_compare_format() -> TableFormat {
+        format::FormatBuilder::new()
+            .column_separator(' ')
+            .borders(' ')
+            .separators(
+                &[format::LinePosition::Title],
+                format::LineSeparator::new('-', ' ', ' ', ' '),
+            )
+            .indent(0)
+            .padding(0, 0)
+            .build()
     }
 }
