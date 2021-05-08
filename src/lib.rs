@@ -1,13 +1,16 @@
 pub mod console;
+mod similar;
 
+#[macro_use]
+extern crate prettytable;
+extern crate aho_corasick;
 extern crate ini;
 extern crate jwalk;
 
+use crate::similar::Similar;
 use ini::{Ini, Properties};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, HashMap};
-#[macro_use]
-extern crate prettytable;
 
 pub type AnyError = Box<dyn std::error::Error>;
 
@@ -25,7 +28,13 @@ pub struct CompareItem<'input> {
 }
 
 pub trait ValidationFormatter {
-    fn format(&self, path: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>);
+    fn format(
+        &self,
+        path: &str,
+        dup_sect: Vec<&str>,
+        dup_props: BTreeMap<&str, Vec<&str>>,
+        sim_props: BTreeMap<&str, Vec<(&str, &str)>>,
+    );
 }
 
 pub trait ComparisonFormatter {
@@ -79,17 +88,20 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
 fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let mut sect_count = HashMap::new();
     let mut dup_props = BTreeMap::new();
+    let mut sim_props = BTreeMap::new();
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
 
-        let mut duplicate_pops: Vec<&str> = prop
-            .iter()
-            .map(|(k, _)| k)
-            .fold(HashMap::new(), |mut h, s| {
-                *h.entry(s).or_insert(0) += 1;
-                h
-            })
+        let unique_props: HashMap<&str, i32> =
+            prop.iter()
+                .map(|(k, _)| k)
+                .fold(HashMap::new(), |mut h, s| {
+                    *h.entry(s).or_insert(0) += 1;
+                    h
+                });
+
+        let mut duplicate_pops: Vec<&str> = unique_props
             .iter()
             .filter(|(_, v)| **v > 1)
             .map(|(k, _)| *k)
@@ -101,6 +113,16 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                 .or_insert_with(Vec::<&str>::new)
                 .append(&mut duplicate_pops);
         }
+
+        let props: Vec<&str> = unique_props.keys().copied().collect();
+        let sim = Similar::new(&props);
+        let mut similar = sim.find(&props);
+        if !similar.is_empty() {
+            sim_props
+                .entry(sk)
+                .or_insert_with(Vec::<(&str, &str)>::new)
+                .append(&mut similar);
+        }
     }
 
     let dup_sect: Vec<&str> = sect_count
@@ -109,7 +131,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         .map(|(k, _)| *k)
         .collect();
 
-    formatter.format(path, dup_sect, dup_props);
+    formatter.format(path, dup_sect, dup_props, sim_props);
 }
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
@@ -171,7 +193,7 @@ mod tests {
 
     struct TestFormatter<F>
     where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>, BTreeMap<&str, Vec<(&str, &str)>>),
     {
         assert: F,
     }
@@ -185,7 +207,7 @@ mod tests {
 
     impl<F> TestFormatter<F>
     where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>, BTreeMap<&str, Vec<(&str, &str)>>),
     {
         fn new(assert: F) -> Self {
             Self { assert }
@@ -203,10 +225,16 @@ mod tests {
 
     impl<F> ValidationFormatter for TestFormatter<F>
     where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>),
+        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>, BTreeMap<&str, Vec<(&str, &str)>>),
     {
-        fn format(&self, _: &str, dup_sect: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
-            (self.assert)(dup_sect, dup_props);
+        fn format(
+            &self,
+            _: &str,
+            dup_sect: Vec<&str>,
+            dup_props: BTreeMap<&str, Vec<&str>>,
+            sim_props: BTreeMap<&str, Vec<(&str, &str)>>,
+        ) {
+            (self.assert)(dup_sect, dup_props, sim_props);
         }
     }
 
@@ -231,10 +259,15 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
-            assert!(props.is_empty());
-            assert!(sect.is_empty());
-        });
+        let formatter = TestFormatter::new(
+            |sect: Vec<&str>,
+             props: BTreeMap<&str, Vec<&str>>,
+             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
+                assert!(props.is_empty());
+                assert!(sect.is_empty());
+                assert!(sims.is_empty());
+            },
+        );
 
         // Act
         validate(&conf, "", &formatter);
@@ -249,10 +282,15 @@ a = b
 c = d
 "###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
-            assert!(props.is_empty());
-            assert!(sect.is_empty());
-        });
+        let formatter = TestFormatter::new(
+            |sect: Vec<&str>,
+             props: BTreeMap<&str, Vec<&str>>,
+             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
+                assert!(props.is_empty());
+                assert!(sect.is_empty());
+                assert!(sims.is_empty());
+            },
+        );
 
         // Act
         validate(&conf, "", &formatter);
@@ -267,10 +305,15 @@ a = b # comment 1
 c = d # comment 2
 "###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
-            assert!(props.is_empty());
-            assert!(sect.is_empty());
-        });
+        let formatter = TestFormatter::new(
+            |sect: Vec<&str>,
+             props: BTreeMap<&str, Vec<&str>>,
+             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
+                assert!(props.is_empty());
+                assert!(sect.is_empty());
+                assert!(sims.is_empty());
+            },
+        );
 
         // Act
         validate(&conf, "", &formatter);
@@ -289,10 +332,15 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
-            assert!(!props.is_empty());
-            assert!(sect.is_empty());
-        });
+        let formatter = TestFormatter::new(
+            |sect: Vec<&str>,
+             props: BTreeMap<&str, Vec<&str>>,
+             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
+                assert!(!props.is_empty());
+                assert!(sect.is_empty());
+                assert!(sims.is_empty());
+            },
+        );
 
         // Act
         validate(&conf, "", &formatter);
@@ -312,10 +360,15 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
-            assert!(!props.is_empty());
-            assert!(sect.is_empty());
-        });
+        let formatter = TestFormatter::new(
+            |sect: Vec<&str>,
+             props: BTreeMap<&str, Vec<&str>>,
+             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
+                assert!(!props.is_empty());
+                assert!(sect.is_empty());
+                assert!(sims.is_empty());
+            },
+        );
 
         // Act
         validate(&conf, "", &formatter);
@@ -334,10 +387,15 @@ c = d
 [*]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|sect: Vec<&str>, props: BTreeMap<&str, Vec<&str>>| {
-            assert!(props.is_empty());
-            assert!(!sect.is_empty());
-        });
+        let formatter = TestFormatter::new(
+            |sect: Vec<&str>,
+             props: BTreeMap<&str, Vec<&str>>,
+             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
+                assert!(props.is_empty());
+                assert!(!sect.is_empty());
+                assert!(sims.is_empty());
+            },
+        );
 
         // Act
         validate(&conf, "", &formatter);

@@ -1,5 +1,5 @@
 use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter};
-use ansi_term::Colour::{Green, Red};
+use ansi_term::Colour::{Green, Red, Yellow};
 use prettytable::format::TableFormat;
 use prettytable::{format, Table};
 use std::collections::BTreeMap;
@@ -15,15 +15,26 @@ impl Formatter {
 }
 
 impl ValidationFormatter for Formatter {
-    fn format(&self, path: &str, dup_sects: Vec<&str>, dup_props: BTreeMap<&str, Vec<&str>>) {
-        if dup_props.is_empty() && dup_sects.is_empty() {
+    fn format(
+        &self,
+        path: &str,
+        dup_sects: Vec<&str>,
+        dup_props: BTreeMap<&str, Vec<&str>>,
+        sim_props: BTreeMap<&str, Vec<(&str, &str)>>,
+    ) {
+        if dup_props.is_empty() && dup_sects.is_empty() && sim_props.is_empty() {
             if !self.only_problems {
                 println!(" {} {}", path, Green.paint("valid"));
             }
             return;
         }
 
-        println!(" {} {}", path, Red.paint("invalid"));
+        if !dup_sects.is_empty() || !dup_props.is_empty() {
+            println!(" {} {}", path, Red.paint("invalid"));
+        } else {
+            println!(" {} {}", path, Yellow.paint("has some problems"));
+        }
+
         if !dup_sects.is_empty() {
             println!("   Duplicate sections:");
             for section in dup_sects {
@@ -38,6 +49,20 @@ impl ValidationFormatter for Formatter {
                     println!("       {}", property);
                 }
             }
+        }
+
+        if !sim_props.is_empty() {
+            let mut table = Table::new();
+            table.set_format(Comparator::new_compare_format(6));
+            println!("   Similar properties:");
+            for (section, sims) in sim_props {
+                println!("     [{}]:", section);
+
+                for sim in sims {
+                    table.add_row(row![sim.0, sim.1]);
+                }
+            }
+            table.printstd();
         }
         println!();
     }
@@ -58,7 +83,7 @@ pub struct Comparator {}
 impl ComparisonFormatter for Comparator {
     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
         let mut table = Table::new();
-        table.set_format(Comparator::new_compare_format());
+        table.set_format(Comparator::new_compare_format(0));
         table.set_titles(row![bF->"", bF->"FILE #1", bF->"FILE #2"]);
 
         for (sect, values) in result {
@@ -85,7 +110,7 @@ impl ComparisonFormatter for Comparator {
 }
 
 impl Comparator {
-    fn new_compare_format() -> TableFormat {
+    fn new_compare_format(ident: usize) -> TableFormat {
         format::FormatBuilder::new()
             .column_separator(' ')
             .borders(' ')
@@ -93,7 +118,7 @@ impl Comparator {
                 &[format::LinePosition::Title],
                 format::LineSeparator::new('-', ' ', ' ', ' '),
             )
-            .indent(0)
+            .indent(ident)
             .padding(0, 0)
             .build()
     }
