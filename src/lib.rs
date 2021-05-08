@@ -1,6 +1,9 @@
 pub mod console;
 mod similar;
+mod sect;
 
+#[macro_use]
+extern crate lalrpop_util;
 #[macro_use]
 extern crate prettytable;
 extern crate aho_corasick;
@@ -92,6 +95,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
+        sect::parse(sk);
 
         let unique_props: HashMap<&str, i32> =
             prop.iter()
