@@ -53,16 +53,13 @@ mod tests {
     #[test]
     fn parse_get_data_single() {
         // Arrange
-        let parser = section::DefinesParser::new();
 
         // Act
-        let result: Result<Vec<String>, lalrpop_util::ParseError<usize, Token<'_>, &'static str>> =
-            parser.parse("*.{e1}");
+        let result = parse("*.{e1}");
 
         // Assert
-        let data = result.unwrap();
-        assert_eq!(1, data.len());
-        assert_eq!("*.e1", data[0]);
+        assert_eq!(1, result.len());
+        assert_eq!("*.e1", result[0]);
     }
 
     #[test]
