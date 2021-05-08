@@ -1,4 +1,3 @@
-use lalrpop_util::lexer::Token;
 use std::path::PathBuf;
 
 lalrpop_mod!(
@@ -11,14 +10,12 @@ pub fn parse(string: &str) -> Vec<String> {
     let parser = section::DefinesParser::new();
     let path = PathBuf::from(string);
     let file = path.file_name().unwrap_or_default().to_str().unwrap_or("*");
-    let result: Result<Vec<String>, lalrpop_util::ParseError<usize, Token<'_>, &'static str>> =
-        parser.parse(file);
-    if result.is_ok() {
-        result.unwrap()
-    } else {
-        println!("string:{} error: {}", string, result.unwrap_err());
-        vec![]
+
+    match parser.parse(file) {
+        Ok(r) => return r,
+        Err(e) => println!("string:{} error: {}", string, e)
     }
+    vec![]
 }
 
 #[cfg(test)]
