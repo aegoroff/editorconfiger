@@ -13,7 +13,7 @@ pub fn parse(string: &str) -> Vec<String> {
 
     return match parser.parse(file) {
         Ok(r) => r,
-        Err(e) => vec![],
+        Err(_e) => vec![],
     }
 }
 
