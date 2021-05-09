@@ -13,7 +13,7 @@ pub fn parse(string: &str) -> Vec<String> {
 
     match parser.parse(file) {
         Ok(r) => return r,
-        Err(e) => println!("string:{} error: {}", string, e)
+        Err(e) => println!("string:{} error: {}", string, e),
     }
     vec![]
 }
@@ -100,5 +100,57 @@ mod tests {
         assert_eq!(2, result.len());
         assert_eq!("*.c", result[0]);
         assert_eq!("*.h", result[1]);
+    }
+
+    #[test]
+    fn parse_path_get_data_many_mixed() {
+        // Arrange
+
+        // Act
+        let result = parse("{f1.e1,*.f1.e1}");
+
+        // Assert
+        assert_eq!(2, result.len());
+        assert_eq!("f1.e1", result[0]);
+        assert_eq!("*.f1.e1", result[1]);
+    }
+
+    #[test]
+    fn parse_path_get_data_many_only_list_full_wild() {
+        // Arrange
+
+        // Act
+        let result = parse("{*.e1,*.e2}");
+
+        // Assert
+        assert_eq!(2, result.len());
+        assert_eq!("*.e1", result[0]);
+        assert_eq!("*.e2", result[1]);
+    }
+
+    #[test]
+    fn parse_path_get_data_many_only_list_fulls() {
+        // Arrange
+
+        // Act
+        let result = parse("{f1.e1,.f1.e1}");
+
+        // Assert
+        assert_eq!(2, result.len());
+        assert_eq!("f1.e1", result[0]);
+        assert_eq!(".f1.e1", result[1]);
+    }
+
+    #[test]
+    fn parse_path_get_data_many_composite_fulls() {
+        // Arrange
+
+        // Act
+        let result = parse("{f1,f2}.e1");
+
+        // Assert
+        assert_eq!(2, result.len());
+        assert_eq!("f1.e1", result[0]);
+        assert_eq!("f2.e1", result[1]);
     }
 }
