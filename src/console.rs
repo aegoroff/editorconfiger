@@ -23,7 +23,7 @@ impl ValidationFormatter for Formatter {
             return;
         }
 
-        if !result.duplicate_sections.is_empty() || !result.duplicate_properties.is_empty() {
+        if result.is_invalid() {
             println!(" {} {}", result.path, Red.paint("invalid"));
         } else {
             println!(" {} {}", result.path, Yellow.paint("has some problems"));
