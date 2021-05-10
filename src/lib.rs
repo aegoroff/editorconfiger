@@ -30,14 +30,23 @@ pub struct CompareItem<'input> {
     pub second_value: Option<&'input str>,
 }
 
+pub struct ValidationResult<'input> {
+    pub path: &'input str,
+    pub duplicate_sections: Vec<&'input str>,
+    pub duplicate_properties: BTreeMap<&'input str, Vec<&'input str>>,
+    pub similar_properties: BTreeMap<&'input str, Vec<(&'input str, &'input str)>>,
+}
+
+impl<'input> ValidationResult<'input> {
+    pub fn is_ok(&self) -> bool {
+        self.duplicate_properties.is_empty()
+            && self.duplicate_sections.is_empty()
+            && self.similar_properties.is_empty()
+    }
+}
+
 pub trait ValidationFormatter {
-    fn format(
-        &self,
-        path: &str,
-        dup_sect: Vec<&str>,
-        dup_props: BTreeMap<&str, Vec<&str>>,
-        sim_props: BTreeMap<&str, Vec<(&str, &str)>>,
-    );
+    fn format(&self, result: ValidationResult);
 }
 
 pub trait ComparisonFormatter {
@@ -135,7 +144,14 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         .map(|(k, _)| *k)
         .collect();
 
-    formatter.format(path, dup_sect, dup_props, sim_props);
+    let result = ValidationResult {
+        path,
+        duplicate_sections: dup_sect,
+        duplicate_properties: dup_props,
+        similar_properties: sim_props,
+    };
+
+    formatter.format(result);
 }
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
@@ -197,7 +213,7 @@ mod tests {
 
     struct TestFormatter<F>
     where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>, BTreeMap<&str, Vec<(&str, &str)>>),
+        F: Fn(ValidationResult),
     {
         assert: F,
     }
@@ -211,7 +227,7 @@ mod tests {
 
     impl<F> TestFormatter<F>
     where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>, BTreeMap<&str, Vec<(&str, &str)>>),
+        F: Fn(ValidationResult),
     {
         fn new(assert: F) -> Self {
             Self { assert }
@@ -229,16 +245,10 @@ mod tests {
 
     impl<F> ValidationFormatter for TestFormatter<F>
     where
-        F: Fn(Vec<&str>, BTreeMap<&str, Vec<&str>>, BTreeMap<&str, Vec<(&str, &str)>>),
+        F: Fn(ValidationResult),
     {
-        fn format(
-            &self,
-            _: &str,
-            dup_sect: Vec<&str>,
-            dup_props: BTreeMap<&str, Vec<&str>>,
-            sim_props: BTreeMap<&str, Vec<(&str, &str)>>,
-        ) {
-            (self.assert)(dup_sect, dup_props, sim_props);
+        fn format(&self, result: ValidationResult) {
+            (self.assert)(result);
         }
     }
 
@@ -263,15 +273,9 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(
-            |sect: Vec<&str>,
-             props: BTreeMap<&str, Vec<&str>>,
-             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
-                assert!(props.is_empty());
-                assert!(sect.is_empty());
-                assert!(sims.is_empty());
-            },
-        );
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(result.is_ok());
+        });
 
         // Act
         validate(&conf, "", &formatter);
@@ -286,15 +290,9 @@ a = b
 c = d
 "###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(
-            |sect: Vec<&str>,
-             props: BTreeMap<&str, Vec<&str>>,
-             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
-                assert!(props.is_empty());
-                assert!(sect.is_empty());
-                assert!(sims.is_empty());
-            },
-        );
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(result.is_ok());
+        });
 
         // Act
         validate(&conf, "", &formatter);
@@ -309,15 +307,9 @@ a = b # comment 1
 c = d # comment 2
 "###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(
-            |sect: Vec<&str>,
-             props: BTreeMap<&str, Vec<&str>>,
-             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
-                assert!(props.is_empty());
-                assert!(sect.is_empty());
-                assert!(sims.is_empty());
-            },
-        );
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(result.is_ok());
+        });
 
         // Act
         validate(&conf, "", &formatter);
@@ -336,15 +328,11 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(
-            |sect: Vec<&str>,
-             props: BTreeMap<&str, Vec<&str>>,
-             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
-                assert!(!props.is_empty());
-                assert!(sect.is_empty());
-                assert!(sims.is_empty());
-            },
-        );
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(!result.duplicate_properties.is_empty());
+            assert!(result.duplicate_sections.is_empty());
+            assert!(result.similar_properties.is_empty());
+        });
 
         // Act
         validate(&conf, "", &formatter);
@@ -364,15 +352,11 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(
-            |sect: Vec<&str>,
-             props: BTreeMap<&str, Vec<&str>>,
-             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
-                assert!(!props.is_empty());
-                assert!(sect.is_empty());
-                assert!(sims.is_empty());
-            },
-        );
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(!result.duplicate_properties.is_empty());
+            assert!(result.duplicate_sections.is_empty());
+            assert!(result.similar_properties.is_empty());
+        });
 
         // Act
         validate(&conf, "", &formatter);
@@ -391,15 +375,11 @@ c = d
 [*]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(
-            |sect: Vec<&str>,
-             props: BTreeMap<&str, Vec<&str>>,
-             sims: BTreeMap<&str, Vec<(&str, &str)>>| {
-                assert!(props.is_empty());
-                assert!(!sect.is_empty());
-                assert!(sims.is_empty());
-            },
-        );
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(result.duplicate_properties.is_empty());
+            assert!(!result.duplicate_sections.is_empty());
+            assert!(result.similar_properties.is_empty());
+        });
 
         // Act
         validate(&conf, "", &formatter);

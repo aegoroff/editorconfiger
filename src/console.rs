@@ -1,4 +1,4 @@
-use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter};
+use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, ValidationResult};
 use ansi_term::Colour::{Green, Red, Yellow};
 use prettytable::format::TableFormat;
 use prettytable::{format, Table};
@@ -15,35 +15,29 @@ impl Formatter {
 }
 
 impl ValidationFormatter for Formatter {
-    fn format(
-        &self,
-        path: &str,
-        dup_sects: Vec<&str>,
-        dup_props: BTreeMap<&str, Vec<&str>>,
-        sim_props: BTreeMap<&str, Vec<(&str, &str)>>,
-    ) {
-        if dup_props.is_empty() && dup_sects.is_empty() && sim_props.is_empty() {
+    fn format(&self, result: ValidationResult) {
+        if result.is_ok() {
             if !self.only_problems {
-                println!(" {} {}", path, Green.paint("valid"));
+                println!(" {} {}", result.path, Green.paint("valid"));
             }
             return;
         }
 
-        if !dup_sects.is_empty() || !dup_props.is_empty() {
-            println!(" {} {}", path, Red.paint("invalid"));
+        if !result.duplicate_sections.is_empty() || !result.duplicate_properties.is_empty() {
+            println!(" {} {}", result.path, Red.paint("invalid"));
         } else {
-            println!(" {} {}", path, Yellow.paint("has some problems"));
+            println!(" {} {}", result.path, Yellow.paint("has some problems"));
         }
 
-        if !dup_sects.is_empty() {
+        if !result.duplicate_sections.is_empty() {
             println!("   Duplicate sections:");
-            for section in dup_sects {
+            for section in result.duplicate_sections {
                 println!("     {}", section);
             }
         }
-        if !dup_props.is_empty() {
+        if !result.duplicate_properties.is_empty() {
             println!("   Duplicate properties:");
-            for (section, duplicates) in dup_props {
+            for (section, duplicates) in result.duplicate_properties {
                 println!("     [{}]:", section);
                 for property in duplicates {
                     println!("       {}", property);
@@ -51,11 +45,11 @@ impl ValidationFormatter for Formatter {
             }
         }
 
-        if !sim_props.is_empty() {
+        if !result.similar_properties.is_empty() {
             let mut table = Table::new();
             table.set_format(Comparator::new_compare_format(6));
             println!("   Similar properties:");
-            for (section, sims) in sim_props {
+            for (section, sims) in result.similar_properties {
                 println!("     [{}]:", section);
 
                 for sim in sims {
