@@ -37,6 +37,17 @@ pub struct ValidationResult<'input> {
     pub similar_properties: BTreeMap<&'input str, Vec<(&'input str, &'input str)>>,
 }
 
+pub struct Property<'input> {
+    pub name: &'input str,
+    pub value: &'input str,
+    pub section: &'input str,
+}
+
+pub struct Extension<'input> {
+    pub value: String,
+    pub section: &'input str,
+}
+
 impl<'input> ValidationResult<'input> {
     pub fn is_ok(&self) -> bool {
         self.duplicate_properties.is_empty()
