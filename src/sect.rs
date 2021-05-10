@@ -11,11 +11,10 @@ pub fn parse(string: &str) -> Vec<String> {
     let path = PathBuf::from(string);
     let file = path.file_name().unwrap_or_default().to_str().unwrap_or("*");
 
-    match parser.parse(file) {
-        Ok(r) => return r,
-        Err(e) => println!("string:{} error: {}", string, e),
+    return match parser.parse(file) {
+        Ok(r) => r,
+        Err(_e) => vec![],
     }
-    vec![]
 }
 
 #[cfg(test)]
