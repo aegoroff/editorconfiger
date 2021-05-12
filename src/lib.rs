@@ -120,7 +120,8 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
-        sect::parse(sk);
+        let extensions = sect::parse(sk);
+        let extensions : Vec<Extension> = extensions.into_iter().map(|e| Extension { section: sk, value: e}).collect();
 
         let unique_props: HashMap<&str, i32> =
             prop.iter()
