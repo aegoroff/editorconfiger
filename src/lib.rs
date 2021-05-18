@@ -56,8 +56,7 @@ impl<'input> ValidationResult<'input> {
     }
 
     pub fn is_invalid(&self) -> bool {
-        !self.duplicate_properties.is_empty()
-            || !self.duplicate_sections.is_empty()
+        !self.duplicate_properties.is_empty() || !self.duplicate_sections.is_empty()
     }
 }
 
@@ -121,7 +120,13 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
         let extensions = sect::parse(sk);
-        let extensions : Vec<Extension> = extensions.into_iter().map(|e| Extension { section: sk, value: e}).collect();
+        let extensions: Vec<Extension> = extensions
+            .into_iter()
+            .map(|e| Extension {
+                section: sk,
+                value: e,
+            })
+            .collect();
 
         let unique_props: HashMap<&str, i32> =
             prop.iter()

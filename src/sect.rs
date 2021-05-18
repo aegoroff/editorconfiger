@@ -14,7 +14,7 @@ pub fn parse(string: &str) -> Vec<String> {
     return match parser.parse(file) {
         Ok(r) => r,
         Err(_e) => vec![],
-    }
+    };
 }
 
 #[cfg(test)]
