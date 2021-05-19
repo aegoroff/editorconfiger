@@ -58,6 +58,28 @@ impl ValidationFormatter for Formatter {
             }
             table.printstd();
         }
+
+        if !result.ext_problems.is_empty() {
+            for item in result.ext_problems {
+                if !item.duplicates.is_empty() {
+                    println!("   Duplicates related to {}:", item.ext);
+                    for duplicate in item.duplicates {
+                        println!("       {}", duplicate);
+                    }
+                }
+
+                if !item.similar.is_empty() {
+                    let mut table = Table::new();
+                    table.set_format(Comparator::new_compare_format(6));
+                    println!("   Similar properties related to {}:", item.ext);
+                    for sim in item.similar {
+                        table.add_row(row![sim.0, sim.1]);
+                    }
+                    table.printstd();
+                }
+            }
+
+        }
         println!();
     }
 }
