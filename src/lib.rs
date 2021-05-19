@@ -34,8 +34,14 @@ pub struct ValidationResult<'input> {
     pub path: &'input str,
     pub duplicate_sections: Vec<&'input str>,
     pub duplicate_properties: BTreeMap<&'input str, Vec<&'input str>>,
-    pub ext_problems: Vec<(String, Vec<&'input str>, Vec<(&'input str, &'input str)>)>,
+    pub ext_problems: Vec<ExtValidationResult<'input>>,
     pub similar_properties: BTreeMap<&'input str, Vec<(&'input str, &'input str)>>,
+}
+
+pub struct ExtValidationResult<'input> {
+    pub ext: String,
+    pub duplicates: Vec<&'input str>,
+    pub similar: Vec<(&'input str, &'input str)>,
 }
 
 pub struct Property<'input> {
@@ -57,7 +63,9 @@ impl<'input> ValidationResult<'input> {
     }
 
     pub fn is_invalid(&self) -> bool {
-        !self.duplicate_properties.is_empty() || !self.duplicate_sections.is_empty()
+        !self.duplicate_properties.is_empty()
+            || !self.duplicate_sections.is_empty()
+            || !self.ext_problems.is_empty()
     }
 }
 
@@ -170,7 +178,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         }
     }
 
-    let ext_problems: Vec<(String, Vec<&str>, Vec<(&str, &str)>)> = all_extensions
+    let ext_problems: Vec<ExtValidationResult> = all_extensions
         .into_iter()
         .map(|(ext, props)| {
             let unique_props: HashMap<&str, i32> =
@@ -181,15 +189,19 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                         *h.entry(s).or_insert(0) += 1;
                         h
                     });
-            let duplicate_pops = find_duplicates(&unique_props);
+            let duplicates = find_duplicates(&unique_props);
 
             let props: Vec<&str> = unique_props.keys().copied().collect();
             let sim = Similar::new(&props);
             let similar = sim.find(&props);
 
-            (ext, duplicate_pops, similar)
+            ExtValidationResult {
+                ext,
+                duplicates,
+                similar,
+            }
         })
-        .filter(|(_, p, s)| !p.is_empty() || !s.is_empty())
+        .filter(|r| !r.duplicates.is_empty() || !r.duplicates.is_empty())
         .collect();
 
     let dup_sect: Vec<&str> = find_duplicates(&sect_count);
