@@ -134,7 +134,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 
                 all_extensions
                     .entry(e.clone())
-                    .or_insert(Vec::new())
+                    .or_insert_with(Vec::new)
                     .extend(props);
             })
             .count();
