@@ -219,12 +219,11 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 }
 
 fn find_duplicates<'a>(unique_props: &HashMap<&'a str, i32>) -> Vec<&'a str> {
-    let duplicate_pops: Vec<&str> = unique_props
+    unique_props
         .iter()
         .filter(|(_, v)| **v > 1)
         .map(|(k, _)| *k)
-        .collect();
-    duplicate_pops
+        .collect()
 }
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {

@@ -78,7 +78,6 @@ impl ValidationFormatter for Formatter {
                     table.printstd();
                 }
             }
-
         }
         println!();
     }
