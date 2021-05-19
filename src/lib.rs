@@ -34,6 +34,7 @@ pub struct ValidationResult<'input> {
     pub path: &'input str,
     pub duplicate_sections: Vec<&'input str>,
     pub duplicate_properties: BTreeMap<&'input str, Vec<&'input str>>,
+    pub ext_problems: Vec<(String, Vec<&'input str>, Vec<(&'input str, &'input str)>)>,
     pub similar_properties: BTreeMap<&'input str, Vec<(&'input str, &'input str)>>,
 }
 
@@ -125,12 +126,14 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         extensions
             .into_iter()
             .inspect(|e| {
-                let props : Vec<Property> = prop.iter()
-                    .map(|(k, v)| Property{
+                let props: Vec<Property> = prop
+                    .iter()
+                    .map(|(k, v)| Property {
                         name: k,
                         value: v,
-                        section: sk
-                    }).collect();
+                        section: sk,
+                    })
+                    .collect();
 
                 all_extensions
                     .entry(e.clone())
@@ -147,11 +150,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                     h
                 });
 
-        let mut duplicate_pops: Vec<&str> = unique_props
-            .iter()
-            .filter(|(_, v)| **v > 1)
-            .map(|(k, _)| *k)
-            .collect();
+        let mut duplicate_pops = find_duplicates(&unique_props);
 
         if !duplicate_pops.is_empty() {
             dup_props
@@ -171,20 +170,48 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         }
     }
 
-    let dup_sect: Vec<&str> = sect_count
-        .iter()
-        .filter(|(_, v)| **v > 1)
-        .map(|(k, _)| *k)
+    let ext_problems: Vec<(String, Vec<&str>, Vec<(&str, &str)>)> = all_extensions
+        .into_iter()
+        .map(|(ext, props)| {
+            let unique_props: HashMap<&str, i32> =
+                props
+                    .iter()
+                    .map(|p| p.name)
+                    .fold(HashMap::new(), |mut h, s| {
+                        *h.entry(s).or_insert(0) += 1;
+                        h
+                    });
+            let duplicate_pops = find_duplicates(&unique_props);
+
+            let props: Vec<&str> = unique_props.keys().copied().collect();
+            let sim = Similar::new(&props);
+            let similar = sim.find(&props);
+
+            (ext, duplicate_pops, similar)
+        })
+        .filter(|(_, p, s)| !p.is_empty() || !s.is_empty())
         .collect();
+
+    let dup_sect: Vec<&str> = find_duplicates(&sect_count);
 
     let result = ValidationResult {
         path,
         duplicate_sections: dup_sect,
         duplicate_properties: dup_props,
         similar_properties: sim_props,
+        ext_problems,
     };
 
     formatter.format(result);
+}
+
+fn find_duplicates<'a>(unique_props: &HashMap<&'a str, i32>) -> Vec<&'a str> {
+    let duplicate_pops: Vec<&str> = unique_props
+        .iter()
+        .filter(|(_, v)| **v > 1)
+        .map(|(k, _)| *k)
+        .collect();
+    duplicate_pops
 }
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
