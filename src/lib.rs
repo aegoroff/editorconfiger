@@ -66,7 +66,7 @@ impl<'input> ValidationResult<'input> {
     pub fn is_invalid(&self) -> bool {
         !self.duplicate_properties.is_empty()
             || !self.duplicate_sections.is_empty()
-            || !self.ext_problems.iter().any(|e| !e.duplicates.is_empty())
+            || self.ext_problems.iter().any(|e| !e.duplicates.is_empty())
     }
 }
 
