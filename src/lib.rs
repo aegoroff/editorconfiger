@@ -60,12 +60,13 @@ impl<'input> ValidationResult<'input> {
         self.duplicate_properties.is_empty()
             && self.duplicate_sections.is_empty()
             && self.similar_properties.is_empty()
+            && self.ext_problems.is_empty()
     }
 
     pub fn is_invalid(&self) -> bool {
         !self.duplicate_properties.is_empty()
             || !self.duplicate_sections.is_empty()
-            || !self.ext_problems.is_empty()
+            || !self.ext_problems.iter().any(|e| !e.duplicates.is_empty())
     }
 }
 
@@ -201,7 +202,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                 similar,
             }
         })
-        .filter(|r| !r.duplicates.is_empty() || !r.duplicates.is_empty())
+        .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
     let dup_sect: Vec<&str> = find_duplicates(&sect_count);
