@@ -116,17 +116,28 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let mut sect_count = HashMap::new();
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
+    let mut all_extensions = BTreeMap::new();
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
         let extensions = sect::parse(sk);
-        let extensions: Vec<Extension> = extensions
+
+        extensions
             .into_iter()
-            .map(|e| Extension {
-                section: sk,
-                value: e,
+            .inspect(|e| {
+                let props : Vec<Property> = prop.iter()
+                    .map(|(k, v)| Property{
+                        name: k,
+                        value: v,
+                        section: sk
+                    }).collect();
+
+                all_extensions
+                    .entry(e.clone())
+                    .or_insert(Vec::new())
+                    .extend(props);
             })
-            .collect();
+            .count();
 
         let unique_props: HashMap<&str, i32> =
             prop.iter()
