@@ -7,10 +7,29 @@ lalrpop_mod!(
 );
 
 pub fn parse(string: &str) -> Vec<String> {
-    let parser = section::DefinesParser::new();
     let path = PathBuf::from(string);
     let file = path.file_name().unwrap_or_default().to_str().unwrap_or("*");
+    let dir = path.parent();
+    if let Some(dir) = dir {
+        if let Some(dir) = dir.to_str() {
+            parse_file(file)
+                .into_iter()
+                .map(|s| {
+                    let mut p = PathBuf::from(dir);
+                    p.push(s);
+                    String::from(p.to_str().unwrap())
+                })
+                .collect()
+        } else {
+            parse_file(file)
+        }
+    } else {
+        parse_file(file)
+    }
+}
 
+fn parse_file(file: &str) -> Vec<String> {
+    let parser = section::DefinesParser::new();
     return match parser.parse(file) {
         Ok(r) => r,
         Err(_e) => vec![],
@@ -84,8 +103,8 @@ mod tests {
 
         // Assert
         assert_eq!(2, result.len());
-        assert_eq!("*.e1", result[0]);
-        assert_eq!("*.e2", result[1]);
+        assert_eq!("test/*.e1", result[0]);
+        assert_eq!("test/*.e2", result[1]);
     }
 
     #[test]
