@@ -126,7 +126,8 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let mut sect_count = HashMap::new();
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
-    let mut all_extensions = BTreeMap::new();
+    let mut all_ext_props = BTreeMap::new();
+    let mut all_extensions: Vec<Extension> = Vec::new();
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
@@ -144,7 +145,12 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                     })
                     .collect();
 
-                all_extensions
+                all_extensions.push(Extension {
+                    value: e.clone(),
+                    section: sk,
+                });
+
+                all_ext_props
                     .entry(e.clone())
                     .or_insert_with(Vec::new)
                     .extend(props);
@@ -179,13 +185,28 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         }
     }
 
-    let ext_problems: Vec<ExtValidationResult> = all_extensions
+    let multi_section_extensions: HashMap<&str, i32> =
+        all_extensions
+            .iter()
+            .map(|p| &p.value)
+            .fold(HashMap::new(), |mut h, s| {
+                *h.entry(&s).or_insert(0) += 1;
+                h
+            });
+
+    let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
         .map(|(ext, props)| {
             let unique_props: HashMap<&str, i32> =
                 props
                     .iter()
                     .map(|p| p.name)
+                    .filter(|e| {
+                        if let Some((_e, c)) = multi_section_extensions.get_key_value(e) {
+                            return *c > 1;
+                        }
+                        false
+                    })
                     .fold(HashMap::new(), |mut h, s| {
                         *h.entry(s).or_insert(0) += 1;
                         h
