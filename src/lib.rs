@@ -180,8 +180,8 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
             let unique_props: HashMap<&str, i32> = props
                 .iter()
                 .map(|p| p.name)
-                .filter(|e| {
-                    if let Some((_e, c)) = all_ext.get_key_value(&String::from(*e)) {
+                .filter(|_e| {
+                    if let Some((_e, c)) = all_ext.get_key_value(&ext) {
                         return *c > 1;
                     }
                     false
@@ -428,6 +428,29 @@ e = f"###;
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
+        });
+
+        // Act
+        validate(&conf, "", &formatter);
+    }
+
+    #[test]
+    fn validate_fail_duplicate_keys_ext_across_different_sections() {
+        // Arrange
+        let config = r###"
+[*.{md,txt}]
+a = b
+c = d
+
+[*.md]
+a = d
+"###;
+        let conf = Ini::load_from_str(config).unwrap();
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(result.duplicate_properties.is_empty());
+            assert!(result.duplicate_sections.is_empty());
+            assert!(result.similar_properties.is_empty());
+            assert!(!result.ext_problems.is_empty());
         });
 
         // Act
