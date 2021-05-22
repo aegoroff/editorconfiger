@@ -50,11 +50,6 @@ pub struct Property<'input> {
     pub section: &'input str,
 }
 
-pub struct Extension<'input> {
-    pub value: String,
-    pub section: &'input str,
-}
-
 impl<'input> ValidationResult<'input> {
     pub fn is_ok(&self) -> bool {
         self.duplicate_properties.is_empty()
@@ -127,7 +122,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
-    let mut all_extensions: Vec<Extension> = Vec::new();
+    let mut all_ext: HashMap<String, i32> = HashMap::new();
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
@@ -143,10 +138,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                 })
                 .collect();
 
-            all_extensions.push(Extension {
-                value: e.clone(),
-                section: sk,
-            });
+            *all_ext.entry(e.clone()).or_insert(0) += 1;
 
             all_ext_props
                 .entry(e.clone())
@@ -182,14 +174,6 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         }
     }
 
-    let multi_section_extensions: HashMap<&str, i32> = all_extensions
-        .iter()
-        .map(|p| &p.value)
-        .fold(HashMap::new(), |mut h, s| {
-            *h.entry(&s).or_insert(0) += 1;
-            h
-        });
-
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
         .map(|(ext, props)| {
@@ -197,7 +181,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                 .iter()
                 .map(|p| p.name)
                 .filter(|e| {
-                    if let Some((_e, c)) = multi_section_extensions.get_key_value(e) {
+                    if let Some((_e, c)) = all_ext.get_key_value(&String::from(*e)) {
                         return *c > 1;
                     }
                     false
