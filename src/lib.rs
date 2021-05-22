@@ -174,7 +174,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
         .map(|(ext, props)| {
-            let props_in_diff_sect: BTreeSet<&str> = props
+            let duplicates: Vec<&str> = props
                 .iter()
                 .map(|p| (p.name, p.section))
                 .fold(HashMap::new(), |mut h, (prop, sect)| {
@@ -194,10 +194,6 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                         *h.entry(s).or_insert(0) += 1;
                         h
                     });
-            let duplicates = find_duplicates(&unique_props)
-                .into_iter()
-                .filter(|p| props_in_diff_sect.contains(p))
-                .collect();
 
             let props: Vec<&str> = unique_props.keys().copied().collect();
             let sim = Similar::new(&props);
