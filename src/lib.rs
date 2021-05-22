@@ -174,13 +174,13 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
         .map(|(ext, props)| {
-            let props_sections = props
-                .iter()
-                .map(|p| (p.name, p.section))
-                .fold(HashMap::new(), |mut h, (prop, sect)| {
+            let props_sections = props.iter().map(|p| (p.name, p.section)).fold(
+                HashMap::new(),
+                |mut h, (prop, sect)| {
                     h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
                     h
-                });
+                },
+            );
 
             let duplicates: Vec<&str> = props_sections
                 .iter()
