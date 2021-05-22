@@ -182,32 +182,30 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         }
     }
 
-    let multi_section_extensions: HashMap<&str, i32> =
-        all_extensions
-            .iter()
-            .map(|p| &p.value)
-            .fold(HashMap::new(), |mut h, s| {
-                *h.entry(&s).or_insert(0) += 1;
-                h
-            });
+    let multi_section_extensions: HashMap<&str, i32> = all_extensions
+        .iter()
+        .map(|p| &p.value)
+        .fold(HashMap::new(), |mut h, s| {
+            *h.entry(&s).or_insert(0) += 1;
+            h
+        });
 
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
         .map(|(ext, props)| {
-            let unique_props: HashMap<&str, i32> =
-                props
-                    .iter()
-                    .map(|p| p.name)
-                    .filter(|e| {
-                        if let Some((_e, c)) = multi_section_extensions.get_key_value(e) {
-                            return *c > 1;
-                        }
-                        false
-                    })
-                    .fold(HashMap::new(), |mut h, s| {
-                        *h.entry(s).or_insert(0) += 1;
-                        h
-                    });
+            let unique_props: HashMap<&str, i32> = props
+                .iter()
+                .map(|p| p.name)
+                .filter(|e| {
+                    if let Some((_e, c)) = multi_section_extensions.get_key_value(e) {
+                        return *c > 1;
+                    }
+                    false
+                })
+                .fold(HashMap::new(), |mut h, s| {
+                    *h.entry(s).or_insert(0) += 1;
+                    h
+                });
             let duplicates = find_duplicates(&unique_props);
 
             let props: Vec<&str> = unique_props.keys().copied().collect();
