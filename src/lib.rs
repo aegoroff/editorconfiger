@@ -133,29 +133,26 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
         *sect_count.entry(sk).or_insert(0) += 1;
         let extensions = sect::parse(sk);
 
-        extensions
-            .into_iter()
-            .inspect(|e| {
-                let props: Vec<Property> = prop
-                    .iter()
-                    .map(|(k, v)| Property {
-                        name: k,
-                        value: v,
-                        section: sk,
-                    })
-                    .collect();
-
-                all_extensions.push(Extension {
-                    value: e.clone(),
+        for e in extensions {
+            let props: Vec<Property> = prop
+                .iter()
+                .map(|(k, v)| Property {
+                    name: k,
+                    value: v,
                     section: sk,
-                });
+                })
+                .collect();
 
-                all_ext_props
-                    .entry(e.clone())
-                    .or_insert_with(Vec::new)
-                    .extend(props);
-            })
-            .count();
+            all_extensions.push(Extension {
+                value: e.clone(),
+                section: sk,
+            });
+
+            all_ext_props
+                .entry(e.clone())
+                .or_insert_with(Vec::new)
+                .extend(props);
+        }
 
         let unique_props: HashMap<&str, i32> =
             prop.iter()
