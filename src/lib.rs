@@ -13,7 +13,7 @@ extern crate jwalk;
 use crate::similar::Similar;
 use ini::{Ini, Properties};
 use jwalk::WalkDir;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 pub type AnyError = Box<dyn std::error::Error>;
 
@@ -122,7 +122,6 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
-    let mut all_ext: HashMap<String, i32> = HashMap::new();
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
@@ -137,8 +136,6 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
                     section: sk,
                 })
                 .collect();
-
-            *all_ext.entry(e.clone()).or_insert(0) += 1;
 
             all_ext_props
                 .entry(e.clone())
@@ -177,20 +174,30 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
         .map(|(ext, props)| {
-            let unique_props: HashMap<&str, i32> = props
+            let props_in_diff_sect: BTreeSet<&str> = props
                 .iter()
-                .map(|p| p.name)
-                .filter(|_e| {
-                    if let Some((_e, c)) = all_ext.get_key_value(&ext) {
-                        return *c > 1;
-                    }
-                    false
-                })
-                .fold(HashMap::new(), |mut h, s| {
-                    *h.entry(s).or_insert(0) += 1;
+                .map(|p| (p.name, p.section))
+                .fold(HashMap::new(), |mut h, (prop, sect)| {
+                    h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
                     h
-                });
-            let duplicates = find_duplicates(&unique_props);
+                })
+                .iter()
+                .filter(|(_, sections)| (*sections).len() > 1)
+                .map(|(p, _)| *p)
+                .collect();
+
+            let unique_props: HashMap<&str, i32> =
+                props
+                    .iter()
+                    .map(|p| p.name)
+                    .fold(HashMap::new(), |mut h, s| {
+                        *h.entry(s).or_insert(0) += 1;
+                        h
+                    });
+            let duplicates = find_duplicates(&unique_props)
+                .into_iter()
+                .filter(|p| props_in_diff_sect.contains(p))
+                .collect();
 
             let props: Vec<&str> = unique_props.keys().copied().collect();
             let sim = Similar::new(&props);
@@ -428,6 +435,7 @@ e = f"###;
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
+            assert!(result.ext_problems.is_empty());
         });
 
         // Act
