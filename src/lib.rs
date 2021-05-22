@@ -190,7 +190,15 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 
             let props: Vec<&str> = props_sections.keys().copied().collect();
             let sim = Similar::new(&props);
-            let similar = sim.find(&props);
+            let similar = sim
+                .find(&props)
+                .into_iter()
+                .filter(|(first, second)| {
+                    let first_sections = props_sections.get(first).unwrap();
+                    let second_sections = props_sections.get(second).unwrap();
+                    first_sections.intersection(second_sections).count() == 0
+                })
+                .collect();
 
             ExtValidationResult {
                 ext,
