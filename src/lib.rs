@@ -174,28 +174,21 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
         .map(|(ext, props)| {
-            let duplicates: Vec<&str> = props
+            let props_sections = props
                 .iter()
                 .map(|p| (p.name, p.section))
                 .fold(HashMap::new(), |mut h, (prop, sect)| {
                     h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
                     h
-                })
+                });
+
+            let duplicates: Vec<&str> = props_sections
                 .iter()
                 .filter(|(_, sections)| (*sections).len() > 1)
                 .map(|(p, _)| *p)
                 .collect();
 
-            let unique_props: HashMap<&str, i32> =
-                props
-                    .iter()
-                    .map(|p| p.name)
-                    .fold(HashMap::new(), |mut h, s| {
-                        *h.entry(s).or_insert(0) += 1;
-                        h
-                    });
-
-            let props: Vec<&str> = unique_props.keys().copied().collect();
+            let props: Vec<&str> = props_sections.keys().copied().collect();
             let sim = Similar::new(&props);
             let similar = sim.find(&props);
 
@@ -414,6 +407,30 @@ e = f"###;
     }
 
     #[test]
+    fn validate_fail_similar_keys_in_not_root() {
+        // Arrange
+        let config = r###"
+root = true
+[*]
+ab = b
+dab = e
+c = d
+
+[*.md]
+e = f"###;
+        let conf = Ini::load_from_str(config).unwrap();
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(result.duplicate_properties.is_empty());
+            assert!(result.duplicate_sections.is_empty());
+            assert!(!result.similar_properties.is_empty());
+            assert!(result.ext_problems.is_empty());
+        });
+
+        // Act
+        validate(&conf, "", &formatter);
+    }
+
+    #[test]
     fn validate_fail_duplicate_keys_in_root() {
         // Arrange
         let config = r###"
@@ -448,6 +465,29 @@ c = d
 
 [*.md]
 a = d
+"###;
+        let conf = Ini::load_from_str(config).unwrap();
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert!(result.duplicate_properties.is_empty());
+            assert!(result.duplicate_sections.is_empty());
+            assert!(result.similar_properties.is_empty());
+            assert!(!result.ext_problems.is_empty());
+        });
+
+        // Act
+        validate(&conf, "", &formatter);
+    }
+
+    #[test]
+    fn validate_fail_similar_keys_ext_across_different_sections() {
+        // Arrange
+        let config = r###"
+[*.{md,txt}]
+a_b_c = b
+x = d
+
+[*.md]
+d_a_b_c = d
 "###;
         let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
