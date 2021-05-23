@@ -173,39 +173,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
 
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
-        .map(|(ext, props)| {
-            let props_sections = props.iter().map(|p| (p.name, p.section)).fold(
-                HashMap::new(),
-                |mut h, (prop, sect)| {
-                    h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
-                    h
-                },
-            );
-
-            let duplicates: Vec<&str> = props_sections
-                .iter()
-                .filter(|(_, sections)| (*sections).len() > 1)
-                .map(|(p, _)| *p)
-                .collect();
-
-            let props: Vec<&str> = props_sections.keys().copied().collect();
-            let sim = Similar::new(&props);
-            let similar = sim
-                .find(&props)
-                .into_iter()
-                .filter(|(first, second)| {
-                    let first_sections = props_sections.get(first).unwrap();
-                    let second_sections = props_sections.get(second).unwrap();
-                    first_sections.intersection(second_sections).count() == 0
-                })
-                .collect();
-
-            ExtValidationResult {
-                ext,
-                duplicates,
-                similar,
-            }
-        })
+        .map(|(ext, props)| validate_extension(ext, props))
         .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
@@ -220,6 +188,41 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     };
 
     formatter.format(result);
+}
+
+fn validate_extension(ext: String, props: Vec<Property>) -> ExtValidationResult {
+    let props_sections =
+        props
+            .iter()
+            .map(|p| (p.name, p.section))
+            .fold(HashMap::new(), |mut h, (prop, sect)| {
+                h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
+                h
+            });
+
+    let duplicates: Vec<&str> = props_sections
+        .iter()
+        .filter(|(_, sections)| (*sections).len() > 1)
+        .map(|(p, _)| *p)
+        .collect();
+
+    let props: Vec<&str> = props_sections.keys().copied().collect();
+    let similar = Similar::new(&props);
+    let similar = similar
+        .find(&props)
+        .into_iter()
+        .filter(|(first, second)| {
+            let first_sections = props_sections.get(first).unwrap();
+            let second_sections = props_sections.get(second).unwrap();
+            first_sections.intersection(second_sections).count() == 0
+        })
+        .collect();
+
+    ExtValidationResult {
+        ext,
+        duplicates,
+        similar,
+    }
 }
 
 fn find_duplicates<'a>(unique_props: &HashMap<&'a str, i32>) -> Vec<&'a str> {
