@@ -1,5 +1,5 @@
 pub mod console;
-mod sect;
+mod parser;
 mod similar;
 
 #[macro_use]
@@ -125,7 +125,7 @@ fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
     for (sec, prop) in conf {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
-        let extensions = sect::parse(sk);
+        let extensions = parser::parse(sk);
 
         for e in extensions {
             let props: Vec<Property> = prop
