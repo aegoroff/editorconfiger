@@ -68,7 +68,7 @@ fn build_cli() -> App<'static, 'static> {
                 .about("Validate all found .editorconfig files in a directory and all its children")
                 .arg(
                     Arg::with_name(PATH)
-                        .help("Path directory that contains .editorconfig files")
+                        .help("Path to the directory that contains .editorconfig files")
                         .required(true)
                         .index(1),
                 )
@@ -77,7 +77,7 @@ fn build_cli() -> App<'static, 'static> {
                         .long("problems")
                         .short("p")
                         .takes_value(false)
-                        .help("Show only files with problems. Correct files will not be shown.")
+                        .help("Show only files that have problems. Correct files will not be shown.")
                         .required(false),
                 ),
         )
