@@ -86,7 +86,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path().to_str().unwrap_or("").to_string())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
-        .inspect(|p| validate_one(&p, formatter, err))
+        .inspect(|p| validate_one(p, formatter, err))
         .count()
 }
 
