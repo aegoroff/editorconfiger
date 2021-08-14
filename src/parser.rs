@@ -44,30 +44,40 @@ mod tests {
     #[test]
     fn parse_success() {
         // Arrange
+        let cases = vec![
+            "22",
+            "*.e1",
+            "**.e1",
+            "*.{e1}",
+            "*.[ch]",
+            "f.e1",
+            "f1",
+            "*.*",
+            "*",
+            "**",
+            "*.{e1,e2}",
+            "*.{e1,e2,f1.e1}",
+            "{*.e1,*.e2}",
+            "{f1,f2}.e1",
+            "{f1,f2}",
+            "{f1,.f2}",
+            "{f1.e1,*.e1}",
+            "{f1.e1,*.f1.e1}",
+            "{f1.e1,.f1.e1}",
+            "test/*",
+            "test/**/*",
+            "test/{p1,p2}/*",
+        ];
 
         // Assert
-        assert!(!parse("22").is_empty());
-        assert!(!parse("*.e1").is_empty());
-        assert!(!parse("**.e1").is_empty());
-        assert!(!parse("*.{e1}").is_empty());
-        assert!(!parse("*.[ch]").is_empty());
-        assert!(!parse("f.e1").is_empty());
-        assert!(!parse("f1").is_empty());
-        assert!(!parse("*.*").is_empty());
-        assert!(!parse("*").is_empty());
-        assert!(!parse("**").is_empty());
-        assert!(!parse("*.{e1,e2}").is_empty());
-        assert!(!parse("*.{e1,e2,f1.e1}").is_empty());
-        assert!(!parse("{*.e1,*.e2}").is_empty());
-        assert!(!parse("{f1,f2}.e1").is_empty());
-        assert!(!parse("{f1,f2}").is_empty());
-        assert!(!parse("{f1,.f2}").is_empty());
-        assert!(!parse("{f1.e1,*.e1}").is_empty());
-        assert!(!parse("{f1.e1,*.f1.e1}").is_empty());
-        assert!(!parse("{f1.e1,.f1.e1}").is_empty());
-        assert!(!parse("test/*").is_empty());
-        assert!(!parse("test/**/*").is_empty());
-        assert!(!parse("test/{p1,p2}/*").is_empty());
+        cases
+            .iter()
+            .inspect(|case| {
+                println!("{}", *case);
+                let result = parse(case);
+                assert_that(&result.is_empty()).is_false();
+            })
+            .count();
     }
 
     #[test]
