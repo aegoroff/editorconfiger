@@ -32,6 +32,7 @@ impl Similar {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use spectral::prelude::*;
 
     #[test]
     fn find_no_similar() {
@@ -43,7 +44,7 @@ mod tests {
         let result = sim.find(&items);
 
         // Assert
-        assert!(result.is_empty())
+        assert_that(&result).is_empty();
     }
 
     #[test]
@@ -59,7 +60,7 @@ mod tests {
         let result = sim.find(&items);
 
         // Assert
-        assert!(!result.is_empty())
+        assert_that(&result).has_length(1);
     }
 
     #[test]
@@ -72,6 +73,6 @@ mod tests {
         let result = sim.find(&items);
 
         // Assert
-        assert!(result.is_empty())
+        assert_that(&result).is_empty();
     }
 }

@@ -39,6 +39,7 @@ fn parse_file(file: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use spectral::prelude::*;
 
     #[test]
     fn parse_success() {
@@ -77,7 +78,7 @@ mod tests {
         let result = parse("*.{e1}");
 
         // Assert
-        assert_eq!(1, result.len());
+        assert_that(&result).has_length(1);
         assert_eq!("*.e1", result[0]);
     }
 
@@ -89,7 +90,7 @@ mod tests {
         let result = parse("*.{e1, e2}");
 
         // Assert
-        assert_eq!(2, result.len());
+        assert_that(&result).has_length(2);
         assert_eq!("*.e1", result[0]);
         assert_eq!("*.e2", result[1]);
     }
@@ -102,7 +103,7 @@ mod tests {
         let result = parse("test/*.{e1, e2}");
 
         // Assert
-        assert_eq!(2, result.len());
+        assert_that(&result).has_length(2);
         assert_eq!("test/*.e1", result[0]);
         assert_eq!("test/*.e2", result[1]);
     }
@@ -115,7 +116,7 @@ mod tests {
         let result = parse("*.[ch]");
 
         // Assert
-        assert_eq!(2, result.len());
+        assert_that(&result).has_length(2);
         assert_eq!("*.c", result[0]);
         assert_eq!("*.h", result[1]);
     }
@@ -128,7 +129,7 @@ mod tests {
         let result = parse("{f1.e1,*.f1.e1}");
 
         // Assert
-        assert_eq!(2, result.len());
+        assert_that(&result).has_length(2);
         assert_eq!("f1.e1", result[0]);
         assert_eq!("*.f1.e1", result[1]);
     }
@@ -141,7 +142,7 @@ mod tests {
         let result = parse("{*.e1,*.e2}");
 
         // Assert
-        assert_eq!(2, result.len());
+        assert_that(&result).has_length(2);
         assert_eq!("*.e1", result[0]);
         assert_eq!("*.e2", result[1]);
     }
@@ -154,7 +155,7 @@ mod tests {
         let result = parse("{f1.e1,.f1.e1}");
 
         // Assert
-        assert_eq!(2, result.len());
+        assert_that(&result).has_length(2);
         assert_eq!("f1.e1", result[0]);
         assert_eq!(".f1.e1", result[1]);
     }
@@ -167,7 +168,7 @@ mod tests {
         let result = parse("{f1,f2}.e1");
 
         // Assert
-        assert_eq!(2, result.len());
+        assert_that(&result).has_length(2);
         assert_eq!("f1.e1", result[0]);
         assert_eq!("f2.e1", result[1]);
     }

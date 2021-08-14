@@ -77,7 +77,9 @@ fn build_cli() -> App<'static, 'static> {
                         .long("problems")
                         .short("p")
                         .takes_value(false)
-                        .help("Show only files that have problems. Correct files will not be shown.")
+                        .help(
+                            "Show only files that have problems. Correct files will not be shown.",
+                        )
                         .required(false),
                 ),
         )

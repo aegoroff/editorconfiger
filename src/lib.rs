@@ -9,6 +9,7 @@ extern crate prettytable;
 extern crate aho_corasick;
 extern crate ini;
 extern crate jwalk;
+extern crate spectral;
 
 use crate::similar::Similar;
 use ini::{Ini, Properties};
@@ -289,6 +290,7 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
 #[cfg(test)]
 mod tests {
     use super::*;
+    use spectral::prelude::*;
 
     struct TestFormatter<F>
     where
@@ -352,9 +354,8 @@ c = d
 [*.md]
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert!(result.is_ok());
-        });
+        let formatter =
+            TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
 
         // Act
         validate(&conf, "", &formatter);
@@ -369,9 +370,8 @@ a = b
 c = d
 "###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert!(result.is_ok());
-        });
+        let formatter =
+            TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
 
         // Act
         validate(&conf, "", &formatter);
@@ -386,9 +386,8 @@ a = b # comment 1
 c = d # comment 2
 "###;
         let conf = Ini::load_from_str(config).unwrap();
-        let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert!(result.is_ok());
-        });
+        let formatter =
+            TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
 
         // Act
         validate(&conf, "", &formatter);
@@ -408,9 +407,9 @@ c = d
 e = f"###;
         let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert!(!result.duplicate_properties.is_empty());
-            assert!(result.duplicate_sections.is_empty());
-            assert!(result.similar_properties.is_empty());
+            assert_that(&result.duplicate_properties.is_empty()).is_false();
+            assert_that(&result.duplicate_sections.is_empty()).is_true();
+            assert_that(&result.similar_properties.is_empty()).is_true();
         });
 
         // Act
@@ -434,7 +433,7 @@ e = f"###;
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(!result.similar_properties.is_empty());
-            assert!(result.ext_problems.is_empty());
+            assert_that(&result.ext_problems).is_empty();
         });
 
         // Act
@@ -459,7 +458,7 @@ e = f"###;
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert!(result.ext_problems.is_empty());
+            assert_that(&result.ext_problems).is_empty();
         });
 
         // Act
@@ -482,7 +481,7 @@ a = d
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert!(!result.ext_problems.is_empty());
+            assert_that(&result.ext_problems).has_length(1);
         });
 
         // Act
@@ -505,7 +504,7 @@ d_a_b_c = d
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert!(!result.ext_problems.is_empty());
+            assert_that(&result.ext_problems).has_length(1);
         });
 
         // Act
@@ -553,7 +552,7 @@ c = d2
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
-            assert_eq!(2, res.get("*").unwrap().len());
+            assert_that(res.get("*").unwrap()).has_length(2);
         });
 
         // Act
@@ -582,8 +581,8 @@ c = d2
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
-            assert_eq!(2, res.get("*").unwrap().len());
-            assert_eq!(1, res.get("").unwrap().len());
+            assert_that(res.get("*").unwrap()).has_length(2);
+            assert_that(res.get("").unwrap()).has_length(1);
         });
 
         // Act
@@ -607,7 +606,7 @@ d = d2
         let conf2 = Ini::load_from_str(config2).unwrap();
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
-            assert_eq!(3, res.get("*").unwrap().len());
+            assert_that(res.get("*").unwrap()).has_length(3);
         });
 
         // Act
@@ -631,8 +630,8 @@ d = d2
         let conf2 = Ini::load_from_str(config2).unwrap();
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
-            assert_eq!(2, res.get("x").unwrap().len());
-            assert_eq!(2, res.get("x").unwrap().len());
+            assert_that(res.get("x").unwrap()).has_length(2);
+            assert_that(res.get("y").unwrap()).has_length(2);
         });
 
         // Act
