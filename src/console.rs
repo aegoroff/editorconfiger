@@ -3,6 +3,7 @@ use ansi_term::Colour::{Green, Red, Yellow};
 use prettytable::format::TableFormat;
 use prettytable::{format, Table};
 use std::collections::BTreeMap;
+use ansi_term::ANSIGenericString;
 
 pub struct Formatter {
     only_problems: bool,
@@ -22,12 +23,13 @@ impl ValidationFormatter for Formatter {
             }
             return;
         }
-
+        let msg: ANSIGenericString<str>;
         if result.is_invalid() {
-            println!(" {} {}", result.path, Red.paint("invalid"));
+            msg = Red.paint("invalid");
         } else {
-            println!(" {} {}", result.path, Yellow.paint("has some problems"));
+            msg = Yellow.paint("has some problems");
         }
+        println!(" {} {}", result.path, msg);
 
         if !result.duplicate_sections.is_empty() {
             println!("   Duplicate sections:");
