@@ -1,12 +1,18 @@
 use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, ValidationResult};
+use ansi_term::ANSIGenericString;
 use ansi_term::Colour::{Green, Red, Yellow};
 use prettytable::format::TableFormat;
 use prettytable::{format, Table};
 use std::collections::BTreeMap;
-use ansi_term::ANSIGenericString;
 
 pub struct Formatter {
     only_problems: bool,
+}
+
+enum ValidationState {
+    Valid,
+    Invalid,
+    SomeProblems,
 }
 
 impl Formatter {
@@ -17,19 +23,27 @@ impl Formatter {
 
 impl ValidationFormatter for Formatter {
     fn format(&self, result: ValidationResult) {
+        let state: ValidationState;
+
         if result.is_ok() {
-            if !self.only_problems {
-                println!(" {} {}", result.path, Green.paint("valid"));
-            }
-            return;
+            state = ValidationState::Valid;
+        } else if result.is_invalid() {
+            state = ValidationState::Invalid;
+        } else {
+            state = ValidationState::SomeProblems;
         }
         let msg: ANSIGenericString<str>;
-        if result.is_invalid() {
-            msg = Red.paint("invalid");
-        } else {
-            msg = Yellow.paint("has some problems");
+        match state {
+            ValidationState::Valid => msg = Green.paint("valid"),
+            ValidationState::Invalid => msg = Red.paint("invalid"),
+            ValidationState::SomeProblems => msg = Yellow.paint("has some problems"),
         }
-        println!(" {} {}", result.path, msg);
+        if !self.only_problems || !result.is_ok() {
+            println!(" {} {}", result.path, msg);
+        }
+        if result.is_ok() {
+            return;
+        }
 
         if !result.duplicate_sections.is_empty() {
             println!("   Duplicate sections:");
