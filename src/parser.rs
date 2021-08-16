@@ -69,7 +69,7 @@ mod tests {
             "test/{p1,p2}/*",
         ];
 
-        // Assert
+        // Act & Assert
         cases
             .iter()
             .inspect(|case| {
