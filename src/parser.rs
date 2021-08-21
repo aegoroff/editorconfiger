@@ -72,12 +72,11 @@ mod tests {
         // Act & Assert
         cases
             .iter()
-            .inspect(|case| {
+            .for_each(|case| {
                 println!("{}", *case);
                 let result = parse(case);
                 assert_that(&result.is_empty()).is_false();
-            })
-            .count();
+            });
     }
 
     #[test]
