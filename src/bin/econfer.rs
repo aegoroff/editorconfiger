@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, ArgMatches, SubCommand, AppSettings};
 use editorconfiger::console::{Comparator, Error, Formatter};
 
 #[macro_use]
@@ -48,6 +48,7 @@ fn compare(cmd: &ArgMatches) {
 
 fn build_cli() -> App<'static, 'static> {
     return App::new(crate_name!())
+        .setting(AppSettings::ArgRequiredElseHelp)
         .version(crate_version!())
         .author("egoroff <egoroff@gmail.com>")
         .about(".editorconfig files tool")
