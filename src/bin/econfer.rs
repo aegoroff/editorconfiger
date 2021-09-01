@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches, SubCommand, AppSettings};
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use editorconfiger::console::{Comparator, Error, Formatter};
 
 #[macro_use]

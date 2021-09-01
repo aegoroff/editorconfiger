@@ -103,6 +103,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn parse_path_get_data_many() {
         // Arrange
 
@@ -113,6 +114,20 @@ mod tests {
         assert_that(&result).has_length(2);
         assert_eq!("test/*.e1", result[0]);
         assert_eq!("test/*.e2", result[1]);
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn parse_path_get_data_many() {
+        // Arrange
+
+        // Act
+        let result = parse("test\\*.{e1, e2}");
+
+        // Assert
+        assert_that(&result).has_length(2);
+        assert_eq!("test\\*.e1", result[0]);
+        assert_eq!("test\\*.e2", result[1]);
     }
 
     #[test]
