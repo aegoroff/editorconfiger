@@ -63,7 +63,7 @@ impl ValidationFormatter for Formatter {
 
         if !result.similar_properties.is_empty() {
             let mut table = Table::new();
-            table.set_format(Comparator::new_compare_format(6));
+            table.set_format(new_format(6));
             println!("   Similar properties:");
             for (section, sims) in result.similar_properties {
                 println!("     [{}]:", section);
@@ -86,7 +86,7 @@ impl ValidationFormatter for Formatter {
 
                 if !item.similar.is_empty() {
                     let mut table = Table::new();
-                    table.set_format(Comparator::new_compare_format(6));
+                    table.set_format(new_format(6));
                     println!("   Similar properties related to {}:", item.ext);
                     for sim in item.similar {
                         table.add_row(row![sim.0, sim.1]);
@@ -114,7 +114,7 @@ pub struct Comparator {}
 impl ComparisonFormatter for Comparator {
     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
         let mut table = Table::new();
-        table.set_format(Comparator::new_compare_format(0));
+        table.set_format(new_format(0));
         table.set_titles(row![bF->"", bF->"FILE #1", bF->"FILE #2"]);
 
         for (sect, values) in result {
@@ -140,17 +140,15 @@ impl ComparisonFormatter for Comparator {
     }
 }
 
-impl Comparator {
-    fn new_compare_format(ident: usize) -> TableFormat {
-        format::FormatBuilder::new()
-            .column_separator(' ')
-            .borders(' ')
-            .separators(
-                &[format::LinePosition::Title],
-                format::LineSeparator::new('-', ' ', ' ', ' '),
-            )
-            .indent(ident)
-            .padding(0, 0)
-            .build()
-    }
+fn new_format(ident: usize) -> TableFormat {
+    format::FormatBuilder::new()
+        .column_separator(' ')
+        .borders(' ')
+        .separators(
+            &[format::LinePosition::Title],
+            format::LineSeparator::new('-', ' ', ' ', ' '),
+        )
+        .indent(ident)
+        .padding(0, 0)
+        .build()
 }

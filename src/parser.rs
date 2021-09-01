@@ -70,13 +70,11 @@ mod tests {
         ];
 
         // Act & Assert
-        cases
-            .iter()
-            .for_each(|case| {
-                println!("{}", *case);
-                let result = parse(case);
-                assert_that(&result.is_empty()).is_false();
-            });
+        cases.iter().for_each(|case| {
+            println!("{}", *case);
+            let result = parse(case);
+            assert_that(&result.is_empty()).is_false();
+        });
     }
 
     #[test]
