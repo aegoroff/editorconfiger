@@ -334,12 +334,52 @@ mod tests {
     }
 
     impl<F> ComparisonFormatter for TestCompareFormatter<F>
-    where
-        F: Fn(BTreeMap<&str, Vec<CompareItem>>),
+        where
+            F: Fn(BTreeMap<&str, Vec<CompareItem>>),
     {
         fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
             (self.assert)(result);
         }
+    }
+
+    #[test]
+    fn find_duplicates_success() {
+        // Arrange
+        let mut hm: HashMap<&str, i32> = HashMap::new();
+        hm.insert("a", 1);
+        hm.insert("b", 2);
+
+        // Act
+        let result = find_duplicates(&hm);
+
+        // Assert
+        assert_that(&result).has_length(1);
+    }
+
+    #[test]
+    fn find_duplicates_failure() {
+        // Arrange
+        let mut hm: HashMap<&str, i32> = HashMap::new();
+        hm.insert("a", 1);
+        hm.insert("b", 1);
+
+        // Act
+        let result = find_duplicates(&hm);
+
+        // Assert
+        assert_that(&result).is_empty();
+    }
+
+    #[test]
+    fn find_duplicates_empty_map_failure() {
+        // Arrange
+        let hm: HashMap<&str, i32> = HashMap::new();
+
+        // Act
+        let result = find_duplicates(&hm);
+
+        // Assert
+        assert_that(&result).is_empty();
     }
 
     #[test]
