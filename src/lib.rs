@@ -31,6 +31,16 @@ pub struct CompareItem<'input> {
     pub second_value: Option<&'input str>,
 }
 
+impl<'input> CompareItem<'input> {
+    pub fn only_second(key: &'input str, second_value: &'input str) -> Self {
+        CompareItem {
+            key,
+            first_value: None,
+            second_value: Some(second_value),
+        }
+    }
+}
+
 pub struct ValidationResult<'input> {
     pub path: &'input str,
     pub duplicate_sections: Vec<&'input str>,
@@ -256,11 +266,7 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
                     props2
                         .iter()
                         .filter(|(k, _)| !props1.contains_key(k))
-                        .map(|(k, v)| CompareItem {
-                            key: k,
-                            first_value: None,
-                            second_value: Some(v),
-                        }),
+                        .map(|(k, v)| CompareItem::only_second(k, v)),
                 )
                 .collect();
             (s1.unwrap_or_default(), items)
@@ -273,11 +279,7 @@ fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F
                 .map(|(s, p)| {
                     let items: Vec<CompareItem> = p
                         .iter()
-                        .map(|(k, v)| CompareItem {
-                            key: k,
-                            first_value: None,
-                            second_value: Some(v),
-                        })
+                        .map(|(k, v)| CompareItem::only_second(k, v))
                         .collect();
                     (s.unwrap_or_default(), items)
                 }),
