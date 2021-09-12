@@ -23,3 +23,6 @@ spectral = "0.6.0"
 
 [[bin]]
 name = "econfer"
+
+[profile.release]
+lto = true
