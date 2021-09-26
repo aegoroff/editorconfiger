@@ -336,8 +336,8 @@ mod tests {
     }
 
     impl<F> ComparisonFormatter for TestCompareFormatter<F>
-        where
-            F: Fn(BTreeMap<&str, Vec<CompareItem>>),
+    where
+        F: Fn(BTreeMap<&str, Vec<CompareItem>>),
     {
         fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
             (self.assert)(result);
