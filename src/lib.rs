@@ -128,12 +128,12 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
     None
 }
 
-fn validate<V: ValidationFormatter>(conf: &Ini, path: &str, formatter: &V) {
+fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
     let mut sect_count = HashMap::new();
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
-    for (sec, prop) in conf {
+    for (sec, prop) in ini {
         let sk = sec.unwrap_or("root");
         *sect_count.entry(sk).or_insert(0) += 1;
         let extensions = parser::parse(sk);
