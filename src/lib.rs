@@ -12,6 +12,7 @@ extern crate ini;
 extern crate jwalk;
 extern crate spectral;
 
+use crate::file_iterator::{FileIterator, SectionContent};
 use crate::similar::Similar;
 use ini::{Ini, Properties};
 use jwalk::WalkDir;
@@ -134,30 +135,23 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
-    for (sec, prop) in ini {
-        let sk = sec.unwrap_or("root");
-        *sect_count.entry(sk).or_insert(0) += 1;
-        let extensions = parser::parse(sk);
 
-        for e in extensions {
-            let props: Vec<Property> = prop
-                .iter()
-                .map(|(k, v)| Property {
-                    name: k,
-                    value: v,
-                    section: sk,
-                })
-                .collect();
+    let it = &mut FileIterator::from(ini);
+    let sections = it.collect::<Vec<SectionContent>>();
 
+    for sec in &sections {
+        for e in &sec.extensions {
             all_ext_props
                 .entry(e)
                 .or_insert_with(Vec::new)
-                .extend(props);
+                .extend(&sec.properties);
         }
+        *sect_count.entry(sec.section).or_insert(0) += 1;
 
         let unique_props: HashMap<&str, i32> =
-            prop.iter()
-                .map(|(k, _)| k)
+            sec.properties
+                .iter()
+                .map(|item| item.name)
                 .fold(HashMap::new(), |mut h, s| {
                     *h.entry(s).or_insert(0) += 1;
                     h
@@ -167,7 +161,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
 
         if !duplicate_pops.is_empty() {
             dup_props
-                .entry(sk)
+                .entry(sec.section)
                 .or_insert_with(Vec::<&str>::new)
                 .append(&mut duplicate_pops);
         }
@@ -177,7 +171,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
         let mut similar = sim.find(&props);
         if !similar.is_empty() {
             sim_props
-                .entry(sk)
+                .entry(sec.section)
                 .or_insert_with(Vec::<(&str, &str)>::new)
                 .append(&mut similar);
         }
@@ -185,7 +179,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
 
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
-        .map(|(ext, props)| validate_extension(ext, props))
+        .map(|(ext, props)| validate_extension(ext.to_string(), props))
         .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
@@ -202,7 +196,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
     formatter.format(result);
 }
 
-fn validate_extension(ext: String, props: Vec<Property>) -> ExtValidationResult {
+fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidationResult<'a> {
     let props_sections =
         props
             .iter()
