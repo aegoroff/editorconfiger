@@ -1,4 +1,5 @@
 pub mod console;
+mod file_iterator;
 mod parser;
 mod similar;
 
