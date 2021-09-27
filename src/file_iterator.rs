@@ -47,7 +47,7 @@ e = f"###;
         let it = &mut FileIterator::from(&conf);
 
         // Act
-        let extensions: Vec<Vec<String>> = it.map(|item| item.0).collect();
+        let extensions: Vec<Vec<String>> = it.map(|(extensions, _props)| extensions).collect();
 
         // Assert
         assert_that!(extensions).has_length(3);
