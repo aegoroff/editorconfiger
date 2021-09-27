@@ -1,5 +1,11 @@
-use crate::parser;
-use ini::{Ini, Properties, SectionIter};
+use crate::{parser, Property};
+use ini::{Ini, SectionIter};
+
+pub struct SectionContent<'a> {
+    pub section: &'a str,
+    pub extensions: Vec<String>,
+    pub properties: Vec<Property<'a>>,
+}
 
 pub struct FileIterator<I: Iterator> {
     inner: I,
@@ -12,15 +18,29 @@ impl<'a> FileIterator<SectionIter<'a>> {
 }
 
 impl<'a> Iterator for &'a mut FileIterator<SectionIter<'a>> {
-    type Item = (Vec<String>, &'a Properties);
+    type Item = SectionContent<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let item = self.inner.next();
 
         if let Some((sec, prop)) = item {
-            let sk = sec.unwrap_or("root");
-            let extensions = parser::parse(sk);
-            return Some((extensions, prop));
+            let section = sec.unwrap_or("root");
+            let extensions = parser::parse(section);
+
+            let properties: Vec<Property> = prop
+                .iter()
+                .map(|(k, v)| Property {
+                    name: k,
+                    value: v,
+                    section,
+                })
+                .collect();
+
+            return Some(SectionContent {
+                section,
+                extensions,
+                properties,
+            });
         }
 
         None
@@ -47,9 +67,29 @@ e = f"###;
         let it = &mut FileIterator::from(&conf);
 
         // Act
-        let extensions: Vec<Vec<String>> = it.map(|(extensions, _props)| extensions).collect();
+        let contents: Vec<SectionContent<'_>> = it.map(|content| content).collect();
 
         // Assert
-        assert_that!(extensions).has_length(3);
+        assert_that!(contents).has_length(3);
+        assert_that!(contents.iter().map(|x| x.section).collect::<Vec<&str>>())
+            .is_equal_to(vec!["root", "*", "*.md"]);
+    }
+
+    #[test]
+    fn map_test_properties() {
+        // Arrange
+        let config = r###"
+[*]
+a = b
+c = d"###;
+        let conf = Ini::load_from_str(config).unwrap();
+        let it = &mut FileIterator::from(&conf);
+
+        // Act
+        let props: Vec<Vec<Property<'_>>> = it.map(|x| x.properties).collect();
+
+        // Assert
+        assert_that!(props).has_length(1);
+        assert_that!(props[0]).has_length(2);
     }
 }
