@@ -26,3 +26,30 @@ impl<'a> Iterator for &'a mut FileIterator<SectionIter<'a>> {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use spectral::prelude::*;
+
+    #[test]
+    fn map_several_sections() {
+        // Arrange
+        let config = r###"
+root = true
+[*]
+a = b
+c = d
+
+[*.md]
+e = f"###;
+        let conf = Ini::load_from_str(config).unwrap();
+        let it = &mut FileIterator::from(&conf);
+
+        // Act
+        let extensions: Vec<Vec<String>> = it.map(|item| item.0).collect();
+
+        // Assert
+        assert_that!(extensions).has_length(3);
+    }
+}
