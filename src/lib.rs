@@ -150,7 +150,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
                 .collect();
 
             all_ext_props
-                .entry(e.clone())
+                .entry(e)
                 .or_insert_with(Vec::new)
                 .extend(props);
         }
