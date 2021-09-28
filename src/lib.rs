@@ -371,7 +371,7 @@ mod tests {
     #[test]
     fn find_duplicates_empty_map_failure() {
         // Arrange
-        let items : Vec<&str> = vec![];
+        let items: Vec<&str> = vec![];
 
         // Act
         let result = find_duplicates(items.into_iter());
