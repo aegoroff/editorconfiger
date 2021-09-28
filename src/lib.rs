@@ -17,6 +17,7 @@ use crate::similar::Similar;
 use ini::{Ini, Properties};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::hash::Hash;
 
 pub type AnyError = Box<dyn std::error::Error>;
 
@@ -232,17 +233,15 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
     }
 }
 
-fn find_duplicates<'a>(iter: impl Iterator<Item = &'a str>) -> Vec<&'a str> {
-    let unique_props: HashMap<&str, i32> = iter.fold(HashMap::new(), |mut h, s| {
+fn find_duplicates<T: Eq + Hash + Copy>(iter: impl Iterator<Item = T>) -> Vec<T> {
+    iter.fold(HashMap::new(), |mut h, s| {
         *h.entry(s).or_insert(0) += 1;
         h
-    });
-
-    unique_props
-        .iter()
-        .filter(|(_, v)| **v > 1)
-        .map(|(k, _)| *k)
-        .collect()
+    })
+    .iter()
+    .filter(|(_, v)| **v > 1)
+    .map(|(k, _)| *k)
+    .collect()
 }
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
@@ -372,7 +371,7 @@ mod tests {
     #[test]
     fn find_duplicates_empty_map_failure() {
         // Arrange
-        let items = vec![];
+        let items : Vec<&str> = vec![];
 
         // Act
         let result = find_duplicates(items.into_iter());
