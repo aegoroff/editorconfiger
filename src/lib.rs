@@ -1,4 +1,5 @@
 pub mod console;
+mod enumerable;
 mod file_iterator;
 mod parser;
 mod similar;
@@ -17,7 +18,6 @@ use crate::similar::Similar;
 use ini::{Ini, Properties};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use std::hash::Hash;
 
 pub type AnyError = Box<dyn std::error::Error>;
 
@@ -151,7 +151,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
 
         let names = sec.properties.iter().map(|item| item.name);
 
-        let mut duplicate_pops = find_duplicates(names);
+        let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names).collect();
 
         if !duplicate_pops.is_empty() {
             dup_props
@@ -160,17 +160,11 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
                 .append(&mut duplicate_pops);
         }
 
-        let unique_props: HashMap<&str, i32> =
-            sec.properties
-                .iter()
-                .map(|item| item.name)
-                .fold(HashMap::new(), |mut h, s| {
-                    *h.entry(s).or_insert(0) += 1;
-                    h
-                });
-        let props: Vec<&str> = unique_props.into_keys().collect();
-        let sim = Similar::new(&props);
-        let mut similar = sim.find(&props);
+        let unique_props: Vec<&str> =
+            enumerable::only_unique(sec.properties.iter().map(|item| item.name)).collect();
+
+        let sim = Similar::new(&unique_props);
+        let mut similar = sim.find(&unique_props);
         if !similar.is_empty() {
             sim_props
                 .entry(sec.section)
@@ -185,7 +179,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
         .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
-    let dup_sect: Vec<&str> = find_duplicates(section_heads.into_iter());
+    let dup_sect: Vec<&str> = enumerable::only_duplicates(section_heads.into_iter()).collect();
 
     let result = ValidationResult {
         path,
@@ -231,17 +225,6 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
         duplicates,
         similar,
     }
-}
-
-fn find_duplicates<T: Eq + Hash>(iter: impl Iterator<Item = T>) -> Vec<T> {
-    iter.fold(HashMap::new(), |mut h, s| {
-        *h.entry(s).or_insert(0) += 1;
-        h
-    })
-    .into_iter()
-    .filter(|(_, v)| *v > 1)
-    .map(|(k, _)| k)
-    .collect()
 }
 
 fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
@@ -342,42 +325,6 @@ mod tests {
         fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
             (self.assert)(result);
         }
-    }
-
-    #[test]
-    fn find_duplicates_success() {
-        // Arrange
-        let items = vec!["a", "b", "b"];
-
-        // Act
-        let result = find_duplicates(items.into_iter());
-
-        // Assert
-        assert_that(&result).has_length(1);
-    }
-
-    #[test]
-    fn find_duplicates_failure() {
-        // Arrange
-        let items = vec!["a", "b"];
-
-        // Act
-        let result = find_duplicates(items.into_iter());
-
-        // Assert
-        assert_that(&result).is_empty();
-    }
-
-    #[test]
-    fn find_duplicates_empty_map_failure() {
-        // Arrange
-        let items: Vec<&str> = vec![];
-
-        // Act
-        let result = find_duplicates(items.into_iter());
-
-        // Assert
-        assert_that(&result).is_empty();
     }
 
     #[test]
