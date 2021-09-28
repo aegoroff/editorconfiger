@@ -233,14 +233,14 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
     }
 }
 
-fn find_duplicates<T: Eq + Hash + Copy>(iter: impl Iterator<Item = T>) -> Vec<T> {
+fn find_duplicates<T: Eq + Hash>(iter: impl Iterator<Item = T>) -> Vec<T> {
     iter.fold(HashMap::new(), |mut h, s| {
         *h.entry(s).or_insert(0) += 1;
         h
     })
-    .iter()
-    .filter(|(_, v)| **v > 1)
-    .map(|(k, _)| *k)
+    .into_iter()
+    .filter(|(_, v)| *v > 1)
+    .map(|(k, _)| k)
     .collect()
 }
 
