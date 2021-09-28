@@ -131,13 +131,13 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
 }
 
 fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
-    let mut sect_count = HashMap::new();
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
 
     let it = &mut FileIterator::from(ini);
     let sections = it.collect::<Vec<SectionContent>>();
+    let mut section_heads = Vec::new();
 
     for sec in &sections {
         for e in &sec.extensions {
@@ -146,7 +146,18 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
                 .or_insert_with(Vec::new)
                 .extend(&sec.properties);
         }
-        *sect_count.entry(sec.section).or_insert(0) += 1;
+        section_heads.push(sec.section);
+
+        let names = sec.properties.iter().map(|item| item.name);
+
+        let mut duplicate_pops = find_duplicates(names);
+
+        if !duplicate_pops.is_empty() {
+            dup_props
+                .entry(sec.section)
+                .or_insert_with(Vec::<&str>::new)
+                .append(&mut duplicate_pops);
+        }
 
         let unique_props: HashMap<&str, i32> =
             sec.properties
@@ -156,17 +167,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
                     *h.entry(s).or_insert(0) += 1;
                     h
                 });
-
-        let mut duplicate_pops = find_duplicates(&unique_props);
-
-        if !duplicate_pops.is_empty() {
-            dup_props
-                .entry(sec.section)
-                .or_insert_with(Vec::<&str>::new)
-                .append(&mut duplicate_pops);
-        }
-
-        let props: Vec<&str> = unique_props.keys().copied().collect();
+        let props: Vec<&str> = unique_props.into_keys().collect();
         let sim = Similar::new(&props);
         let mut similar = sim.find(&props);
         if !similar.is_empty() {
@@ -183,7 +184,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
         .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
-    let dup_sect: Vec<&str> = find_duplicates(&sect_count);
+    let dup_sect: Vec<&str> = find_duplicates(section_heads.into_iter());
 
     let result = ValidationResult {
         path,
@@ -231,7 +232,12 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
     }
 }
 
-fn find_duplicates<'a>(unique_props: &HashMap<&'a str, i32>) -> Vec<&'a str> {
+fn find_duplicates<'a>(iter: impl Iterator<Item = &'a str>) -> Vec<&'a str> {
+    let unique_props: HashMap<&str, i32> = iter.fold(HashMap::new(), |mut h, s| {
+        *h.entry(s).or_insert(0) += 1;
+        h
+    });
+
     unique_props
         .iter()
         .filter(|(_, v)| **v > 1)
@@ -342,12 +348,10 @@ mod tests {
     #[test]
     fn find_duplicates_success() {
         // Arrange
-        let mut hm: HashMap<&str, i32> = HashMap::new();
-        hm.insert("a", 1);
-        hm.insert("b", 2);
+        let items = vec!["a", "b", "b"];
 
         // Act
-        let result = find_duplicates(&hm);
+        let result = find_duplicates(items.into_iter());
 
         // Assert
         assert_that(&result).has_length(1);
@@ -356,12 +360,10 @@ mod tests {
     #[test]
     fn find_duplicates_failure() {
         // Arrange
-        let mut hm: HashMap<&str, i32> = HashMap::new();
-        hm.insert("a", 1);
-        hm.insert("b", 1);
+        let items = vec!["a", "b"];
 
         // Act
-        let result = find_duplicates(&hm);
+        let result = find_duplicates(items.into_iter());
 
         // Assert
         assert_that(&result).is_empty();
@@ -370,10 +372,10 @@ mod tests {
     #[test]
     fn find_duplicates_empty_map_failure() {
         // Arrange
-        let hm: HashMap<&str, i32> = HashMap::new();
+        let items = vec![];
 
         // Act
-        let result = find_duplicates(&hm);
+        let result = find_duplicates(items.into_iter());
 
         // Assert
         assert_that(&result).is_empty();
