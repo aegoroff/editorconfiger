@@ -31,7 +31,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build
         run: cargo build
-      - name: Run tests
+      - name: Run Debug tests
         run: cargo test
+      - name: Run Release tests
+        run: cargo test --release
       - name: Run linter
         run: cargo clippy
