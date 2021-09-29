@@ -196,7 +196,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
 fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidationResult<'a> {
     let props_sections =
         props
-            .iter()
+            .into_iter()
             .map(|p| (p.name, p.section))
             .fold(HashMap::new(), |mut h, (prop, sect)| {
                 h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
