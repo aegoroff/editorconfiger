@@ -154,23 +154,13 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
 
         let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names()).collect();
 
-        if !duplicate_pops.is_empty() {
-            dup_props
-                .entry(sec.section)
-                .or_insert_with(Vec::<&str>::new)
-                .append(&mut duplicate_pops);
-        }
+        append_to_btree(&mut dup_props, sec.section, &mut duplicate_pops);
 
         let unique_props: Vec<&str> = enumerable::only_unique(names()).collect();
 
         let sim = Similar::new(&unique_props);
         let mut similar = sim.find(&unique_props);
-        if !similar.is_empty() {
-            sim_props
-                .entry(sec.section)
-                .or_insert_with(Vec::<(&str, &str)>::new)
-                .append(&mut similar);
-        }
+        append_to_btree(&mut sim_props, sec.section, &mut similar)
     }
 
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
@@ -190,6 +180,18 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
     };
 
     formatter.format(result);
+}
+
+fn append_to_btree<'a, T>(
+    bree: &mut BTreeMap<&'a str, Vec<T>>,
+    key: &'a str,
+    mut data: &mut Vec<T>,
+) {
+    if !data.is_empty() {
+        bree.entry(key)
+            .or_insert_with(Vec::<T>::new)
+            .append(&mut data);
+    }
 }
 
 fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidationResult<'a> {
