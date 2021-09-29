@@ -98,7 +98,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .map(Result::unwrap)
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path())
-        .filter(|p|p.ends_with(EDITOR_CONFIG))
+        .filter(|p| p.ends_with(EDITOR_CONFIG))
         .map(|f| f.to_str().unwrap_or("").to_string())
         .inspect(|p| validate_one(p, formatter, err))
         .count()
@@ -150,9 +150,9 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
         }
         section_heads.push(sec.section);
 
-        let names = sec.properties.iter().map(|item| item.name);
+        let names = || sec.properties.iter().map(|item| item.name);
 
-        let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names).collect();
+        let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names()).collect();
 
         if !duplicate_pops.is_empty() {
             dup_props
@@ -161,8 +161,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
                 .append(&mut duplicate_pops);
         }
 
-        let unique_props: Vec<&str> =
-            enumerable::only_unique(sec.properties.iter().map(|item| item.name)).collect();
+        let unique_props: Vec<&str> = enumerable::only_unique(names()).collect();
 
         let sim = Similar::new(&unique_props);
         let mut similar = sim.find(&unique_props);
@@ -194,14 +193,13 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
 }
 
 fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidationResult<'a> {
-    let props_sections =
-        props
-            .into_iter()
-            .map(|p| (p.name, p.section))
-            .fold(HashMap::new(), |mut h, (prop, sect)| {
-                h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
-                h
-            });
+    let props_sections = props.into_iter().map(|p| (p.name, p.section)).fold(
+        HashMap::new(),
+        |mut h, (prop, sect)| {
+            h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
+            h
+        },
+    );
 
     let duplicates: Vec<&str> = props_sections
         .iter()
