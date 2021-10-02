@@ -1,8 +1,8 @@
 use crate::{parser, Property};
 use ini::{Ini, SectionIter};
 
-pub struct SectionContent<'a> {
-    pub section: &'a str,
+pub struct Section<'a> {
+    pub title: &'a str,
     pub extensions: Vec<String>,
     pub properties: Vec<Property<'a>>,
 }
@@ -18,7 +18,7 @@ impl<'a> FileIterator<SectionIter<'a>> {
 }
 
 impl<'a> Iterator for &'a mut FileIterator<SectionIter<'a>> {
-    type Item = SectionContent<'a>;
+    type Item = Section<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let item = self.inner.next();
@@ -36,8 +36,8 @@ impl<'a> Iterator for &'a mut FileIterator<SectionIter<'a>> {
                 })
                 .collect();
 
-            return Some(SectionContent {
-                section,
+            return Some(Section {
+                title: section,
                 extensions,
                 properties,
             });
@@ -67,11 +67,11 @@ e = f"###;
         let it = &mut FileIterator::from(&conf);
 
         // Act
-        let contents: Vec<SectionContent<'_>> = it.map(|content| content).collect();
+        let contents: Vec<Section<'_>> = it.map(|content| content).collect();
 
         // Assert
         assert_that!(contents).has_length(3);
-        assert_that!(contents.iter().map(|x| x.section).collect::<Vec<&str>>())
+        assert_that!(contents.iter().map(|x| x.title).collect::<Vec<&str>>())
             .is_equal_to(vec!["root", "*", "*.md"]);
     }
 

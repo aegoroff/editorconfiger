@@ -13,7 +13,7 @@ extern crate ini;
 extern crate jwalk;
 extern crate spectral;
 
-use crate::file_iterator::{FileIterator, SectionContent};
+use crate::file_iterator::{FileIterator, Section};
 use crate::similar::Similar;
 use ini::{Ini, Properties};
 use jwalk::WalkDir;
@@ -138,7 +138,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
     let mut all_ext_props = BTreeMap::new();
 
     let it = &mut FileIterator::from(ini);
-    let sections = it.collect::<Vec<SectionContent>>();
+    let sections = it.collect::<Vec<Section>>();
     let mut section_heads = Vec::new();
 
     for sec in &sections {
@@ -148,19 +148,19 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
                 .or_insert_with(Vec::new)
                 .extend(&sec.properties);
         }
-        section_heads.push(sec.section);
+        section_heads.push(sec.title);
 
         let names = || sec.properties.iter().map(|item| item.name);
 
         let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names()).collect();
 
-        append_to_btree(&mut dup_props, sec.section, &mut duplicate_pops);
+        append_to_btree(&mut dup_props, sec.title, &mut duplicate_pops);
 
         let unique_props: Vec<&str> = enumerable::only_unique(names()).collect();
 
         let sim = Similar::new(&unique_props);
         let mut similar = sim.find(&unique_props);
-        append_to_btree(&mut sim_props, sec.section, &mut similar)
+        append_to_btree(&mut sim_props, sec.title, &mut similar)
     }
 
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
