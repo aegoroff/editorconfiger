@@ -53,7 +53,7 @@ mod tests {
     use spectral::prelude::*;
 
     #[test]
-    fn map_several_sections() {
+    fn map_several_sections_len_and_content_as_expected() {
         // Arrange
         let config = r###"
 root = true
@@ -67,7 +67,7 @@ e = f"###;
         let it = &mut FileIterator::from(&conf);
 
         // Act
-        let contents: Vec<Section<'_>> = it.map(|content| content).collect();
+        let contents: Vec<Section<'_>> = it.map(|x| x).collect();
 
         // Assert
         assert_that!(contents).has_length(3);
@@ -76,7 +76,7 @@ e = f"###;
     }
 
     #[test]
-    fn map_test_properties() {
+    fn map_test_properties_len_as_expected() {
         // Arrange
         let config = r###"
 [*]

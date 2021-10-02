@@ -150,13 +150,13 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
         }
         section_heads.push(sec.title);
 
-        let names = || sec.properties.iter().map(|item| item.name);
+        let names_fn = || sec.properties.iter().map(|item| item.name);
 
-        let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names()).collect();
+        let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names_fn()).collect();
 
         append_to_btree(&mut dup_props, sec.title, &mut duplicate_pops);
 
-        let unique_props: Vec<&str> = enumerable::only_unique(names()).collect();
+        let unique_props: Vec<&str> = enumerable::only_unique(names_fn()).collect();
 
         let sim = Similar::new(&unique_props);
         let mut similar = sim.find(&unique_props);
