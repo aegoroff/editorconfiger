@@ -65,16 +65,15 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
-    fn find_suffix_pairs_different_prefix_and_one_not_match_found() {
+    fn find_suffix_pairs_several_matches_found() {
         // Arrange
-        let items = vec!["aa", "aaa", "b"];
+        let items = vec!["aab", "aaab", "b"];
 
         // Act
         let result = find_suffix_pairs(&items);
 
         // Assert
-        assert_that(&result).has_length(1);
+        assert_that(&result).has_length(3);
     }
 
     #[test]
