@@ -2,7 +2,7 @@ pub mod console;
 mod enumerable;
 mod file_iterator;
 mod parser;
-mod similar;
+pub mod similar;
 
 #[macro_use]
 extern crate lalrpop_util;
