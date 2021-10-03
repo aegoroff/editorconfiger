@@ -9,7 +9,7 @@ pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
         .build(items);
 
     items
-        .into_iter()
+        .iter()
         .flat_map(|item| {
             machine
                 .find_overlapping_iter(*item)
