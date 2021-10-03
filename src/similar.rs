@@ -46,7 +46,7 @@ mod tests {
         let result = find_suffix_pairs(&items);
 
         // Assert
-        assert_that(&result).is_empty();
+        assert_that!(result).is_empty();
     }
 
     #[test]
@@ -61,7 +61,7 @@ mod tests {
         let result = find_suffix_pairs(&items);
 
         // Assert
-        assert_that(&result).has_length(1);
+        assert_that!(result).has_length(1);
     }
 
     #[test]
@@ -73,7 +73,7 @@ mod tests {
         let result = find_suffix_pairs(&items);
 
         // Assert
-        assert_that(&result).has_length(3);
+        assert_that!(result).has_length(3);
     }
 
     #[test]
@@ -85,6 +85,6 @@ mod tests {
         let result = find_suffix_pairs(&items);
 
         // Assert
-        assert_that(&result).is_empty();
+        assert_that!(result).is_empty();
     }
 }

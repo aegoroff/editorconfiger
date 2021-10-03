@@ -415,7 +415,7 @@ e = f"###;
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(!result.similar_properties.is_empty());
-            assert_that(&result.ext_problems).is_empty();
+            assert_that!(result.ext_problems).is_empty();
         });
 
         // Act
@@ -440,7 +440,7 @@ e = f"###;
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert_that(&result.ext_problems).is_empty();
+            assert_that!(result.ext_problems).is_empty();
         });
 
         // Act
@@ -463,7 +463,7 @@ a = d
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert_that(&result.ext_problems).has_length(1);
+            assert_that!(result.ext_problems).has_length(1);
         });
 
         // Act
@@ -486,7 +486,7 @@ d_a_b_c = d
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert_that(&result.ext_problems).has_length(1);
+            assert_that!(result.ext_problems).has_length(1);
         });
 
         // Act
