@@ -6,6 +6,28 @@ lalrpop_mod!(
     pub section
 );
 
+/// Parses .editorconfig section title string and extracts all extensions into
+/// Vec. Each extension as separate element if any
+///
+/// Examples:
+///
+/// ```
+/// use editorconfiger::parser;
+///
+/// let result = parser::parse("*.{e1, e2}");
+/// assert_eq!(2, result.len());
+/// assert_eq!("*.e1", result[0]);
+/// assert_eq!("*.e2", result[1]);
+///
+/// let result = parser::parse("*.[ch]");
+/// assert_eq!(2, result.len());
+/// assert_eq!("*.c", result[0]);
+/// assert_eq!("*.h", result[1]);
+///
+/// let result = parser::parse("*");
+/// assert_eq!(1, result.len());
+/// assert_eq!("*", result[0]);
+/// ```
 pub fn parse(string: &str) -> Vec<String> {
     let path = PathBuf::from(string);
     let file = path.file_name().unwrap_or_default().to_str().unwrap_or("*");
