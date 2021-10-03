@@ -126,7 +126,10 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
     let conf = Ini::load_from_file(path);
     match conf {
         Ok(c) => return Some(c),
-        Err(e) => err.error(path, &e.to_string()),
+        Err(e) => {
+            let msg = "Problem opening file or file syntax error - ".to_string() + &e.to_string();
+            err.error(path, &msg)
+        }
     }
     None
 }
