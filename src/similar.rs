@@ -14,18 +14,18 @@ impl Similar {
     }
 
     pub fn find<'a>(&self, items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
-        let mut result: Vec<(&str, &str)> = Vec::new();
-        for item in items {
-            for mat in self.machine.find_overlapping_iter(*item) {
-                if !mat.is_empty() {
-                    let found = &item[mat.start()..mat.end()];
-                    if *item != found && (*item).ends_with(found) {
-                        result.push((*item, found))
-                    }
-                }
-            }
-        }
-        result
+        items
+            .into_iter()
+            .flat_map(|item| {
+                self.machine
+                    .find_overlapping_iter(*item)
+                    .map(move |mat| (*item, mat))
+            })
+            .filter(|(_item, mat)| !mat.is_empty())
+            .map(|(item, mat)| (item, &item[mat.start()..mat.end()]))
+            .filter(|(item, found)| *item != *found && (*item).ends_with(*found))
+            .map(|(item, found)| (item, found))
+            .collect()
     }
 }
 
@@ -35,7 +35,7 @@ mod tests {
     use spectral::prelude::*;
 
     #[test]
-    fn find_no_similar() {
+    fn find_no_similar_not_found() {
         // Arrange
         let items = vec!["csharp_space_before_comma", "space_before_semicolon"];
         let sim = Similar::new(&items);
@@ -48,7 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn find_has_similar() {
+    fn find_different_prefix_found() {
         // Arrange
         let items = vec![
             "csharp_space_before_comma",
@@ -64,7 +64,7 @@ mod tests {
     }
 
     #[test]
-    fn find_has_similar_but_as_prefix() {
+    fn find_different_suffix_not_found() {
         // Arrange
         let items = vec!["block_comment_end", "block_comment"];
         let sim = Similar::new(&items);
