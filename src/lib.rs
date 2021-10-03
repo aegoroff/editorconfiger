@@ -14,7 +14,6 @@ extern crate jwalk;
 extern crate spectral;
 
 use crate::file_iterator::{FileIterator, Section};
-use crate::similar::Similar;
 use ini::{Ini, Properties};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -158,8 +157,7 @@ fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
 
         let unique_props: Vec<&str> = enumerable::only_unique(names_fn()).collect();
 
-        let sim = Similar::new(&unique_props);
-        let mut similar = sim.find(&unique_props);
+        let mut similar = similar::find_suffix_pairs(&unique_props);
         append_to_btree(&mut sim_props, sec.title, &mut similar)
     }
 
@@ -210,9 +208,7 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
         .collect();
 
     let props: Vec<&str> = props_sections.keys().copied().collect();
-    let similar = Similar::new(&props);
-    let similar = similar
-        .find(&props)
+    let similar = similar::find_suffix_pairs(&props)
         .into_iter()
         .filter(|(first, second)| {
             let first_sections = props_sections.get(first).unwrap();
