@@ -54,7 +54,7 @@ fn parse_file(file: &str) -> Vec<String> {
     let parser = section::DefinesParser::new();
     return match parser.parse(file) {
         Ok(r) => r,
-        Err(_e) => vec![],
+        Err(_e) => vec![]
     };
 }
 
@@ -176,6 +176,20 @@ mod tests {
         assert_that!(result).has_length(2);
         assert_eq!("f1.e1", result[0]);
         assert_eq!("*.f1.e1", result[1]);
+    }
+
+    #[test]
+    fn parse_path_get_data_many_nested() {
+        // Arrange
+
+        // Act
+        let result = parse("{f1.e1,{f1.e2, f1.e3}}");
+
+        // Assert
+        assert_that!(result).has_length(3);
+        assert_eq!("f1.e1", result[0]);
+        assert_eq!("f1.e2", result[1]);
+        assert_eq!("f1.e3", result[2]);
     }
 
     #[test]

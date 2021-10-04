@@ -60,7 +60,8 @@ FullList : Vec<String> = {
 
 FullItems : Vec<String> = {
     <w:FullItem> => vec![w],
-    <w:FullItem> "," <ws:FullItems> => { let mut v = vec![w]; v.extend(ws); v }
+    <w:FullItem> "," <ws:FullItems> => { let mut v = vec![w]; v.extend(ws); v },
+    <w:FullList> => w,
 }
 
 #[inline]
