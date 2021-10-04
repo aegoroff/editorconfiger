@@ -3,6 +3,7 @@ mod enumerable;
 mod file_iterator;
 pub mod parser;
 pub mod similar;
+mod glob;
 
 #[macro_use]
 extern crate lalrpop_util;
@@ -12,6 +13,7 @@ extern crate aho_corasick;
 extern crate ini;
 extern crate jwalk;
 extern crate spectral;
+extern crate nom;
 
 use crate::file_iterator::{FileIterator, Section};
 use ini::{Ini, Properties};

@@ -20,6 +20,7 @@ prettytable-rs = "^0.8"
 jwalk = "0.6"
 aho-corasick = "0.7"
 spectral = "0.6.0"
+nom = "7"
 
 [[bin]]
 name = "econfer"
