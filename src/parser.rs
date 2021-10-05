@@ -54,7 +54,7 @@ fn parse_file(file: &str) -> Vec<String> {
     let parser = section::DefinesParser::new();
     return match parser.parse(file) {
         Ok(r) => r,
-        Err(_e) => vec![]
+        Err(_e) => vec![],
     };
 }
 

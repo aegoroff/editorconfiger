@@ -1,9 +1,9 @@
 pub mod console;
 mod enumerable;
 mod file_iterator;
+mod glob;
 pub mod parser;
 pub mod similar;
-mod glob;
 
 #[macro_use]
 extern crate lalrpop_util;
@@ -12,8 +12,8 @@ extern crate prettytable;
 extern crate aho_corasick;
 extern crate ini;
 extern crate jwalk;
-extern crate spectral;
 extern crate nom;
+extern crate spectral;
 
 use crate::file_iterator::{FileIterator, Section};
 use ini::{Ini, Properties};
@@ -128,7 +128,10 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
     let conf = Ini::load_from_file(path);
     match conf {
         Ok(c) => return Some(c),
-        Err(e) => err.error(path, &format!("Problem opening file or file syntax error - {}", e)),
+        Err(e) => err.error(
+            path,
+            &format!("Problem opening file or file syntax error - {}", e),
+        ),
     }
     None
 }

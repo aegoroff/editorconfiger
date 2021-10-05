@@ -1,11 +1,17 @@
-use nom::{combinator::iterator, IResult, character::complete, sequence::terminated};
+use nom::bytes::complete::{is_not};
+use nom::error::VerboseError;
+use nom::sequence::{delimited};
+use nom::{character::complete, IResult, Parser};
 
-fn parse_str(input: &str) -> Vec<&str> {
-    let mut it = iterator(input, terminated(complete::not_line_ending, complete::line_ending));
-    let mut parsed : Vec<&str> = it.collect();
-    let res: IResult<_,_> = it.finish();
-    parsed.push(res.unwrap_or_default().0);
-    parsed
+fn parse_str(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    s_expr(is_not("[]"))(input)
+}
+
+fn s_expr<'a, O1, F>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O1, VerboseError<&'a str>>
+where
+    F: Parser<&'a str, O1, VerboseError<&'a str>>,
+{
+    delimited(complete::char('['), inner, complete::char(']'))
 }
 
 #[cfg(test)]
@@ -16,16 +22,17 @@ mod tests {
     #[test]
     fn parse() {
         // Arrange
-        let config = r###"
-[*]
-a = b
-c = d"###;
+        let cases = vec![
+            ("[*]", "*"),
+            ("[ * ]", " * "),
+            ("[123]", "123"),
+            ("[]", ""),
+        ];
 
-        // Act
-        let result = parse_str(config);
-
-        // Assert
-        assert_that!(result).has_length(4);
+        // Act & Assert
+        cases.into_iter().for_each(|case| {
+            let result = parse_str(case.0);
+            assert_that!(result.unwrap_or_default().1).is_equal_to(case.1);
+        });
     }
-
 }
