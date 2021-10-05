@@ -24,6 +24,7 @@ Single : String = {
 }
 
 SingleExt : Vec<String> = {
+    <s:Word> ".[" <w:Word> "]" => w.chars().map(|c| format!("{}.{}", s, c)).collect(),
     <s:Star> ".[" <w:Word> "]" => w.chars().map(|c| format!("{}.{}", s, c)).collect(),
     <s1:Star> <s2:Star> ".[" <w:Word> "]" => w.chars().map(|c| format!("{}.{}", s2, c)).collect(),
 }
@@ -59,24 +60,20 @@ FullList : Vec<String> = {
 }
 
 FullItems : Vec<String> = {
-    <w:FullItem> => vec![w],
-    <w:FullItem> "," <ws:FullItems> => { let mut v = vec![w]; v.extend(ws); v },
+    <w:FullItem> => w,
+    <w:FullItem> "," <ws:FullItems> => { let mut y = w; y.extend(ws); y },
     <w:FullList> => w,
 }
 
 #[inline]
-FullItem : String = {
-    Word,
-    Full,
-    Single,
+FullItem : Vec<String> = {
+    <w:Word> => vec![w],
+    <w:Full> => vec![w],
+    <w:Single> => vec![w],
+    <w:SingleExt> => w,
 }
 
 Words : Vec<String> = {
     <w:Word> => vec![w],
-    <w:Word> "," <ws:Words> => { let mut v = vec![w]; v.extend(ws); v }
-}
-
-Items : Vec<String> = {
-    <i:Single> => vec![<>],
-    <i:Single> "," <is:Items> => { let mut v = vec![i]; v.extend(is); v }
+    <w:Word> "," <ws:Words> => { let mut v = vec![w]; v.extend(ws); v },
 }

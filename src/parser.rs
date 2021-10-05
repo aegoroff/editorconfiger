@@ -193,6 +193,20 @@ mod tests {
     }
 
     #[test]
+    fn parse_path_get_data_many_nested_in_squares() {
+        // Arrange
+
+        // Act
+        let result = parse("{f1.e1,f1.[ch]}");
+
+        // Assert
+        assert_that!(result).has_length(3);
+        assert_eq!("f1.e1", result[0]);
+        assert_eq!("f1.c", result[1]);
+        assert_eq!("f1.h", result[2]);
+    }
+
+    #[test]
     fn parse_path_get_data_many_only_list_full_wild() {
         // Arrange
 
