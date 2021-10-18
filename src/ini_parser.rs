@@ -1,3 +1,4 @@
+use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::character::complete::multispace0;
 use nom::combinator::ParserIterator;
@@ -5,6 +6,7 @@ use nom::error::{ParseError, VerboseError};
 use nom::sequence;
 use nom::{character::complete, combinator, IResult, Parser};
 
+#[derive(Debug, PartialEq)]
 enum IniLine<'a> {
     Head(&'a str),
     Line(&'a str, &'a str),
@@ -110,7 +112,10 @@ fn comment<'a, E>(input: &'a str) -> IResult<&'a str, &'a str, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut action = sequence::preceded(complete::char('#'), is_not("\n\r"));
+    let mut action = sequence::preceded(
+        alt((complete::char('#'), complete::char(';'))),
+        is_not("\n\r"),
+    );
     action(input)
 }
 
@@ -165,6 +170,15 @@ mod tests {
                 ],
             ),
             (
+                "[a]\n; test\nk=v\n[b]",
+                vec![
+                    IniLine::Head("a"),
+                    IniLine::Comment(" test"),
+                    IniLine::Line("k", "v"),
+                    IniLine::Head("b"),
+                ],
+            ),
+            (
                 "[a]\n# test\nk = v \n[b]",
                 vec![
                     IniLine::Head("a"),
@@ -176,9 +190,9 @@ mod tests {
         ];
 
         // Act & Assert
-        cases.into_iter().for_each(|case| {
-            let result = parse_ini(case.0);
-            assert_that!(result).has_length(case.1.len());
+        cases.into_iter().for_each(|(case, expected)| {
+            let result = parse_ini(case);
+            assert_that!(result).is_equal_to(expected);
         });
     }
 
@@ -192,6 +206,20 @@ mod tests {
 
         // Assert
         assert_that!(trimmed).is_equal_to("test");
+        assert_that!(trail).is_equal_to("");
+    }
+
+    #[test]
+    #[ignore]
+    fn trim_spaces_inside() {
+        // Arrange
+        let s = "  test test  ";
+
+        // Act
+        let (trail, trimmed) = trim_spaces::<VerboseError<&str>>(s).unwrap();
+
+        // Assert
+        assert_that!(trimmed).is_equal_to("test test");
         assert_that!(trail).is_equal_to("");
     }
 }
