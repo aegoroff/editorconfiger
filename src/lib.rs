@@ -1,7 +1,7 @@
 pub mod console;
 mod enumerable;
 mod file_iterator;
-mod glob;
+mod ini_parser;
 pub mod parser;
 pub mod similar;
 
