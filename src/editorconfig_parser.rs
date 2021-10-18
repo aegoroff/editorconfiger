@@ -7,22 +7,22 @@ use nom::sequence;
 use nom::{character::complete, combinator, IResult, Parser};
 
 #[derive(Debug, PartialEq)]
-enum IniLine<'a> {
+enum EditorConfigLine<'a> {
     Head(&'a str),
-    Line(&'a str, &'a str),
+    Pair(&'a str, &'a str),
     Comment(&'a str),
 }
 
-fn parse_ini<'a>(input: &'a str) -> Vec<IniLine<'a>> {
+fn parse_editorconfig<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
     parse_str(input, line::<VerboseError<&'a str>>)
 }
 
 fn parse_str<'a>(
     input: &'a str,
-    mut line_parser: impl FnMut(&'a str) -> Option<IniLine<'a>>,
-) -> Vec<IniLine<'a>> {
+    mut line_parser: impl FnMut(&'a str) -> Option<EditorConfigLine<'a>>,
+) -> Vec<EditorConfigLine<'a>> {
     let mut it = lines::<VerboseError<&str>>(input);
-    let mut result: Vec<IniLine<'a>> = it.filter_map(|x| line_parser(x)).collect();
+    let mut result: Vec<EditorConfigLine<'a>> = it.filter_map(|x| line_parser(x)).collect();
     let r: IResult<_, _, _> = it.finish();
     let last = r.unwrap().0;
     if !last.is_empty() {
@@ -43,18 +43,18 @@ where
     )
 }
 
-fn line<'a, E>(input: &'a str) -> Option<IniLine<'a>>
+fn line<'a, E>(input: &'a str) -> Option<EditorConfigLine<'a>>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
     // Section head
     let result: IResult<&'a str, &'a str, E> = s_expr(is_not("]"))(input);
     let head = match result {
-        Ok((_trail, matched)) => Some(IniLine::Head(matched)),
+        Ok((_trail, matched)) => Some(EditorConfigLine::Head(matched)),
         Err(_e) => None,
     };
 
-    if let Some(IniLine::Head(_h)) = head {
+    if let Some(EditorConfigLine::Head(_h)) = head {
         return head;
     }
 
@@ -66,7 +66,7 @@ where
             let vt = trim_spaces::<E>(v);
             if let Ok((_trail, kt)) = kt {
                 if let Ok((_trail, vt)) = vt {
-                    return Some(IniLine::Line(kt, vt));
+                    return Some(EditorConfigLine::Pair(kt, vt));
                 }
             }
             None
@@ -74,18 +74,18 @@ where
         Err(_e) => None,
     };
 
-    if let Some(IniLine::Line(_k, _v)) = kv {
+    if let Some(EditorConfigLine::Pair(_k, _v)) = kv {
         return kv;
     }
 
     // Comment
     let result: IResult<&'a str, &'a str, E> = comment(input);
     let c = match result {
-        Ok((_trail, c)) => Some(IniLine::Comment(c)),
+        Ok((_trail, c)) => Some(EditorConfigLine::Comment(c)),
         Err(_e) => None,
     };
 
-    if let Some(IniLine::Comment(_c)) = c {
+    if let Some(EditorConfigLine::Comment(_c)) = c {
         return c;
     }
 
@@ -143,55 +143,67 @@ mod tests {
     fn parse() {
         // Arrange
         let cases = vec![
-            ("[a]\n[b]", vec![IniLine::Head("a"), IniLine::Head("b")]),
-            ("[a]\r\n[b]", vec![IniLine::Head("a"), IniLine::Head("b")]),
-            ("[a]\n\n[b]", vec![IniLine::Head("a"), IniLine::Head("b")]),
-            ("[a]", vec![IniLine::Head("a")]),
-            ("[a]\r\n", vec![IniLine::Head("a")]),
+            (
+                "[a]\n[b]",
+                vec![EditorConfigLine::Head("a"), EditorConfigLine::Head("b")],
+            ),
+            (
+                "[a]\r\n[b]",
+                vec![EditorConfigLine::Head("a"), EditorConfigLine::Head("b")],
+            ),
+            (
+                "[a]\n\n[b]",
+                vec![EditorConfigLine::Head("a"), EditorConfigLine::Head("b")],
+            ),
+            ("[a]", vec![EditorConfigLine::Head("a")]),
+            ("[a]\r\n", vec![EditorConfigLine::Head("a")]),
             (
                 "[a]\nk=v",
-                vec![IniLine::Head("a"), IniLine::Line("k", "v")],
+                vec![
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Pair("k", "v"),
+                ],
             ),
             (
                 "[a]\nk=v\n[b]",
                 vec![
-                    IniLine::Head("a"),
-                    IniLine::Line("k", "v"),
-                    IniLine::Head("b"),
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Head("b"),
                 ],
             ),
             (
                 "[a]\n# test\nk=v\n[b]",
                 vec![
-                    IniLine::Head("a"),
-                    IniLine::Comment(" test"),
-                    IniLine::Line("k", "v"),
-                    IniLine::Head("b"),
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Head("b"),
                 ],
             ),
             (
                 "[a]\n; test\nk=v\n[b]",
                 vec![
-                    IniLine::Head("a"),
-                    IniLine::Comment(" test"),
-                    IniLine::Line("k", "v"),
-                    IniLine::Head("b"),
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Head("b"),
                 ],
             ),
             (
                 "[a]\n# test\nk = v \n[b]",
                 vec![
-                    IniLine::Head("a"),
-                    IniLine::Comment(" test"),
-                    IniLine::Line("k", "v"),
-                    IniLine::Head("b"),
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Head("b"),
                 ],
             ),
         ];
 
         // Act & Assert
         cases.into_iter().for_each(|(case, expected)| {
-            let result = parse_ini(case);
+            let result = parse_editorconfig(case);
             assert_that!(result).is_equal_to(expected);
         });
     }

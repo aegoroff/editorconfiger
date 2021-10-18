@@ -1,7 +1,7 @@
 pub mod console;
+mod editorconfig_parser;
 mod enumerable;
 mod file_iterator;
-mod ini_parser;
 pub mod parser;
 pub mod similar;
 
