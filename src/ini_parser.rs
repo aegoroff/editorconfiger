@@ -21,7 +21,7 @@ fn parse_str<'a>(
     let mut result: Vec<IniLine<'a>> = it.filter_map(|x| line_parser(x)).collect();
     let r: IResult<_, _, _> = it.finish();
     let last = r.unwrap().0;
-    if last.len() > 0 {
+    if !last.is_empty() {
         result.push(line_parser(last).unwrap());
     }
     result
@@ -46,7 +46,7 @@ where
     let result: IResult<&'a str, &'a str, E> = s_expr(is_not("]"))(input);
     match result {
         Ok((_trail, matched)) => Some(IniLine::Head(matched)),
-        Err(e) => None,
+        Err(_e) => None,
     }
 }
 
