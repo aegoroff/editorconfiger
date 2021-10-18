@@ -1,6 +1,7 @@
 use nom::bytes::complete::is_not;
+use nom::character::complete::multispace0;
 use nom::combinator::ParserIterator;
-use nom::error::VerboseError;
+use nom::error::{ParseError, VerboseError};
 use nom::sequence;
 use nom::{character::complete, combinator, IResult, Parser};
 
@@ -32,7 +33,7 @@ fn lines<'a, E>(
     input: &'a str,
 ) -> ParserIterator<&'a str, E, impl FnMut(&'a str) -> Result<(&str, &str), nom::Err<E>>>
 where
-    E: nom::error::ParseError<&'a str> + std::fmt::Debug,
+    E: ParseError<&'a str> + std::fmt::Debug,
 {
     combinator::iterator(
         input,
@@ -42,8 +43,9 @@ where
 
 fn line<'a, E>(input: &'a str) -> Option<IniLine<'a>>
 where
-    E: nom::error::ParseError<&'a str> + std::fmt::Debug,
+    E: ParseError<&'a str> + std::fmt::Debug,
 {
+    // Section head
     let result: IResult<&'a str, &'a str, E> = s_expr(is_not("]"))(input);
     let head = match result {
         Ok((_trail, matched)) => Some(IniLine::Head(matched)),
@@ -54,9 +56,19 @@ where
         return head;
     }
 
+    // Key/value line
     let result: IResult<&'a str, (&'a str, &'a str), E> = key_value(input);
     let kv = match result {
-        Ok((_trail, (k, v))) => Some(IniLine::Line(k, v)),
+        Ok((_trail, (k, v))) => {
+            let kt = trim_spaces::<E>(k);
+            let vt = trim_spaces::<E>(v);
+            if let Ok((_trail, kt)) = kt {
+                if let Ok((_trail, vt)) = vt {
+                    return Some(IniLine::Line(kt, vt));
+                }
+            }
+            None
+        }
         Err(_e) => None,
     };
 
@@ -64,6 +76,7 @@ where
         return kv;
     }
 
+    // Comment
     let result: IResult<&'a str, &'a str, E> = comment(input);
     let c = match result {
         Ok((_trail, c)) => Some(IniLine::Comment(c)),
@@ -80,14 +93,14 @@ where
 fn s_expr<'a, F, E>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str, E>
 where
     F: Parser<&'a str, &'a str, E>,
-    E: nom::error::ParseError<&'a str> + std::fmt::Debug,
+    E: ParseError<&'a str> + std::fmt::Debug,
 {
     sequence::delimited(complete::char('['), inner, complete::char(']'))
 }
 
 fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, (&'a str, &'a str), E>
 where
-    E: nom::error::ParseError<&'a str> + std::fmt::Debug,
+    E: ParseError<&'a str> + std::fmt::Debug,
 {
     let mut action = sequence::separated_pair(is_not("="), complete::char('='), is_not("="));
     action(input)
@@ -95,10 +108,25 @@ where
 
 fn comment<'a, E>(input: &'a str) -> IResult<&'a str, &'a str, E>
 where
-    E: nom::error::ParseError<&'a str> + std::fmt::Debug,
+    E: ParseError<&'a str> + std::fmt::Debug,
 {
     let mut action = sequence::preceded(complete::char('#'), is_not("\n\r"));
     action(input)
+}
+
+fn trim_spaces<'a, E>(input: &'a str) -> IResult<&'a str, &'a str, E>
+where
+    E: ParseError<&'a str> + std::fmt::Debug,
+{
+    ws(is_not(" \t"))(input)
+}
+
+fn ws<'a, F, E>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str, E>
+where
+    F: Parser<&'a str, &'a str, E>,
+    E: ParseError<&'a str> + std::fmt::Debug,
+{
+    sequence::delimited(multispace0, inner, multispace0)
 }
 
 #[cfg(test)]
@@ -136,6 +164,15 @@ mod tests {
                     IniLine::Head("b"),
                 ],
             ),
+            (
+                "[a]\n# test\nk = v \n[b]",
+                vec![
+                    IniLine::Head("a"),
+                    IniLine::Comment(" test"),
+                    IniLine::Line("k", "v"),
+                    IniLine::Head("b"),
+                ],
+            ),
         ];
 
         // Act & Assert
@@ -143,5 +180,18 @@ mod tests {
             let result = parse_ini(case.0);
             assert_that!(result).has_length(case.1.len());
         });
+    }
+
+    #[test]
+    fn trim() {
+        // Arrange
+        let s = "  test  ";
+
+        // Act
+        let (trail, trimmed) = trim_spaces::<VerboseError<&str>>(s).unwrap();
+
+        // Assert
+        assert_that!(trimmed).is_equal_to("test");
+        assert_that!(trail).is_equal_to("");
     }
 }
