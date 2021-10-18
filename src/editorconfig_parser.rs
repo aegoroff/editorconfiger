@@ -23,11 +23,13 @@ fn parse_str<'a>(
 ) -> Vec<EditorConfigLine<'a>> {
     let mut it = lines::<VerboseError<&str>>(input);
     let mut result: Vec<EditorConfigLine<'a>> = it.filter_map(|x| line_parser(x)).collect();
-    let r: IResult<_, _, _> = it.finish();
-    let last = r.unwrap().0;
-    if !last.is_empty() {
-        result.push(line_parser(last).unwrap());
-    }
+
+    if let Ok((last, _)) = it.finish() {
+        if !last.is_empty() {
+            result.push(line_parser(last).unwrap());
+        }
+    };
+
     result
 }
 
