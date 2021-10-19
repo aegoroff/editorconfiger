@@ -22,7 +22,8 @@ fn parse_str<'a>(
     mut line_parser: impl FnMut(&'a str) -> Option<EditorConfigLine<'a>>,
 ) -> Vec<EditorConfigLine<'a>> {
     let mut it = lines::<VerboseError<&str>>(input);
-    let mut result: Vec<EditorConfigLine<'a>> = it.filter_map(|x| line_parser(x)).collect();
+    let lit = it.filter_map(|x| line_parser(x));
+    let mut result: Vec<EditorConfigLine<'a>> = lit.collect();
 
     if let Ok((last, _)) = it.finish() {
         if !last.is_empty() {
@@ -106,7 +107,7 @@ fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, (&'a str, &'a str), E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut action = sequence::separated_pair(is_not("="), complete::char('='), is_not("="));
+    let mut action = sequence::separated_pair(is_not("=;#"), complete::char('='), is_not("=;#"));
     action(input)
 }
 
@@ -161,6 +162,20 @@ mod tests {
             ("[a]\r\n", vec![EditorConfigLine::Head("a")]),
             (
                 "[a]\nk=v",
+                vec![
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Pair("k", "v"),
+                ],
+            ),
+            (
+                "[a]\nk=v ; test",
+                vec![
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Pair("k", "v"),
+                ],
+            ),
+            (
+                "[a]\nk=v; test",
                 vec![
                     EditorConfigLine::Head("a"),
                     EditorConfigLine::Pair("k", "v"),
