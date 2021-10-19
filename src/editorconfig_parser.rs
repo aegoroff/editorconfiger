@@ -4,16 +4,16 @@ use nom::character::complete::multispace0;
 use nom::combinator::ParserIterator;
 use nom::error::{ParseError, VerboseError};
 use nom::sequence;
-use nom::{character::complete, combinator, IResult, Parser};
+use nom::{character::complete, combinator, IResult};
 
 #[derive(Debug, PartialEq)]
-enum EditorConfigLine<'a> {
+pub enum EditorConfigLine<'a> {
     Head(&'a str),
     Pair(&'a str, &'a str),
     Comment(&'a str),
 }
 
-fn parse_editorconfig<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
+pub fn parse_editorconfig<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
     parse_str(input, line::<VerboseError<&'a str>>)
 }
 
@@ -132,7 +132,7 @@ where
 
 fn ws<'a, F, E>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str, E>
 where
-    F: Parser<&'a str, &'a str, E>,
+    F: nom::Parser<&'a str, &'a str, E>,
     E: ParseError<&'a str> + std::fmt::Debug,
 {
     sequence::delimited(multispace0, inner, multispace0)
