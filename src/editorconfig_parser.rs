@@ -51,14 +51,8 @@ where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
     // Section head
-    let result: IResult<&'a str, &'a str, E> = s_expr(is_not("]"))(input);
-    let head = match result {
-        Ok((_trail, matched)) => Some(EditorConfigLine::Head(matched)),
-        Err(_e) => None,
-    };
-
-    if let Some(EditorConfigLine::Head(_h)) = head {
-        return head;
+    if let Some(matched) = head::<E>(input) {
+        return Some(EditorConfigLine::Head(matched));
     }
 
     // Key/value line
@@ -95,12 +89,22 @@ where
     None
 }
 
-fn s_expr<'a, F, E>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str, E>
+fn head<'a, E>(input: &'a str) -> Option<&'a str>
 where
-    F: Parser<&'a str, &'a str, E>,
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    sequence::delimited(complete::char('['), inner, complete::char(']'))
+    let mut action = sequence::preceded(
+        complete::char('['),
+        is_not("\n\r"),
+    );
+    let parsed : IResult<&str, &str, E> = action(input);
+    if let Ok((_trail, head)) = parsed {
+        let rix = head.rfind(']');
+        if let Some(rix) = rix {
+            return Some(&head[..rix])
+        }
+    }
+    None
 }
 
 fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, (&'a str, &'a str), E>
@@ -146,6 +150,22 @@ mod tests {
     fn parse() {
         // Arrange
         let cases = vec![
+            (
+                "[*.md]",
+                vec![EditorConfigLine::Head("*.md")],
+            ),
+            (
+                "[*.[md]]",
+                vec![EditorConfigLine::Head("*.[md]")],
+            ),
+            (
+                "[*.[md]",
+                vec![EditorConfigLine::Head("*.[md")],
+            ),
+            (
+                "[ *.[md] ]",
+                vec![EditorConfigLine::Head(" *.[md] ")],
+            ),
             (
                 "[a]\n[b]",
                 vec![EditorConfigLine::Head("a"), EditorConfigLine::Head("b")],
