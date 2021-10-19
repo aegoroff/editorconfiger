@@ -201,6 +201,21 @@ mod tests {
                     EditorConfigLine::Head("b"),
                 ],
             ),
+            (
+                "[a\n# test\nk = v \n[b]",
+                vec![
+                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Head("b"),
+                ],
+            ),
+            (
+                "[a\n# test\nk =  \n[b]",
+                vec![
+                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Head("b"),
+                ],
+            ),
         ];
 
         // Act & Assert
@@ -208,6 +223,44 @@ mod tests {
             let result = parse_editorconfig(case);
             assert_that!(result).is_equal_to(expected);
         });
+    }
+
+    #[test]
+    fn parse_real_file() {
+        // Arrange
+        let s = r##"# Editor configuration, see http://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+"##;
+
+        // Act
+        let result = parse_editorconfig(s);
+
+        // Assert
+        let expected = vec![
+            EditorConfigLine::Comment(" Editor configuration, see http://editorconfig.org"),
+            EditorConfigLine::Pair("root", "true"),
+            EditorConfigLine::Head("*"),
+            EditorConfigLine::Pair("charset", "utf-8"),
+            EditorConfigLine::Pair("indent_style", "space"),
+            EditorConfigLine::Pair("indent_size", "2"),
+            EditorConfigLine::Pair("insert_final_newline", "true"),
+            EditorConfigLine::Pair("trim_trailing_whitespace", "true"),
+            EditorConfigLine::Head("*.md"),
+            EditorConfigLine::Pair("max_line_length", "off"),
+            EditorConfigLine::Pair("trim_trailing_whitespace", "false"),
+        ];
+        assert_that!(result).is_equal_to(expected);
     }
 
     #[test]
