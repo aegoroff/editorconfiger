@@ -93,15 +93,12 @@ fn head<'a, E>(input: &'a str) -> Option<&'a str>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut action = sequence::preceded(
-        complete::char('['),
-        is_not("\n\r"),
-    );
-    let parsed : IResult<&str, &str, E> = action(input);
+    let mut action = sequence::preceded(complete::char('['), is_not("\n\r"));
+    let parsed: IResult<&str, &str, E> = action(input);
     if let Ok((_trail, head)) = parsed {
         let rix = head.rfind(']');
         if let Some(rix) = rix {
-            return Some(&head[..rix])
+            return Some(&head[..rix]);
         }
     }
     None
@@ -150,22 +147,10 @@ mod tests {
     fn parse() {
         // Arrange
         let cases = vec![
-            (
-                "[*.md]",
-                vec![EditorConfigLine::Head("*.md")],
-            ),
-            (
-                "[*.[md]]",
-                vec![EditorConfigLine::Head("*.[md]")],
-            ),
-            (
-                "[*.[md]",
-                vec![EditorConfigLine::Head("*.[md")],
-            ),
-            (
-                "[ *.[md] ]",
-                vec![EditorConfigLine::Head(" *.[md] ")],
-            ),
+            ("[*.md]", vec![EditorConfigLine::Head("*.md")]),
+            ("[*.[md]]", vec![EditorConfigLine::Head("*.[md]")]),
+            ("[*.[md]", vec![EditorConfigLine::Head("*.[md")]),
+            ("[ *.[md] ]", vec![EditorConfigLine::Head(" *.[md] ")]),
             (
                 "[a]\n[b]",
                 vec![EditorConfigLine::Head("a"), EditorConfigLine::Head("b")],
