@@ -4,6 +4,10 @@ mod enumerable;
 mod file_iterator;
 pub mod parser;
 pub mod similar;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::{BufReader, SeekFrom};
+use std::path::Path;
 
 #[macro_use]
 extern crate lalrpop_util;
@@ -134,6 +138,30 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
         ),
     }
     None
+}
+
+fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Error> {
+    let file = File::open(filename)?;
+    let mut reader = BufReader::new(file);
+
+    let mut with_bom = false;
+    // Check if file starts with a BOM marker
+    // UTF-8: EF BB BF
+    let mut bom = [0u8; 3];
+    if let Ok(..) = reader.read_exact(&mut bom) {
+        if &bom == b"\xEF\xBB\xBF" {
+            with_bom = true;
+        }
+    }
+
+    if !with_bom {
+        // Reset file pointer
+        reader.seek(SeekFrom::Start(0))?;
+    }
+
+    let mut contents = String::new();
+    reader.read_to_string(&mut contents)?;
+    Ok(contents)
 }
 
 fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
