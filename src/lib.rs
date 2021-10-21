@@ -18,7 +18,6 @@ extern crate jwalk;
 extern crate nom;
 extern crate spectral;
 
-use crate::file_parser::{Section};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -113,18 +112,18 @@ pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &
     }
 }
 
-// pub fn compare<E: Errorer, F: ComparisonFormatter>(
-//     path1: &str,
-//     path2: &str,
-//     err: &E,
-//     formatter: &F,
-// ) {
-//     if let Some(c1) = read_from_file(path1, err) {
-//         if let Some(c2) = read_from_file(path2, err) {
-//             compare_files(&c1, &c2, formatter);
-//         }
-//     }
-// }
+pub fn compare<E: Errorer, F: ComparisonFormatter>(
+    path1: &str,
+    path2: &str,
+    err: &E,
+    formatter: &F,
+) {
+    if let Some(c1) = read_from_file(path1, err) {
+        if let Some(c2) = read_from_file(path2, err) {
+            compare_files(&c1, &c2, formatter);
+        }
+    }
+}
 
 fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<String> {
     let conf = read_file_content(path);
@@ -254,50 +253,75 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
     }
 }
 
-// fn compare_files<F: ComparisonFormatter>(conf1: &str, conf2: &str, formatter: &F) {
-//     let empty = &Properties::new();
-//
-//     let result: BTreeMap<&str, Vec<CompareItem>> = conf1
-//         .iter()
-//         .map(|(s1, props1)| {
-//             let props2 = conf2.section(s1).unwrap_or(empty);
-//             (s1, props1, props2)
-//         })
-//         .map(|(s1, props1, props2)| {
-//             let items: Vec<CompareItem> = props1
-//                 .iter()
-//                 .map(|(k1, v1)| CompareItem {
-//                     key: k1,
-//                     first_value: Some(v1),
-//                     second_value: props2.get(k1),
-//                 })
-//                 .chain(
-//                     // Properties in the section that missing in the first
-//                     props2
-//                         .iter()
-//                         .filter(|(k, _)| !props1.contains_key(k))
-//                         .map(|(k, v)| CompareItem::only_second(k, v)),
-//                 )
-//                 .collect();
-//             (s1.unwrap_or_default(), items)
-//         })
-//         .chain(
-//             // Sections missing in the first
-//             conf2
-//                 .iter()
-//                 .filter(|(s, _)| conf1.section(*s).is_none())
-//                 .map(|(s, p)| {
-//                     let items: Vec<CompareItem> = p
-//                         .iter()
-//                         .map(|(k, v)| CompareItem::only_second(k, v))
-//                         .collect();
-//                     (s.unwrap_or_default(), items)
-//                 }),
-//         )
-//         .collect();
-//
-//     formatter.format(result);
-// }
+fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
+    let empty = HashMap::<&str, &str>::new();
+
+    let f1 = file_parser::parse(content1);
+    let f2 = file_parser::parse(content2);
+
+    let s1_props: HashMap<&str, HashMap<&str, &str>> = f1
+        .iter()
+        .map(|s| {
+            (
+                s.title,
+                s.properties.iter().map(|p| (p.name, p.value)).collect(),
+            )
+        })
+        .collect();
+
+    let s2_props: HashMap<&str, HashMap<&str, &str>> = f2
+        .iter()
+        .map(|s| {
+            (
+                s.title,
+                s.properties.iter().map(|p| (p.name, p.value)).collect(),
+            )
+        })
+        .collect();
+
+    let result: BTreeMap<&str, Vec<CompareItem>> = f1
+        .iter()
+        .map(|s1| {
+            let props1: HashMap<&str, &str> =
+                s1.properties.iter().map(|p| (p.name, p.value)).collect();
+            let props2 = s2_props.get(s1.title).unwrap_or(&empty);
+            (s1, props1, props2)
+        })
+        .map(|(s1, props1, props2)| {
+            let items: Vec<CompareItem> = props1
+                .iter()
+                .map(|(k1, v1)| CompareItem {
+                    key: k1,
+                    first_value: Some(v1),
+                    second_value: props2.get(k1).copied(),
+                })
+                .chain(
+                    // Properties in the section that missing in the first
+                    props2
+                        .iter()
+                        .filter(|(k, _)| !props1.contains_key(*k))
+                        .map(|(k, v)| CompareItem::only_second(k, v)),
+                )
+                .collect();
+            (s1.title, items)
+        })
+        .chain(
+            // Sections missing in the first
+            f2.iter()
+                .filter(|s| s1_props.get(s.title).is_none())
+                .map(|s| {
+                    let items: Vec<CompareItem> = s
+                        .properties
+                        .iter()
+                        .map(|p| CompareItem::only_second(p.name, p.value))
+                        .collect();
+                    (s.title, items)
+                }),
+        )
+        .collect();
+
+    formatter.format(result);
+}
 
 #[cfg(test)]
 mod tests {
@@ -557,7 +581,7 @@ c = d2
         });
 
         // Act
-        //compare_files(config1, config2, &formatter);
+        compare_files(config1, config2, &formatter);
     }
 
     #[test]
@@ -585,7 +609,7 @@ c = d2
         });
 
         // Act
-        //compare_files(config1, config2, &formatter);
+        compare_files(config1, config2, &formatter);
     }
 
     #[test]
@@ -607,7 +631,7 @@ d = d2
         });
 
         // Act
-        //compare_files(config1, config2, &formatter);
+        compare_files(config1, config2, &formatter);
     }
 
     #[test]
@@ -630,6 +654,6 @@ d = d2
         });
 
         // Act
-        //compare_files(config1, config2, &formatter);
+        compare_files(config1, config2, &formatter);
     }
 }
