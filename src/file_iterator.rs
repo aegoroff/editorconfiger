@@ -1,50 +1,46 @@
-use crate::{parser, Property};
-use ini::{Ini, SectionIter};
+use crate::editorconfig_parser::EditorConfigLine;
+use crate::{editorconfig_parser, parser, Property};
 
+#[derive(Default)]
 pub struct Section<'a> {
     pub title: &'a str,
     pub extensions: Vec<String>,
     pub properties: Vec<Property<'a>>,
 }
 
-pub struct FileIterator<I: Iterator> {
-    inner: I,
-}
+pub fn parse_file_content<'a>(content: &'a str) -> Vec<Section<'a>> {
+    let parsed = editorconfig_parser::parse_editorconfig(content);
 
-impl<'a> FileIterator<SectionIter<'a>> {
-    pub fn from(ini: &'a Ini) -> Self {
-        Self { inner: ini.iter() }
-    }
-}
+    parsed
+        .into_iter()
+        .fold(Vec::<Section<'a>>::new(), |mut acc, line| {
+            match line {
+                EditorConfigLine::Head(h) => {
+                    let mut section = Section::default();
+                    section.title = h;
+                    section.extensions = parser::parse(section.title);
+                    acc.push(section)
+                }
+                EditorConfigLine::Pair(k, v) => {
+                    if acc.is_empty() {
+                        let mut section = Section::default();
+                        section.title = "root";
+                        section.extensions = parser::parse(section.title);
+                        acc.push(section)
+                    }
+                    let section = acc.last_mut().unwrap();
+                    let property = Property {
+                        name: k,
+                        value: v,
+                        section: section.title,
+                    };
+                    section.properties.push(property);
+                }
+                EditorConfigLine::Comment(_) => {}
+            }
 
-impl<'a> Iterator for &'a mut FileIterator<SectionIter<'a>> {
-    type Item = Section<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let item = self.inner.next();
-
-        if let Some((sec, prop)) = item {
-            let section = sec.unwrap_or("root");
-            let extensions = parser::parse(section);
-
-            let properties: Vec<Property> = prop
-                .iter()
-                .map(|(k, v)| Property {
-                    name: k,
-                    value: v,
-                    section,
-                })
-                .collect();
-
-            return Some(Section {
-                title: section,
-                extensions,
-                properties,
-            });
-        }
-
-        None
-    }
+            acc
+        })
 }
 
 #[cfg(test)]
@@ -63,11 +59,9 @@ c = d
 
 [*.md]
 e = f"###;
-        let conf = Ini::load_from_str(config).unwrap();
-        let it = &mut FileIterator::from(&conf);
 
         // Act
-        let contents: Vec<Section<'_>> = it.map(|x| x).collect();
+        let contents = parse_file_content(config);
 
         // Assert
         assert_that!(contents).has_length(3);
@@ -82,14 +76,12 @@ e = f"###;
 [*]
 a = b
 c = d"###;
-        let conf = Ini::load_from_str(config).unwrap();
-        let it = &mut FileIterator::from(&conf);
 
         // Act
-        let props: Vec<Vec<Property<'_>>> = it.map(|x| x.properties).collect();
+        let contents = parse_file_content(config);
 
         // Assert
-        assert_that!(props).has_length(1);
-        assert_that!(props[0]).has_length(2);
+        assert_that!(contents).has_length(1);
+        assert_that!(contents[0].properties).has_length(2);
     }
 }

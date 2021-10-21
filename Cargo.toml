@@ -13,7 +13,6 @@ lalrpop = "0.19"
 [dependencies]
 lalrpop-util = "0.19"
 regex = "1"
-rust-ini = { git = "https://github.com/zonyitoo/rust-ini", branch = "master", features = ["inline-comment", "brackets-in-section-names"] }
 clap = "2"
 ansi_term = "0.12"
 prettytable-rs = "^0.8"

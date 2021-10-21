@@ -42,8 +42,8 @@ fn compare(cmd: &ArgMatches) {
     let err = Error {};
     println!(" FILE #1: {}", path1);
     println!(" FILE #2: {}", path2);
-    let cmp = Comparator {};
-    editorconfiger::compare(path1, path2, &err, &cmp);
+    // let cmp = Comparator {};
+    // editorconfiger::compare(path1, path2, &err, &cmp);
 }
 
 fn build_cli() -> App<'static, 'static> {

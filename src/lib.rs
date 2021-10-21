@@ -14,13 +14,11 @@ extern crate lalrpop_util;
 #[macro_use]
 extern crate prettytable;
 extern crate aho_corasick;
-extern crate ini;
 extern crate jwalk;
 extern crate nom;
 extern crate spectral;
 
-use crate::file_iterator::{FileIterator, Section};
-use ini::{Ini, Properties};
+use crate::file_iterator::{parse_file_content, Section};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -115,21 +113,21 @@ pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &
     }
 }
 
-pub fn compare<E: Errorer, F: ComparisonFormatter>(
-    path1: &str,
-    path2: &str,
-    err: &E,
-    formatter: &F,
-) {
-    if let Some(c1) = read_from_file(path1, err) {
-        if let Some(c2) = read_from_file(path2, err) {
-            compare_files(&c1, &c2, formatter);
-        }
-    }
-}
+// pub fn compare<E: Errorer, F: ComparisonFormatter>(
+//     path1: &str,
+//     path2: &str,
+//     err: &E,
+//     formatter: &F,
+// ) {
+//     if let Some(c1) = read_from_file(path1, err) {
+//         if let Some(c2) = read_from_file(path2, err) {
+//             compare_files(&c1, &c2, formatter);
+//         }
+//     }
+// }
 
-fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<Ini> {
-    let conf = Ini::load_from_file(path);
+fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<String> {
+    let conf = read_file_content(path);
     match conf {
         Ok(c) => return Some(c),
         Err(e) => err.error(
@@ -164,13 +162,12 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
     Ok(contents)
 }
 
-fn validate<V: ValidationFormatter>(ini: &Ini, path: &str, formatter: &V) {
+fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
 
-    let it = &mut FileIterator::from(ini);
-    let sections = it.collect::<Vec<Section>>();
+    let sections = parse_file_content(content);
     let mut section_heads = Vec::new();
 
     for sec in &sections {
@@ -257,50 +254,50 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
     }
 }
 
-fn compare_files<F: ComparisonFormatter>(conf1: &Ini, conf2: &Ini, formatter: &F) {
-    let empty = &Properties::new();
-
-    let result: BTreeMap<&str, Vec<CompareItem>> = conf1
-        .iter()
-        .map(|(s1, props1)| {
-            let props2 = conf2.section(s1).unwrap_or(empty);
-            (s1, props1, props2)
-        })
-        .map(|(s1, props1, props2)| {
-            let items: Vec<CompareItem> = props1
-                .iter()
-                .map(|(k1, v1)| CompareItem {
-                    key: k1,
-                    first_value: Some(v1),
-                    second_value: props2.get(k1),
-                })
-                .chain(
-                    // Properties in the section that missing in the first
-                    props2
-                        .iter()
-                        .filter(|(k, _)| !props1.contains_key(k))
-                        .map(|(k, v)| CompareItem::only_second(k, v)),
-                )
-                .collect();
-            (s1.unwrap_or_default(), items)
-        })
-        .chain(
-            // Sections missing in the first
-            conf2
-                .iter()
-                .filter(|(s, _)| conf1.section(*s).is_none())
-                .map(|(s, p)| {
-                    let items: Vec<CompareItem> = p
-                        .iter()
-                        .map(|(k, v)| CompareItem::only_second(k, v))
-                        .collect();
-                    (s.unwrap_or_default(), items)
-                }),
-        )
-        .collect();
-
-    formatter.format(result);
-}
+// fn compare_files<F: ComparisonFormatter>(conf1: &str, conf2: &str, formatter: &F) {
+//     let empty = &Properties::new();
+//
+//     let result: BTreeMap<&str, Vec<CompareItem>> = conf1
+//         .iter()
+//         .map(|(s1, props1)| {
+//             let props2 = conf2.section(s1).unwrap_or(empty);
+//             (s1, props1, props2)
+//         })
+//         .map(|(s1, props1, props2)| {
+//             let items: Vec<CompareItem> = props1
+//                 .iter()
+//                 .map(|(k1, v1)| CompareItem {
+//                     key: k1,
+//                     first_value: Some(v1),
+//                     second_value: props2.get(k1),
+//                 })
+//                 .chain(
+//                     // Properties in the section that missing in the first
+//                     props2
+//                         .iter()
+//                         .filter(|(k, _)| !props1.contains_key(k))
+//                         .map(|(k, v)| CompareItem::only_second(k, v)),
+//                 )
+//                 .collect();
+//             (s1.unwrap_or_default(), items)
+//         })
+//         .chain(
+//             // Sections missing in the first
+//             conf2
+//                 .iter()
+//                 .filter(|(s, _)| conf1.section(*s).is_none())
+//                 .map(|(s, p)| {
+//                     let items: Vec<CompareItem> = p
+//                         .iter()
+//                         .map(|(k, v)| CompareItem::only_second(k, v))
+//                         .collect();
+//                     (s.unwrap_or_default(), items)
+//                 }),
+//         )
+//         .collect();
+//
+//     formatter.format(result);
+// }
 
 #[cfg(test)]
 mod tests {
@@ -368,28 +365,26 @@ c = d
 
 [*.md]
 e = f"###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter =
             TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
-    fn validate_success_brakets_in_section_name() {
+    fn validate_success_brackets_in_section_name() {
         // Arrange
         let config = r###"
 [[*]]
 a = b
 c = d
 "###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter =
             TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -400,12 +395,11 @@ c = d
 a = b # comment 1
 c = d # comment 2
 "###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter =
             TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -420,7 +414,6 @@ c = d
 
 [*.md]
 e = f"###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert_that(&result.duplicate_properties.is_empty()).is_false();
             assert_that(&result.duplicate_sections.is_empty()).is_true();
@@ -428,7 +421,7 @@ e = f"###;
         });
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -443,7 +436,6 @@ c = d
 
 [*.md]
 e = f"###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -452,7 +444,7 @@ e = f"###;
         });
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -468,7 +460,6 @@ c = d
 
 [*.md]
 e = f"###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -477,7 +468,7 @@ e = f"###;
         });
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -491,7 +482,6 @@ c = d
 [*.md]
 a = d
 "###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -500,7 +490,7 @@ a = d
         });
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -514,7 +504,6 @@ x = d
 [*.md]
 d_a_b_c = d
 "###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -523,7 +512,7 @@ d_a_b_c = d
         });
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -538,7 +527,6 @@ c = d
 
 [*]
 e = f"###;
-        let conf = Ini::load_from_str(config).unwrap();
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(!result.duplicate_sections.is_empty());
@@ -546,7 +534,7 @@ e = f"###;
         });
 
         // Act
-        validate(&conf, "", &formatter);
+        validate(config, "", &formatter);
     }
 
     #[test]
@@ -562,8 +550,6 @@ c = d
 a = b1
 c = d2
 "###;
-        let conf1 = Ini::load_from_str(config1).unwrap();
-        let conf2 = Ini::load_from_str(config2).unwrap();
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
@@ -571,7 +557,7 @@ c = d2
         });
 
         // Act
-        compare_files(&conf1, &conf2, &formatter);
+        //compare_files(config1, config2, &formatter);
     }
 
     #[test]
@@ -591,8 +577,6 @@ root = true
 a = b1
 c = d2
 "###;
-        let conf1 = Ini::load_from_str(config1).unwrap();
-        let conf2 = Ini::load_from_str(config2).unwrap();
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
@@ -601,7 +585,7 @@ c = d2
         });
 
         // Act
-        compare_files(&conf1, &conf2, &formatter);
+        //compare_files(config1, config2, &formatter);
     }
 
     #[test]
@@ -617,15 +601,13 @@ c = d
 a = b1
 d = d2
 "###;
-        let conf1 = Ini::load_from_str(config1).unwrap();
-        let conf2 = Ini::load_from_str(config2).unwrap();
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
             assert_that(res.get("*").unwrap()).has_length(3);
         });
 
         // Act
-        compare_files(&conf1, &conf2, &formatter);
+        //compare_files(config1, config2, &formatter);
     }
 
     #[test]
@@ -641,8 +623,6 @@ c = d
 a = b1
 d = d2
 "###;
-        let conf1 = Ini::load_from_str(config1).unwrap();
-        let conf2 = Ini::load_from_str(config2).unwrap();
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
             assert_that(res.get("x").unwrap()).has_length(2);
@@ -650,6 +630,6 @@ d = d2
         });
 
         // Act
-        compare_files(&conf1, &conf2, &formatter);
+        //compare_files(config1, config2, &formatter);
     }
 }
