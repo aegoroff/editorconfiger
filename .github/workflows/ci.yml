@@ -36,4 +36,4 @@ jobs:
       - name: Run Release tests
         run: cargo test --release
       - name: Run linter
-        run: cargo clippy
+        run: cargo clippy -- -Dwarnings
