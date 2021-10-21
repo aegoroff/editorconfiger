@@ -1,8 +1,8 @@
 pub mod console;
-mod editorconfig_parser;
+mod editorconfig;
 mod enumerable;
-mod file_iterator;
-pub mod parser;
+mod file_parser;
+pub mod glob;
 pub mod similar;
 use std::fs::File;
 use std::io::prelude::*;
@@ -18,7 +18,7 @@ extern crate jwalk;
 extern crate nom;
 extern crate spectral;
 
-use crate::file_iterator::{parse_file_content, Section};
+use crate::file_parser::{Section};
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -167,7 +167,7 @@ fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
 
-    let sections = parse_file_content(content);
+    let sections = file_parser::parse(content);
     let mut section_heads = Vec::new();
 
     for sec in &sections {

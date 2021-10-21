@@ -13,7 +13,7 @@ pub enum EditorConfigLine<'a> {
     Comment(&'a str),
 }
 
-pub fn parse_editorconfig<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
+pub fn parse<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
     parse_str(input, line::<VerboseError<&'a str>>)
 }
 
@@ -144,7 +144,7 @@ mod tests {
     use spectral::prelude::*;
 
     #[test]
-    fn parse() {
+    fn parse_test() {
         // Arrange
         let cases = vec![
             ("[*.md]", vec![EditorConfigLine::Head("*.md")]),
@@ -240,7 +240,7 @@ mod tests {
 
         // Act & Assert
         cases.into_iter().for_each(|(case, expected)| {
-            let result = parse_editorconfig(case);
+            let result = parse(case);
             assert_that!(result).is_equal_to(expected);
         });
     }
@@ -264,7 +264,7 @@ trim_trailing_whitespace = false
 "##;
 
         // Act
-        let result = parse_editorconfig(s);
+        let result = parse(s);
 
         // Assert
         let expected = vec![

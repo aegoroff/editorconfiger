@@ -12,19 +12,19 @@ lalrpop_mod!(
 /// Examples:
 ///
 /// ```
-/// use editorconfiger::parser;
+/// use editorconfiger::glob;
 ///
-/// let result = parser::parse("*.{e1, e2}");
+/// let result = glob::parse("*.{e1, e2}");
 /// assert_eq!(2, result.len());
 /// assert_eq!("*.e1", result[0]);
 /// assert_eq!("*.e2", result[1]);
 ///
-/// let result = parser::parse("*.[ch]");
+/// let result = glob::parse("*.[ch]");
 /// assert_eq!(2, result.len());
 /// assert_eq!("*.c", result[0]);
 /// assert_eq!("*.h", result[1]);
 ///
-/// let result = parser::parse("*");
+/// let result = glob::parse("*");
 /// assert_eq!(1, result.len());
 /// assert_eq!("*", result[0]);
 /// ```

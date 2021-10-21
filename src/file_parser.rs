@@ -1,5 +1,5 @@
-use crate::editorconfig_parser::EditorConfigLine;
-use crate::{editorconfig_parser, parser, Property};
+use crate::editorconfig::EditorConfigLine;
+use crate::{editorconfig, glob, Property};
 
 #[derive(Default)]
 pub struct Section<'a> {
@@ -8,8 +8,8 @@ pub struct Section<'a> {
     pub properties: Vec<Property<'a>>,
 }
 
-pub fn parse_file_content<'a>(content: &'a str) -> Vec<Section<'a>> {
-    let parsed = editorconfig_parser::parse_editorconfig(content);
+pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
+    let parsed = editorconfig::parse(content);
 
     parsed
         .into_iter()
@@ -18,14 +18,14 @@ pub fn parse_file_content<'a>(content: &'a str) -> Vec<Section<'a>> {
                 EditorConfigLine::Head(h) => {
                     let mut section = Section::default();
                     section.title = h;
-                    section.extensions = parser::parse(section.title);
+                    section.extensions = glob::parse(section.title);
                     acc.push(section)
                 }
                 EditorConfigLine::Pair(k, v) => {
                     if acc.is_empty() {
                         let mut section = Section::default();
                         section.title = "root";
-                        section.extensions = parser::parse("*");
+                        section.extensions = glob::parse("*");
                         acc.push(section)
                     }
                     let section = acc.last_mut().unwrap();
@@ -61,7 +61,7 @@ c = d
 e = f"###;
 
         // Act
-        let contents = parse_file_content(config);
+        let contents = parse(config);
 
         // Assert
         assert_that!(contents).has_length(3);
@@ -78,7 +78,7 @@ a = b
 c = d"###;
 
         // Act
-        let contents = parse_file_content(config);
+        let contents = parse(config);
 
         // Assert
         assert_that!(contents).has_length(1);
