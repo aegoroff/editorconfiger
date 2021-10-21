@@ -25,7 +25,7 @@ pub fn parse_file_content<'a>(content: &'a str) -> Vec<Section<'a>> {
                     if acc.is_empty() {
                         let mut section = Section::default();
                         section.title = "root";
-                        section.extensions = parser::parse(section.title);
+                        section.extensions = parser::parse("*");
                         acc.push(section)
                     }
                     let section = acc.last_mut().unwrap();
