@@ -605,7 +605,7 @@ c = d2
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
             assert_that(res.get("*").unwrap()).has_length(2);
-            assert_that(res.get("").unwrap()).has_length(1);
+            assert_that(res.get("root").unwrap()).has_length(1);
         });
 
         // Act
