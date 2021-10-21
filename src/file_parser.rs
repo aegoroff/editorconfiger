@@ -23,9 +23,11 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                 }
                 EditorConfigLine::Pair(k, v) => {
                     if acc.is_empty() {
-                        let mut section = Section::default();
-                        section.title = "root";
-                        section.extensions = glob::parse("*");
+                        let section = Section::<'a> {
+                            title: "root",
+                            extensions: glob::parse("*"),
+                            ..Default::default()
+                        };
                         acc.push(section)
                     }
                     let section = acc.last_mut().unwrap();
