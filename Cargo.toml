@@ -2,7 +2,7 @@
 name = "editorconfiger"
 version = "0.1.0"
 authors = ["egoroff <egoroff@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,7 +11,7 @@ license = "MIT"
 lalrpop = "0.19"
 
 [dependencies]
-lalrpop-util = "0.19"
+lalrpop-util  = { version = "0.19", features = ["lexer"] }
 regex = "1"
 clap = "2"
 ansi_term = "0.12"
