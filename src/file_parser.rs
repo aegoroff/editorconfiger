@@ -24,7 +24,6 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                 EditorConfigLine::Pair(k, v) => {
                     if acc.is_empty() {
                         let section = Section::<'a> {
-                            title: "root",
                             extensions: glob::parse("*"),
                             ..Default::default()
                         };
@@ -68,7 +67,7 @@ e = f"###;
         // Assert
         assert_that!(contents).has_length(3);
         assert_that!(contents.iter().map(|x| x.title).collect::<Vec<&str>>())
-            .is_equal_to(vec!["root", "*", "*.md"]);
+            .is_equal_to(vec!["", "*", "*.md"]);
     }
 
     #[test]
