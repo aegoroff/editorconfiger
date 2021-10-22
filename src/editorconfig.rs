@@ -306,4 +306,28 @@ trim_trailing_whitespace = false
         // Assert
         assert_that!(trimmed).is_equal_to("test test");
     }
+
+    #[test]
+    fn trim_empty_is_none() {
+        // Arrange
+        let s = "";
+
+        // Act
+        let trimmed = trim_spaces::<VerboseError<&str>>(s);
+
+        // Assert
+        assert_that!(trimmed).is_none();
+    }
+
+    #[test]
+    fn trim_only_spaces_is_none() {
+        // Arrange
+        let s = "  ";
+
+        // Act
+        let trimmed = trim_spaces::<VerboseError<&str>>(s);
+
+        // Assert
+        assert_that!(trimmed).is_none();
+    }
 }
