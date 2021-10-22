@@ -27,7 +27,7 @@ fn parse_str<'a>(
 
     if let Ok((last, _)) = it.finish() {
         if !last.is_empty() {
-            if let Some(line) = line_parser(last)  {
+            if let Some(line) = line_parser(last) {
                 result.push(line);
             }
         }
@@ -63,8 +63,8 @@ where
         Ok((_trail, (k, v))) => {
             let kt = trim_spaces::<E>(k);
             let vt = trim_spaces::<E>(v);
-            if let Ok((_trail, kt)) = kt {
-                if let Ok((_trail, vt)) = vt {
+            if let Some(kt) = kt {
+                if let Some(vt) = vt {
                     return Some(EditorConfigLine::Pair(kt, vt));
                 }
             }
@@ -125,19 +125,17 @@ where
     action(input)
 }
 
-fn trim_spaces<'a, E>(input: &'a str) -> IResult<&'a str, &'a str, E>
+fn trim_spaces<'a, E>(input: &'a str) -> Option<&'a str>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    ws(is_not(" \t"))(input)
-}
+    let mut action = sequence::preceded(multispace0, is_not("\n\r"));
+    let parsed: IResult<&str, &str, E> = action(input);
 
-fn ws<'a, F, E>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, &'a str, E>
-where
-    F: nom::Parser<&'a str, &'a str, E>,
-    E: ParseError<&'a str> + std::fmt::Debug,
-{
-    sequence::delimited(multispace0, inner, multispace0)
+    if let Ok((_trail, val)) = parsed {
+        return Some(val.trim_end());
+    }
+    None
 }
 
 #[cfg(test)]
@@ -291,24 +289,21 @@ trim_trailing_whitespace = false
         let s = "  test  ";
 
         // Act
-        let (trail, trimmed) = trim_spaces::<VerboseError<&str>>(s).unwrap();
+        let trimmed = trim_spaces::<VerboseError<&str>>(s).unwrap();
 
         // Assert
         assert_that!(trimmed).is_equal_to("test");
-        assert_that!(trail).is_equal_to("");
     }
 
     #[test]
-    #[ignore]
     fn trim_spaces_inside() {
         // Arrange
         let s = "  test test  ";
 
         // Act
-        let (trail, trimmed) = trim_spaces::<VerboseError<&str>>(s).unwrap();
+        let trimmed = trim_spaces::<VerboseError<&str>>(s).unwrap();
 
         // Assert
         assert_that!(trimmed).is_equal_to("test test");
-        assert_that!(trail).is_equal_to("");
     }
 }
