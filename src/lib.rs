@@ -4,6 +4,7 @@ mod enumerable;
 mod file_parser;
 pub mod glob;
 pub mod similar;
+
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{BufReader, SeekFrom};
@@ -19,7 +20,7 @@ extern crate nom;
 extern crate spectral;
 
 use crate::file_parser::Section;
-use jwalk::WalkDir;
+use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 pub type AnyError = Box<dyn std::error::Error>;
@@ -95,7 +96,12 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
     formatter: &V,
     err: &E,
 ) -> usize {
-    let iter = WalkDir::new(path).skip_hidden(false).follow_links(false);
+    let parallelism = Parallelism::RayonNewPool(num_cpus::get_physical());
+
+    let iter = WalkDir::new(path)
+        .skip_hidden(false)
+        .follow_links(false)
+        .parallelism(parallelism);
     iter.into_iter()
         .filter(Result::is_ok)
         .map(Result::unwrap)
