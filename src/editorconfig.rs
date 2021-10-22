@@ -27,7 +27,9 @@ fn parse_str<'a>(
 
     if let Ok((last, _)) = it.finish() {
         if !last.is_empty() {
-            result.push(line_parser(last).unwrap());
+            if let Some(line) = line_parser(last)  {
+                result.push(line);
+            }
         }
     };
 
