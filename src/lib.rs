@@ -266,8 +266,7 @@ fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatt
     let result: BTreeMap<&str, Vec<CompareItem>> = f1
         .iter()
         .map(|s1| {
-            let props1: HashMap<&str, &str> =
-                s1.properties.iter().map(|p| (p.name, p.value)).collect();
+            let props1 = map_properties(s1);
             let props2 = s2_props.get(s1.title).unwrap_or(&empty);
             (s1, props1, props2)
         })
@@ -307,15 +306,14 @@ fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatt
     formatter.format(result);
 }
 
-fn map_sections<'a>(sections: &[Section<'a>]) -> HashMap<&'a str, HashMap<&'a str, &'a str>> {
+fn map_properties<'a>(s1: &'a Section<'a>) -> HashMap<&'a str, &'a str> {
+    s1.properties.iter().map(|p| (p.name, p.value)).collect()
+}
+
+fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, HashMap<&'a str, &'a str>> {
     sections
         .iter()
-        .map(|s| {
-            (
-                s.title,
-                s.properties.iter().map(|p| (p.name, p.value)).collect(),
-            )
-        })
+        .map(|s| (s.title, map_properties(s)))
         .collect()
 }
 
