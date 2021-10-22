@@ -256,7 +256,7 @@ charset = utf-8
 indent_style = space
 indent_size = 2
 insert_final_newline = true
-trim_trailing_whitespace = true
+trim_trailing_whitespace = true : error
 
 [*.md]
 max_line_length = off
@@ -275,7 +275,7 @@ trim_trailing_whitespace = false
             EditorConfigLine::Pair("indent_style", "space"),
             EditorConfigLine::Pair("indent_size", "2"),
             EditorConfigLine::Pair("insert_final_newline", "true"),
-            EditorConfigLine::Pair("trim_trailing_whitespace", "true"),
+            EditorConfigLine::Pair("trim_trailing_whitespace", "true : error"),
             EditorConfigLine::Head("*.md"),
             EditorConfigLine::Pair("max_line_length", "off"),
             EditorConfigLine::Pair("trim_trailing_whitespace", "false"),
