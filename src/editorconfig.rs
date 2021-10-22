@@ -1,6 +1,5 @@
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
-use nom::character::complete::multispace0;
 use nom::combinator::ParserIterator;
 use nom::error::{ParseError, VerboseError};
 use nom::sequence;
@@ -61,14 +60,7 @@ where
     let result: IResult<&'a str, (&'a str, &'a str), E> = key_value(input);
     let kv = match result {
         Ok((_trail, (k, v))) => {
-            let kt = trim_spaces::<E>(k);
-            let vt = trim_spaces::<E>(v);
-            if let Some(kt) = kt {
-                if let Some(vt) = vt {
-                    return Some(EditorConfigLine::Pair(kt, vt));
-                }
-            }
-            None
+            return Some(EditorConfigLine::Pair(k.trim(), v.trim()));
         }
         Err(_e) => None,
     };
@@ -123,19 +115,6 @@ where
         is_not("\n\r"),
     );
     action(input)
-}
-
-fn trim_spaces<'a, E>(input: &'a str) -> Option<&'a str>
-where
-    E: ParseError<&'a str> + std::fmt::Debug,
-{
-    let mut action = sequence::preceded(multispace0, is_not("\n\r"));
-    let parsed: IResult<&str, &str, E> = action(input);
-
-    if let Ok((_trail, val)) = parsed {
-        return Some(val.trim_end());
-    }
-    None
 }
 
 #[cfg(test)]
@@ -233,6 +212,15 @@ mod tests {
                 "[a\n# test\nk =  \n[b]",
                 vec![
                     EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Pair("k", ""),
+                    EditorConfigLine::Head("b"),
+                ],
+            ),
+            (
+                "[a\n# test\nk = v \n[b]test",
+                vec![
+                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
             ),
@@ -281,53 +269,5 @@ trim_trailing_whitespace = false
             EditorConfigLine::Pair("trim_trailing_whitespace", "false"),
         ];
         assert_that!(result).is_equal_to(expected);
-    }
-
-    #[test]
-    fn trim() {
-        // Arrange
-        let s = "  test  ";
-
-        // Act
-        let trimmed = trim_spaces::<VerboseError<&str>>(s).unwrap();
-
-        // Assert
-        assert_that!(trimmed).is_equal_to("test");
-    }
-
-    #[test]
-    fn trim_spaces_inside() {
-        // Arrange
-        let s = "  test test  ";
-
-        // Act
-        let trimmed = trim_spaces::<VerboseError<&str>>(s).unwrap();
-
-        // Assert
-        assert_that!(trimmed).is_equal_to("test test");
-    }
-
-    #[test]
-    fn trim_empty_is_none() {
-        // Arrange
-        let s = "";
-
-        // Act
-        let trimmed = trim_spaces::<VerboseError<&str>>(s);
-
-        // Assert
-        assert_that!(trimmed).is_none();
-    }
-
-    #[test]
-    fn trim_only_spaces_is_none() {
-        // Arrange
-        let s = "  ";
-
-        // Act
-        let trimmed = trim_spaces::<VerboseError<&str>>(s);
-
-        // Assert
-        assert_that!(trimmed).is_none();
     }
 }
