@@ -18,6 +18,7 @@ extern crate jwalk;
 extern crate nom;
 extern crate spectral;
 
+use crate::file_parser::Section;
 use jwalk::WalkDir;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -259,25 +260,8 @@ fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatt
     let f1 = file_parser::parse(content1);
     let f2 = file_parser::parse(content2);
 
-    let s1_props: HashMap<&str, HashMap<&str, &str>> = f1
-        .iter()
-        .map(|s| {
-            (
-                s.title,
-                s.properties.iter().map(|p| (p.name, p.value)).collect(),
-            )
-        })
-        .collect();
-
-    let s2_props: HashMap<&str, HashMap<&str, &str>> = f2
-        .iter()
-        .map(|s| {
-            (
-                s.title,
-                s.properties.iter().map(|p| (p.name, p.value)).collect(),
-            )
-        })
-        .collect();
+    let s1_props = map_sections(&f1);
+    let s2_props = map_sections(&f2);
 
     let result: BTreeMap<&str, Vec<CompareItem>> = f1
         .iter()
@@ -321,6 +305,18 @@ fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatt
         .collect();
 
     formatter.format(result);
+}
+
+fn map_sections<'a>(sections: &[Section<'a>]) -> HashMap<&'a str, HashMap<&'a str, &'a str>> {
+    sections
+        .iter()
+        .map(|s| {
+            (
+                s.title,
+                s.properties.iter().map(|p| (p.name, p.value)).collect(),
+            )
+        })
+        .collect()
 }
 
 #[cfg(test)]
