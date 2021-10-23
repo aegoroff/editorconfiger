@@ -1,5 +1,5 @@
-use crate::editorconfig::EditorConfigLine;
-use crate::{editorconfig, glob, Property};
+use crate::editorconfig_lexer::EditorConfigLine;
+use crate::{editorconfig_lexer, glob, Property};
 
 #[derive(Default)]
 pub struct Section<'a> {
@@ -9,9 +9,9 @@ pub struct Section<'a> {
 }
 
 pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
-    let parsed = editorconfig::parse(content);
+    let tokens = editorconfig_lexer::tokenize(content);
 
-    parsed
+    tokens
         .into_iter()
         .fold(Vec::<Section<'a>>::new(), |mut acc, line| {
             match line {

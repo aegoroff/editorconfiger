@@ -1,7 +1,7 @@
 pub mod console;
-mod editorconfig;
+mod editorconfig_lexer;
+mod editorconfig_parser;
 mod enumerable;
-mod file_parser;
 pub mod glob;
 pub mod similar;
 
@@ -19,7 +19,7 @@ extern crate jwalk;
 extern crate nom;
 extern crate spectral;
 
-use crate::file_parser::Section;
+use crate::editorconfig_parser::Section;
 use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -173,7 +173,7 @@ fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
 
-    let sections = file_parser::parse(content);
+    let sections = editorconfig_parser::parse(content);
     let mut section_heads = Vec::new();
 
     for sec in &sections {
@@ -263,8 +263,8 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
 fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
     let empty = HashMap::<&str, &str>::new();
 
-    let f1 = file_parser::parse(content1);
-    let f2 = file_parser::parse(content2);
+    let f1 = editorconfig_parser::parse(content1);
+    let f2 = editorconfig_parser::parse(content2);
 
     let s1_props = map_sections(&f1);
     let s2_props = map_sections(&f2);

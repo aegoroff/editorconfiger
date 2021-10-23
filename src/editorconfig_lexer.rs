@@ -12,7 +12,7 @@ pub enum EditorConfigLine<'a> {
     Comment(&'a str),
 }
 
-pub fn parse<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
+pub fn tokenize<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
     parse_str(input, line::<VerboseError<&'a str>>)
 }
 
@@ -228,7 +228,7 @@ mod tests {
 
         // Act & Assert
         cases.into_iter().for_each(|(case, expected)| {
-            let result = parse(case);
+            let result = tokenize(case);
             assert_that!(result).is_equal_to(expected);
         });
     }
@@ -252,7 +252,7 @@ trim_trailing_whitespace = false
 "##;
 
         // Act
-        let result = parse(s);
+        let result = tokenize(s);
 
         // Assert
         let expected = vec![
