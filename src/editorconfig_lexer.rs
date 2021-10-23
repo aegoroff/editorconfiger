@@ -2,10 +2,10 @@ use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::combinator::ParserIterator;
 use nom::error::{FromExternalError, ParseError, VerboseError};
+use nom::sequence;
 #[allow(unused)]
 use nom::Parser;
 use nom::{character::complete, combinator, IResult};
-use nom::{sequence};
 
 #[derive(Debug, PartialEq)]
 pub enum EditorConfigLine<'a> {
@@ -82,11 +82,11 @@ where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
     combinator::map(
-        sequence::preceded(
+        combinator::recognize(sequence::preceded(
             alt((complete::char('#'), complete::char(';'))),
             is_not("\n\r"),
-        ),
-        |val: &str| EditorConfigLine::Comment(val.trim_start()),
+        )),
+        |val: &str| EditorConfigLine::Comment(val),
     )(input)
 }
 
@@ -151,7 +151,7 @@ mod tests {
                 "[a]\n# test\nk=v\n[b]",
                 vec![
                     EditorConfigLine::Head("a"),
-                    EditorConfigLine::Comment("test"),
+                    EditorConfigLine::Comment("# test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -160,7 +160,7 @@ mod tests {
                 "[a]\n; test\nk=v\n[b]",
                 vec![
                     EditorConfigLine::Head("a"),
-                    EditorConfigLine::Comment("test"),
+                    EditorConfigLine::Comment("; test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -169,7 +169,7 @@ mod tests {
                 "[a]\n# test\nk = v \n[b]",
                 vec![
                     EditorConfigLine::Head("a"),
-                    EditorConfigLine::Comment("test"),
+                    EditorConfigLine::Comment("# test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -177,7 +177,7 @@ mod tests {
             (
                 "[a\n# test\nk = v \n[b]",
                 vec![
-                    EditorConfigLine::Comment("test"),
+                    EditorConfigLine::Comment("# test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -185,7 +185,7 @@ mod tests {
             (
                 "[a\n# test\nk =  \n[b]",
                 vec![
-                    EditorConfigLine::Comment("test"),
+                    EditorConfigLine::Comment("# test"),
                     EditorConfigLine::Pair("k", ""),
                     EditorConfigLine::Head("b"),
                 ],
@@ -193,7 +193,7 @@ mod tests {
             (
                 "[a\n# test\nk = v \n[b]test",
                 vec![
-                    EditorConfigLine::Comment("test"),
+                    EditorConfigLine::Comment("# test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -231,7 +231,7 @@ trim_trailing_whitespace = false
 
         // Assert
         let expected = vec![
-            EditorConfigLine::Comment("Editor configuration, see http://editorconfig.org"),
+            EditorConfigLine::Comment("# Editor configuration, see http://editorconfig.org"),
             EditorConfigLine::Pair("root", "true"),
             EditorConfigLine::Head("*"),
             EditorConfigLine::Pair("charset", "utf-8"),
