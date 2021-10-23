@@ -1,7 +1,7 @@
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::combinator::ParserIterator;
-use nom::error::{ParseError, VerboseError};
+use nom::error::{FromExternalError, ParseError, VerboseError};
 #[allow(unused)]
 use nom::Parser;
 use nom::{character::complete, combinator, IResult};
@@ -48,48 +48,45 @@ where
 
 fn line<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
-    E: ParseError<&'a str> + std::fmt::Debug,
+    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<()>>,
 {
     alt((head::<E>, key_value::<E>, comment::<E>))(input)
 }
 
 fn head<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
-    E: ParseError<&'a str> + std::fmt::Debug,
+    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<()>>,
 {
-    let mut parser = sequence::preceded(complete::char('['), is_not("\n\r"));
-    match parser(input) {
-        Ok((trail, head)) => match head.rfind(']') {
-            Some(ix) => Ok((trail, EditorConfigLine::Head(&head[..ix]))),
-            None => Err(nom::Err::Incomplete(Needed::Unknown)),
-        },
-        Err(e) => Err(e),
-    }
+    let parser = sequence::preceded(complete::char('['), is_not("\n\r"));
+
+    combinator::map_res(parser, |val: &str| match val.rfind(']') {
+        Some(ix) => Ok(EditorConfigLine::Head(&val[..ix])),
+        None => Err(nom::Err::Incomplete(Needed::Unknown)),
+    })(input)
 }
 
 fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut parser = sequence::separated_pair(is_not("=;#"), complete::char('='), is_not("=;#"));
-    match parser(input) {
-        Ok((trail, (k, v))) => Ok((trail, EditorConfigLine::Pair(k.trim(), v.trim()))),
-        Err(e) => Err(e),
-    }
+    let parser = sequence::separated_pair(is_not("=;#"), complete::char('='), is_not("=;#"));
+
+    combinator::map(parser, |(k, v): (&str, &str)| {
+        EditorConfigLine::Pair(k.trim(), v.trim())
+    })(input)
 }
 
 fn comment<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut parser = sequence::preceded(
-        alt((complete::char('#'), complete::char(';'))),
-        is_not("\n\r"),
-    );
-    match parser(input) {
-        Ok((trail, val)) => Ok((trail, EditorConfigLine::Comment(val.trim_start()))),
-        Err(e) => Err(e),
-    }
+    combinator::map(
+        sequence::preceded(
+            alt((complete::char('#'), complete::char(';'))),
+            is_not("\n\r"),
+        ),
+        |val: &str| EditorConfigLine::Comment(val.trim_start()),
+    )(input)
 }
 
 #[cfg(test)]
