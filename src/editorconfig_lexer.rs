@@ -57,25 +57,13 @@ where
     }
 
     // Key/value line
-    let result: IResult<&'a str, (&'a str, &'a str), E> = key_value(input);
-    let matched = match result {
-        Ok((_trail, (k, v))) => Some(EditorConfigLine::Pair(k.trim(), v.trim())),
-        Err(_e) => None,
-    };
-
-    if matched.is_some() {
-        return matched;
+    if let Ok((_trail, (k, v))) = key_value::<E>(input) {
+        return Some(EditorConfigLine::Pair(k.trim(), v.trim()));
     }
 
     // Comment
-    let result: IResult<&'a str, &'a str, E> = comment(input);
-    let matched = match result {
-        Ok((_trail, val)) => Some(EditorConfigLine::Comment(val.trim_start())),
-        Err(_e) => None,
-    };
-
-    if matched.is_some() {
-        return matched;
+    if let Ok((_trail, val)) = comment::<E>(input) {
+        return Some(EditorConfigLine::Comment(val.trim_start()));
     }
 
     None
