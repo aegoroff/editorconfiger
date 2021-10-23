@@ -5,7 +5,7 @@ use nom::error::{FromExternalError, ParseError, VerboseError};
 #[allow(unused)]
 use nom::Parser;
 use nom::{character::complete, combinator, IResult};
-use nom::{sequence, Needed};
+use nom::{sequence};
 
 #[derive(Debug, PartialEq)]
 pub enum EditorConfigLine<'a> {
@@ -48,21 +48,21 @@ where
 
 fn line<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
-    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<()>>,
+    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
 {
     alt((head::<E>, key_value::<E>, comment::<E>))(input)
 }
 
 fn head<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
-    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<()>>,
+    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
 {
     let parser = sequence::preceded(complete::char('['), is_not("\n\r"));
 
     //  capture data until last ] to support brackets inside section head
     combinator::map_res(parser, |val: &str| match val.rfind(']') {
         Some(ix) => Ok(EditorConfigLine::Head(&val[..ix])),
-        None => Err(nom::Err::Incomplete(Needed::Unknown)),
+        None => Err(nom::Err::Failure(']')),
     })(input)
 }
 
