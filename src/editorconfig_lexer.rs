@@ -2,8 +2,8 @@ use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::combinator::ParserIterator;
 use nom::error::{ParseError, VerboseError};
-use nom::sequence;
 use nom::{character::complete, combinator, IResult};
+use nom::{sequence, Needed};
 
 #[derive(Debug, PartialEq)]
 pub enum EditorConfigLine<'a> {
@@ -52,7 +52,7 @@ where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
     // Section head
-    if let Some(val) = head::<E>(input) {
+    if let Ok((_trail, val)) = head::<E>(input) {
         return Some(EditorConfigLine::Head(val));
     }
 
@@ -69,20 +69,17 @@ where
     None
 }
 
-fn head<'a, E>(input: &'a str) -> Option<&'a str>
+fn head<'a, E>(input: &'a str) -> IResult<&'a str, &'a str, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut action = sequence::preceded(complete::char('['), is_not("\n\r"));
-    let parsed: IResult<&str, &str, E> = action(input);
-
-    if let Ok((_trail, head)) = parsed {
-        let rix = head.rfind(']');
-        if let Some(rix) = rix {
-            return Some(&head[..rix]);
-        }
+    match sequence::preceded(complete::char('['), is_not("\n\r"))(input) {
+        Ok((trail, head)) => match head.rfind(']') {
+            Some(ix) => Ok((trail, &head[..ix])),
+            None => Err(nom::Err::Incomplete(Needed::Unknown)),
+        },
+        Err(e) => Err(e),
     }
-    None
 }
 
 fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, (&'a str, &'a str), E>
