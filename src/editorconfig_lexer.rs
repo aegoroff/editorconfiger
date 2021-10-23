@@ -59,6 +59,7 @@ where
 {
     let parser = sequence::preceded(complete::char('['), is_not("\n\r"));
 
+    //  capture data until last ] to support brackets inside section head
     combinator::map_res(parser, |val: &str| match val.rfind(']') {
         Some(ix) => Ok(EditorConfigLine::Head(&val[..ix])),
         None => Err(nom::Err::Incomplete(Needed::Unknown)),
