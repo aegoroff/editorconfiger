@@ -99,6 +99,7 @@ mod tests {
     fn parse_test() {
         // Arrange
         let cases = vec![
+            ("", vec![]),
             ("[*.md]", vec![EditorConfigLine::Head("*.md")]),
             ("[*.[md]]", vec![EditorConfigLine::Head("*.[md]")]),
             ("[*.[md]", vec![EditorConfigLine::Head("*.[md")]),
@@ -201,6 +202,7 @@ mod tests {
 
         // Act & Assert
         cases.into_iter().for_each(|(case, expected)| {
+            println!("parse_test case: {}", case);
             let result = tokenize(case);
             assert_that!(result).is_equal_to(expected);
         });
