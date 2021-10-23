@@ -52,32 +52,30 @@ where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
     // Section head
-    if let Some(matched) = head::<E>(input) {
-        return Some(EditorConfigLine::Head(matched));
+    if let Some(val) = head::<E>(input) {
+        return Some(EditorConfigLine::Head(val));
     }
 
     // Key/value line
     let result: IResult<&'a str, (&'a str, &'a str), E> = key_value(input);
-    let kv = match result {
-        Ok((_trail, (k, v))) => {
-            return Some(EditorConfigLine::Pair(k.trim(), v.trim()));
-        }
+    let matched = match result {
+        Ok((_trail, (k, v))) => Some(EditorConfigLine::Pair(k.trim(), v.trim())),
         Err(_e) => None,
     };
 
-    if let Some(EditorConfigLine::Pair(_k, _v)) = kv {
-        return kv;
+    if matched.is_some() {
+        return matched;
     }
 
     // Comment
     let result: IResult<&'a str, &'a str, E> = comment(input);
-    let c = match result {
-        Ok((_trail, c)) => Some(EditorConfigLine::Comment(c)),
+    let matched = match result {
+        Ok((_trail, val)) => Some(EditorConfigLine::Comment(val.trim_start())),
         Err(_e) => None,
     };
 
-    if let Some(EditorConfigLine::Comment(_c)) = c {
-        return c;
+    if matched.is_some() {
+        return matched;
     }
 
     None
@@ -89,6 +87,7 @@ where
 {
     let mut action = sequence::preceded(complete::char('['), is_not("\n\r"));
     let parsed: IResult<&str, &str, E> = action(input);
+
     if let Ok((_trail, head)) = parsed {
         let rix = head.rfind(']');
         if let Some(rix) = rix {
@@ -177,7 +176,7 @@ mod tests {
                 "[a]\n# test\nk=v\n[b]",
                 vec![
                     EditorConfigLine::Head("a"),
-                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Comment("test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -186,7 +185,7 @@ mod tests {
                 "[a]\n; test\nk=v\n[b]",
                 vec![
                     EditorConfigLine::Head("a"),
-                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Comment("test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -195,7 +194,7 @@ mod tests {
                 "[a]\n# test\nk = v \n[b]",
                 vec![
                     EditorConfigLine::Head("a"),
-                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Comment("test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -203,7 +202,7 @@ mod tests {
             (
                 "[a\n# test\nk = v \n[b]",
                 vec![
-                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Comment("test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -211,7 +210,7 @@ mod tests {
             (
                 "[a\n# test\nk =  \n[b]",
                 vec![
-                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Comment("test"),
                     EditorConfigLine::Pair("k", ""),
                     EditorConfigLine::Head("b"),
                 ],
@@ -219,7 +218,7 @@ mod tests {
             (
                 "[a\n# test\nk = v \n[b]test",
                 vec![
-                    EditorConfigLine::Comment(" test"),
+                    EditorConfigLine::Comment("test"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Head("b"),
                 ],
@@ -256,7 +255,7 @@ trim_trailing_whitespace = false
 
         // Assert
         let expected = vec![
-            EditorConfigLine::Comment(" Editor configuration, see http://editorconfig.org"),
+            EditorConfigLine::Comment("Editor configuration, see http://editorconfig.org"),
             EditorConfigLine::Pair("root", "true"),
             EditorConfigLine::Head("*"),
             EditorConfigLine::Pair("charset", "utf-8"),
