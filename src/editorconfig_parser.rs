@@ -29,13 +29,14 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                         };
                         acc.push(section)
                     }
-                    let section = acc.last_mut().unwrap();
-                    let property = Property {
-                        name: k,
-                        value: v,
-                        section: section.title,
-                    };
-                    section.properties.push(property);
+                    if let Some(section) = acc.last_mut() {
+                        let property = Property {
+                            name: k,
+                            value: v,
+                            section: section.title,
+                        };
+                        section.properties.push(property);
+                    }
                 }
                 EditorConfigLine::Comment(_) => {}
             }
