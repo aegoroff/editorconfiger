@@ -2,6 +2,8 @@ use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::combinator::ParserIterator;
 use nom::error::{ParseError, VerboseError};
+#[allow(unused)]
+use nom::Parser;
 use nom::{character::complete, combinator, IResult};
 use nom::{sequence, Needed};
 
@@ -13,21 +15,18 @@ pub enum EditorConfigLine<'a> {
 }
 
 pub fn tokenize<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
-    parse_str(input, line::<VerboseError<&'a str>>)
-}
-
-fn parse_str<'a>(
-    input: &'a str,
-    mut line_parser: impl FnMut(&'a str) -> Option<EditorConfigLine<'a>>,
-) -> Vec<EditorConfigLine<'a>> {
-    let mut it = lines::<VerboseError<&str>>(input);
-    let lit = it.filter_map(|x| line_parser(x));
-    let mut result: Vec<EditorConfigLine<'a>> = lit.collect();
+    let mut it = lines::<VerboseError<&'a str>>(input);
+    let mut result: Vec<EditorConfigLine<'a>> = it
+        .map(|x| line::<'a, VerboseError<&'a str>>(x))
+        .filter(Result::is_ok)
+        .map(Result::unwrap)
+        .map(|(_trail, val)| val)
+        .collect();
 
     if let Ok((last, _)) = it.finish() {
         if !last.is_empty() {
-            if let Some(line) = line_parser(last) {
-                result.push(line);
+            if let Ok((_, val)) = line::<'a, VerboseError<&'a str>>(last) {
+                result.push(val);
             }
         }
     };
@@ -47,58 +46,50 @@ where
     )
 }
 
-fn line<'a, E>(input: &'a str) -> Option<EditorConfigLine<'a>>
+fn line<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    // Section head
-    if let Ok((_trail, val)) = head::<E>(input) {
-        return Some(EditorConfigLine::Head(val));
-    }
-
-    // Key/value line
-    if let Ok((_trail, (k, v))) = key_value::<E>(input) {
-        return Some(EditorConfigLine::Pair(k.trim(), v.trim()));
-    }
-
-    // Comment
-    if let Ok((_trail, val)) = comment::<E>(input) {
-        return Some(EditorConfigLine::Comment(val.trim_start()));
-    }
-
-    None
+    alt((head::<E>, key_value::<E>, comment::<E>))(input)
 }
 
-fn head<'a, E>(input: &'a str) -> IResult<&'a str, &'a str, E>
+fn head<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    match sequence::preceded(complete::char('['), is_not("\n\r"))(input) {
+    let mut parser = sequence::preceded(complete::char('['), is_not("\n\r"));
+    match parser(input) {
         Ok((trail, head)) => match head.rfind(']') {
-            Some(ix) => Ok((trail, &head[..ix])),
+            Some(ix) => Ok((trail, EditorConfigLine::Head(&head[..ix]))),
             None => Err(nom::Err::Incomplete(Needed::Unknown)),
         },
         Err(e) => Err(e),
     }
 }
 
-fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, (&'a str, &'a str), E>
+fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut action = sequence::separated_pair(is_not("=;#"), complete::char('='), is_not("=;#"));
-    action(input)
+    let mut parser = sequence::separated_pair(is_not("=;#"), complete::char('='), is_not("=;#"));
+    match parser(input) {
+        Ok((trail, (k, v))) => Ok((trail, EditorConfigLine::Pair(k.trim(), v.trim()))),
+        Err(e) => Err(e),
+    }
 }
 
-fn comment<'a, E>(input: &'a str) -> IResult<&'a str, &'a str, E>
+fn comment<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let mut action = sequence::preceded(
+    let mut parser = sequence::preceded(
         alt((complete::char('#'), complete::char(';'))),
         is_not("\n\r"),
     );
-    action(input)
+    match parser(input) {
+        Ok((trail, val)) => Ok((trail, EditorConfigLine::Comment(val.trim_start()))),
+        Err(e) => Err(e),
+    }
 }
 
 #[cfg(test)]
