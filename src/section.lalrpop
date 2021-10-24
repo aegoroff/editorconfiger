@@ -71,6 +71,7 @@ FullItem : Vec<String> = {
     <w:Full> => vec![w],
     <w:Single> => vec![w],
     <w:SingleExt> => w,
+    <w:WildList> => w,
 }
 
 Words : Vec<String> = {
