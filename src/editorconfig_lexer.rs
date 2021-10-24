@@ -7,11 +7,15 @@ use nom::{character::complete, combinator, IResult};
 /// Represents .editorconfig lexical token abstraction that contain necessary data
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Token<'a> {
+    /// Section head
     Head(&'a str),
+    /// Key/value pair
     Pair(&'a str, &'a str),
+    /// Comment including inline comments in head or key/value lines
     Comment(&'a str),
 }
 
+/// Splits input into tokens
 pub fn tokenize(input: &str) -> impl Iterator<Item = Token> {
     TokenIterator::new(input)
 }
@@ -48,8 +52,8 @@ impl<'a> Iterator for TokenIterator<'a> {
         if !self.inline_comment.is_empty() {
             let parsed_comment = comment::<'a, VerboseError<&'a str>>(self.inline_comment);
             self.inline_comment = "";
-            if let Ok((_, inline)) = parsed_comment {
-                return Some(inline);
+            if let Ok((_, inline_comment)) = parsed_comment {
+                return Some(inline_comment);
             }
         }
 
