@@ -13,8 +13,8 @@ fn main() {
 
     match matches.subcommand() {
         ("c", Some(cmd)) => compare(cmd),
-        ("v", Some(cmd)) => validate_file(cmd),
-        ("va", Some(cmd)) => validate_folder(cmd),
+        ("vf", Some(cmd)) => validate_file(cmd),
+        ("vd", Some(cmd)) => validate_folder(cmd),
         _ => {}
     }
 }
@@ -53,8 +53,8 @@ fn build_cli() -> App<'static, 'static> {
         .author("egoroff <egoroff@gmail.com>")
         .about(".editorconfig files tool")
         .subcommand(
-            SubCommand::with_name("v")
-                .aliases(&["validate"])
+            SubCommand::with_name("vf")
+                .aliases(&["validate-file"])
                 .about("Validate single .editorconfig file")
                 .arg(
                     Arg::with_name(PATH)
@@ -64,8 +64,8 @@ fn build_cli() -> App<'static, 'static> {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("va")
-                .aliases(&["validate-all"])
+            SubCommand::with_name("vd")
+                .aliases(&["validate-dir"])
                 .about("Validate all found .editorconfig files in a directory and all its children")
                 .arg(
                     Arg::with_name(PATH)
