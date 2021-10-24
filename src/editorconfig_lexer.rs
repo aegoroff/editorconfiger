@@ -67,7 +67,7 @@ impl<'a> Iterator for InlineCommentIterator<'a> {
 fn parse_inline_comment<'a, E>(
     trail: &'a str,
     lexeme: EditorConfigLine<'a>,
-) -> InlineCommentIterator<'a>
+) -> impl Iterator<Item = EditorConfigLine<'a>>
 where
     E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
 {
