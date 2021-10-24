@@ -1,10 +1,7 @@
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
-use nom::combinator::ParserIterator;
 use nom::error::{FromExternalError, ParseError, VerboseError};
 use nom::sequence;
-#[allow(unused)]
-use nom::Parser;
 use nom::{character::complete, combinator, IResult};
 
 /// Represents .editorconfig lexical token abstraction that contain necessary data
@@ -15,78 +12,63 @@ pub enum Token<'a> {
     Comment(&'a str),
 }
 
-pub fn tokenize<'a>(input: &'a str) -> Vec<Token<'a>> {
-    let mut it = lines::<VerboseError<&'a str>>(input);
-    let mut result: Vec<Token<'a>> = it
-        .map(|x| line::<'a, VerboseError<&'a str>>(x))
-        .filter(Result::is_ok)
-        .map(Result::unwrap)
-        .flat_map(|(trail, val)| parse_inline_comment::<'a, VerboseError<&'a str>>(trail, val))
-        .collect();
-
-    if let Ok((last, _)) = it.finish() {
-        if !last.is_empty() {
-            if let Ok((trail, val)) = line::<'a, VerboseError<&'a str>>(last) {
-                let it = parse_inline_comment::<'a, VerboseError<&'a str>>(trail, val);
-                result.extend(it);
-            }
-        }
-    };
-
-    result
+pub struct TokenIterator<'a> {
+    input: &'a str,
+    inline_comment: &'a str,
 }
 
-struct TokenWithCommentIterator<'a> {
-    token: Token<'a>,
-    comment: Option<Token<'a>>,
-    count: i32,
+pub fn tokenize(input: &str) -> Vec<Token> {
+    TokenIterator::new(input).collect()
 }
 
-impl<'a> TokenWithCommentIterator<'a> {
-    fn new(token: Token<'a>, comment: Option<Token<'a>>) -> Self {
+impl<'a> TokenIterator<'a> {
+    pub fn new(input: &'a str) -> Self {
         Self {
-            token,
-            comment,
-            count: 0,
+            input,
+            inline_comment: "",
         }
+    }
+
+    fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Token<'a>> {
+        let parsed_line = line::<'a, VerboseError<&'a str>>(val);
+        self.input = trail;
+        if let Ok((comment, token)) = parsed_line {
+            self.inline_comment = comment;
+            return Some(token);
+        }
+
+        None
     }
 }
 
-impl<'a> Iterator for TokenWithCommentIterator<'a> {
+impl<'a> Iterator for TokenIterator<'a> {
     type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.count += 1;
-        match self.count {
-            1 => Some(self.token),
-            2 => self.comment,
-            _ => None,
+        if !self.inline_comment.is_empty() {
+            if let Ok((_, inline)) = comment::<'a, VerboseError<&'a str>>(self.inline_comment) {
+                self.inline_comment = "";
+                return Some(inline);
+            }
+            self.inline_comment = "";
         }
-    }
-}
 
-fn parse_inline_comment<'a, E>(trail: &'a str, token: Token<'a>) -> impl Iterator<Item = Token<'a>>
-where
-    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
-{
-    if !trail.is_empty() {
-        if let Ok((_, inline)) = comment::<'a, VerboseError<&'a str>>(trail) {
-            return TokenWithCommentIterator::new(token, Some(inline));
+        loop {
+            if self.input.is_empty() {
+                break;
+            }
+            let mut parser = sequence::terminated(complete::not_line_ending, complete::line_ending);
+            let parsed: IResult<&'a str, &'a str, VerboseError<&'a str>> = parser(self.input);
+            return match parsed {
+                Ok((trail, val)) => match self.parse_line(trail, val) {
+                    None => continue,
+                    Some(token) => return Some(token),
+                },
+                Err(_) => self.parse_line("", self.input), // EOF
+            };
         }
+        None
     }
-    TokenWithCommentIterator::new(token, None)
-}
-
-fn lines<'a, E>(
-    input: &'a str,
-) -> ParserIterator<&'a str, E, impl FnMut(&'a str) -> Result<(&str, &str), nom::Err<E>>>
-where
-    E: ParseError<&'a str> + std::fmt::Debug,
-{
-    combinator::iterator(
-        input,
-        sequence::terminated(complete::not_line_ending, complete::line_ending),
-    )
 }
 
 fn line<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
