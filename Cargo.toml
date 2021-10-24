@@ -23,7 +23,7 @@ nom = "7"
 num_cpus = "1.13.0"
 
 [[bin]]
-name = "econfer"
+name = "editorconfig"
 
 [profile.release]
 lto = true
