@@ -265,7 +265,7 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
 }
 
 fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
-    let empty = HashMap::<&str, &str>::new();
+    let empty = BTreeMap::<&str, &str>::new();
 
     let f1 = editorconfig_parser::parse(content1);
     let f2 = editorconfig_parser::parse(content2);
@@ -316,11 +316,11 @@ fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatt
     formatter.format(result);
 }
 
-fn map_properties<'a>(s1: &'a Section<'a>) -> HashMap<&'a str, &'a str> {
+fn map_properties<'a>(s1: &'a Section<'a>) -> BTreeMap<&'a str, &'a str> {
     s1.properties.iter().map(|p| (p.name, p.value)).collect()
 }
 
-fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, HashMap<&'a str, &'a str>> {
+fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, BTreeMap<&'a str, &'a str>> {
     sections
         .iter()
         .map(|s| (s.title, map_properties(s)))
