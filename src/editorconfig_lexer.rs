@@ -125,7 +125,7 @@ mod tests {
     use spectral::prelude::*;
 
     #[test]
-    fn parse_test() {
+    fn tokenize_test() {
         // Arrange
         let cases = vec![
             ("", vec![]),
@@ -234,7 +234,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_real_file() {
+    fn tokenize_real_file() {
         // Arrange
         let s = r##"# Editor configuration, see http://editorconfig.org
 root = true
