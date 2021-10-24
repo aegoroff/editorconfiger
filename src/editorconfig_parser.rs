@@ -1,4 +1,4 @@
-use crate::editorconfig_lexer::EditorConfigLine;
+use crate::editorconfig_lexer::Token;
 use crate::{editorconfig_lexer, glob, Property};
 
 #[derive(Default)]
@@ -13,15 +13,15 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
 
     tokens
         .into_iter()
-        .fold(Vec::<Section<'a>>::new(), |mut acc, line| {
-            match line {
-                EditorConfigLine::Head(h) => {
+        .fold(Vec::<Section<'a>>::new(), |mut acc, token| {
+            match token {
+                Token::Head(h) => {
                     let mut section = Section::default();
                     section.title = h;
                     section.extensions = glob::parse(section.title);
                     acc.push(section)
                 }
-                EditorConfigLine::Pair(k, v) => {
+                Token::Pair(k, v) => {
                     if acc.is_empty() {
                         let section = Section::<'a> {
                             extensions: glob::parse("*"),
@@ -38,7 +38,7 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                         section.properties.push(property);
                     }
                 }
-                EditorConfigLine::Comment(_) => {}
+                Token::Comment(_) => {}
             }
 
             acc
