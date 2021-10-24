@@ -61,10 +61,9 @@ fn parse_file(file: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use spectral::prelude::*;
 
     #[test]
-    fn parse_success() {
+    fn parse_tests() {
         // Arrange
         let cases = vec![
             ("22", vec!["22"]),
@@ -79,6 +78,8 @@ mod tests {
             ("**", vec!["*"]),
             ("*.{e1,e2}", vec!["*.e1", "*.e2"]),
             ("*.{e1,e2,f1.e1}", vec!["*.e1", "*.e2", "*.f1.e1"]),
+            ("{f1.e1,{f1.e2, f1.e3}}", vec!["f1.e1", "f1.e2", "f1.e3"]),
+            ("{f1.e1,f1.[ch]}", vec!["f1.e1", "f1.c", "f1.h"]),
             ("{*.e1,*.e2}", vec!["*.e1", "*.e2"]),
             ("{f1,f2}.e1", vec!["f1.e1", "f2.e1"]),
             ("{f1,f2}", vec!["f1", "f2"]),
@@ -86,6 +87,7 @@ mod tests {
             ("{f1.e1,*.e1}", vec!["f1.e1", "*.e1"]),
             ("{f1.e1,*.f1.e1}", vec!["f1.e1", "*.f1.e1"]),
             ("{f1.e1,.f1.e1}", vec!["f1.e1", ".f1.e1"]),
+            ("test/*.{e1, e2}", vec!["test/*.e1", "test/*.e2"]),
             ("test/*", vec!["test/*"]),
             ("test/**/*", vec!["test/**/*"]),
             ("test/{p1,p2}/*", vec!["test/p1/*", "test/p2/*"]),
@@ -102,151 +104,5 @@ mod tests {
                 .then(&format!("it should be {:#?}", expected))
                 .assert_eq(expected, actual);
         }
-    }
-
-    #[test]
-    fn parse_get_data_single() {
-        // Arrange
-
-        // Act
-        let result = parse("*.{e1}");
-
-        // Assert
-        assert_that!(result).has_length(1);
-        assert_eq!("*.e1", result[0]);
-    }
-
-    #[test]
-    fn parse_get_data_many() {
-        // Arrange
-
-        // Act
-        let result = parse("*.{e1, e2}");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("*.e1", result[0]);
-        assert_eq!("*.e2", result[1]);
-    }
-
-    #[test]
-    #[cfg(not(target_os = "windows"))]
-    fn parse_path_get_data_many() {
-        // Arrange
-
-        // Act
-        let result = parse("test/*.{e1, e2}");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("test/*.e1", result[0]);
-        assert_eq!("test/*.e2", result[1]);
-    }
-
-    #[test]
-    #[cfg(target_os = "windows")]
-    fn parse_path_get_data_many() {
-        // Arrange
-
-        // Act
-        let result = parse("test\\*.{e1, e2}");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("test\\*.e1", result[0]);
-        assert_eq!("test\\*.e2", result[1]);
-    }
-
-    #[test]
-    fn parse_get_data_many_ext() {
-        // Arrange
-
-        // Act
-        let result = parse("*.[ch]");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("*.c", result[0]);
-        assert_eq!("*.h", result[1]);
-    }
-
-    #[test]
-    fn parse_path_get_data_many_mixed() {
-        // Arrange
-
-        // Act
-        let result = parse("{f1.e1,*.f1.e1}");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("f1.e1", result[0]);
-        assert_eq!("*.f1.e1", result[1]);
-    }
-
-    #[test]
-    fn parse_path_get_data_many_nested() {
-        // Arrange
-
-        // Act
-        let result = parse("{f1.e1,{f1.e2, f1.e3}}");
-
-        // Assert
-        assert_that!(result).has_length(3);
-        assert_eq!("f1.e1", result[0]);
-        assert_eq!("f1.e2", result[1]);
-        assert_eq!("f1.e3", result[2]);
-    }
-
-    #[test]
-    fn parse_path_get_data_many_nested_in_squares() {
-        // Arrange
-
-        // Act
-        let result = parse("{f1.e1,f1.[ch]}");
-
-        // Assert
-        assert_that!(result).has_length(3);
-        assert_eq!("f1.e1", result[0]);
-        assert_eq!("f1.c", result[1]);
-        assert_eq!("f1.h", result[2]);
-    }
-
-    #[test]
-    fn parse_path_get_data_many_only_list_full_wild() {
-        // Arrange
-
-        // Act
-        let result = parse("{*.e1,*.e2}");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("*.e1", result[0]);
-        assert_eq!("*.e2", result[1]);
-    }
-
-    #[test]
-    fn parse_path_get_data_many_only_list_fulls() {
-        // Arrange
-
-        // Act
-        let result = parse("{f1.e1,.f1.e1}");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("f1.e1", result[0]);
-        assert_eq!(".f1.e1", result[1]);
-    }
-
-    #[test]
-    fn parse_path_get_data_many_composite_fulls() {
-        // Arrange
-
-        // Act
-        let result = parse("{f1,f2}.e1");
-
-        // Assert
-        assert_that!(result).has_length(2);
-        assert_eq!("f1.e1", result[0]);
-        assert_eq!("f2.e1", result[1]);
     }
 }
