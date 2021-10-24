@@ -56,16 +56,10 @@ impl<'a> Iterator for InlineCommentIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.count += 1;
-        return match self.count {
+        match self.count {
             1 => Some(self.lexeme),
-            2 => {
-                if let Some(comment) = self.comment {
-                    Some(comment)
-                } else {
-                    None
-                }
-            }
-            _ => None
+            2 => self.comment,
+            _ => None,
         }
     }
 }
