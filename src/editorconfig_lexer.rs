@@ -25,8 +25,13 @@ pub fn tokenize<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
 
     if let Ok((last, _)) = it.finish() {
         if !last.is_empty() {
-            if let Ok((_, val)) = line::<'a, VerboseError<&'a str>>(last) {
+            if let Ok((trail, val)) = line::<'a, VerboseError<&'a str>>(last) {
                 result.push(val);
+                if !trail.is_empty() {
+                    if let Ok((_, inline)) = comment::<'a, VerboseError<&'a str>>(trail) {
+                        result.push(inline);
+                    }
+                }
             }
         }
     };
@@ -130,6 +135,7 @@ mod tests {
                 vec![
                     EditorConfigLine::Head("a"),
                     EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Comment("; test"),
                 ],
             ),
             (
@@ -137,6 +143,7 @@ mod tests {
                 vec![
                     EditorConfigLine::Head("a"),
                     EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Comment("; test"),
                 ],
             ),
             (
