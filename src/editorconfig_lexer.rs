@@ -7,7 +7,7 @@ use nom::sequence;
 use nom::Parser;
 use nom::{character::complete, combinator, IResult};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum EditorConfigLine<'a> {
     Head(&'a str),
     Pair(&'a str, &'a str),
@@ -20,23 +20,69 @@ pub fn tokenize<'a>(input: &'a str) -> Vec<EditorConfigLine<'a>> {
         .map(|x| line::<'a, VerboseError<&'a str>>(x))
         .filter(Result::is_ok)
         .map(Result::unwrap)
-        .map(|(_trail, val)| val)
+        .flat_map(|(trail, val)| parse_inline_comment::<'a, VerboseError<&'a str>>(trail, val))
         .collect();
 
     if let Ok((last, _)) = it.finish() {
         if !last.is_empty() {
             if let Ok((trail, val)) = line::<'a, VerboseError<&'a str>>(last) {
-                result.push(val);
-                if !trail.is_empty() {
-                    if let Ok((_, inline)) = comment::<'a, VerboseError<&'a str>>(trail) {
-                        result.push(inline);
-                    }
-                }
+                let it = parse_inline_comment::<'a, VerboseError<&'a str>>(trail, val);
+                result.extend(it);
             }
         }
     };
 
     result
+}
+
+struct InlineCommentIterator<'a> {
+    lexeme: EditorConfigLine<'a>,
+    comment: Option<EditorConfigLine<'a>>,
+    count: i32,
+}
+
+impl<'a> InlineCommentIterator<'a> {
+    fn new(lexeme: EditorConfigLine<'a>, comment: Option<EditorConfigLine<'a>>) -> Self {
+        Self {
+            lexeme,
+            comment,
+            count: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for InlineCommentIterator<'a> {
+    type Item = EditorConfigLine<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.count += 1;
+        return match self.count {
+            1 => Some(self.lexeme),
+            2 => {
+                if let Some(comment) = self.comment {
+                    Some(comment)
+                } else {
+                    None
+                }
+            }
+            _ => None
+        }
+    }
+}
+
+fn parse_inline_comment<'a, E>(
+    trail: &'a str,
+    lexeme: EditorConfigLine<'a>,
+) -> InlineCommentIterator<'a>
+where
+    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
+{
+    if !trail.is_empty() {
+        if let Ok((_, inline)) = comment::<'a, VerboseError<&'a str>>(trail) {
+            return InlineCommentIterator::new(lexeme, Some(inline));
+        }
+    }
+    InlineCommentIterator::new(lexeme, None)
 }
 
 fn lines<'a, E>(
@@ -62,7 +108,7 @@ fn head<'a, E>(input: &'a str) -> IResult<&'a str, EditorConfigLine<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
 {
-    let parser = sequence::preceded(complete::char('['), is_not("\n\r"));
+    let parser = sequence::preceded(complete::char('['), is_not("\n\r;#"));
 
     //  capture data until last ] to support brackets inside section head
     combinator::map_res(parser, |val: &str| match val.rfind(']') {
@@ -106,6 +152,13 @@ mod tests {
         let cases = vec![
             ("", vec![]),
             ("[*.md]", vec![EditorConfigLine::Head("*.md")]),
+            (
+                "[*.md] ; test",
+                vec![
+                    EditorConfigLine::Head("*.md"),
+                    EditorConfigLine::Comment("; test"),
+                ],
+            ),
             ("[*.[md]]", vec![EditorConfigLine::Head("*.[md]")]),
             ("[*.[md]", vec![EditorConfigLine::Head("*.[md")]),
             ("[ *.[md] ]", vec![EditorConfigLine::Head(" *.[md] ")]),
@@ -136,6 +189,15 @@ mod tests {
                     EditorConfigLine::Head("a"),
                     EditorConfigLine::Pair("k", "v"),
                     EditorConfigLine::Comment("; test"),
+                ],
+            ),
+            (
+                "[a]\nk=v ; test\n[b]",
+                vec![
+                    EditorConfigLine::Head("a"),
+                    EditorConfigLine::Pair("k", "v"),
+                    EditorConfigLine::Comment("; test"),
+                    EditorConfigLine::Head("b"),
                 ],
             ),
             (
