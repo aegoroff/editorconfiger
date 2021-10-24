@@ -19,6 +19,10 @@ extern crate jwalk;
 extern crate nom;
 extern crate spectral;
 
+#[cfg(test)] // <-- not needed in integration tests
+#[macro_use]
+extern crate table_test;
+
 use crate::editorconfig_parser::Section;
 use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};

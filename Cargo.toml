@@ -22,6 +22,9 @@ spectral = "0.6.0"
 nom = "7"
 num_cpus = "1.13.0"
 
+[dev-dependencies]
+table-test = "0.2.1"
+
 [[bin]]
 name = "editorconfig"
 

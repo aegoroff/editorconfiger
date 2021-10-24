@@ -67,36 +67,41 @@ mod tests {
     fn parse_success() {
         // Arrange
         let cases = vec![
-            "22",
-            "*.e1",
-            "**.e1",
-            "*.{e1}",
-            "*.[ch]",
-            "f.e1",
-            "f1",
-            "*.*",
-            "*",
-            "**",
-            "*.{e1,e2}",
-            "*.{e1,e2,f1.e1}",
-            "{*.e1,*.e2}",
-            "{f1,f2}.e1",
-            "{f1,f2}",
-            "{f1,.f2}",
-            "{f1.e1,*.e1}",
-            "{f1.e1,*.f1.e1}",
-            "{f1.e1,.f1.e1}",
-            "test/*",
-            "test/**/*",
-            "test/{p1,p2}/*",
+            ("22", vec!["22"]),
+            ("*.e1", vec!["*.e1"]),
+            ("**.e1", vec!["*.e1"]),
+            ("*.{e1}", vec!["*.e1"]),
+            ("*.[ch]", vec!["*.c", "*.h"]),
+            ("f.e1", vec!["f.e1"]),
+            ("f1", vec!["f1"]),
+            ("*.*", vec!["*"]),
+            ("*", vec!["*"]),
+            ("**", vec!["*"]),
+            ("*.{e1,e2}", vec!["*.e1", "*.e2"]),
+            ("*.{e1,e2,f1.e1}", vec!["*.e1", "*.e2", "*.f1.e1"]),
+            ("{*.e1,*.e2}", vec!["*.e1", "*.e2"]),
+            ("{f1,f2}.e1", vec!["f1.e1", "f2.e1"]),
+            ("{f1,f2}", vec!["f1", "f2"]),
+            ("{f1,.f2}", vec!["f1", ".f2"]),
+            ("{f1.e1,*.e1}", vec!["f1.e1", "*.e1"]),
+            ("{f1.e1,*.f1.e1}", vec!["f1.e1", "*.f1.e1"]),
+            ("{f1.e1,.f1.e1}", vec!["f1.e1", ".f1.e1"]),
+            ("test/*", vec!["test/*"]),
+            ("test/**/*", vec!["test/**/*"]),
+            ("test/{p1,p2}/*", vec!["test/p1/*", "test/p2/*"]),
         ];
 
         // Act & Assert
-        cases.iter().for_each(|case| {
-            println!("{}", *case);
-            let result = parse(case);
-            assert!(!result.is_empty());
-        });
+        for (validator, input, expected) in table_test!(cases) {
+            let actual = parse(input);
+            let actual = actual.iter().map(|s| &**s).collect();
+
+            validator
+                .given(&format!("{}", input))
+                .when("parse")
+                .then(&format!("it should be {:#?}", expected))
+                .assert_eq(expected, actual);
+        }
     }
 
     #[test]

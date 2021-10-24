@@ -226,11 +226,15 @@ mod tests {
         ];
 
         // Act & Assert
-        cases.into_iter().for_each(|(case, expected)| {
-            println!("parse_test case: {}", case);
-            let result: Vec<Token> = tokenize(case).collect();
-            assert_that!(result).is_equal_to(expected);
-        });
+        for (validator, input, expected) in table_test!(cases) {
+            let actual: Vec<Token> = tokenize(input).collect();
+
+            validator
+                .given(&format!("{}", input))
+                .when("tokenize")
+                .then(&format!("it should be {:#?}", expected))
+                .assert_eq(expected, actual);
+        }
     }
 
     #[test]
