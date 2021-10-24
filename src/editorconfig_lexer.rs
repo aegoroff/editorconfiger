@@ -12,17 +12,17 @@ pub enum Token<'a> {
     Comment(&'a str),
 }
 
-pub struct TokenIterator<'a> {
+pub fn tokenize(input: &str) -> impl Iterator<Item = Token> {
+    TokenIterator::new(input)
+}
+
+struct TokenIterator<'a> {
     input: &'a str,
     inline_comment: &'a str,
 }
 
-pub fn tokenize(input: &str) -> Vec<Token> {
-    TokenIterator::new(input).collect()
-}
-
 impl<'a> TokenIterator<'a> {
-    pub fn new(input: &'a str) -> Self {
+    fn new(input: &'a str) -> Self {
         Self {
             input,
             inline_comment: "",
@@ -46,11 +46,11 @@ impl<'a> Iterator for TokenIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if !self.inline_comment.is_empty() {
-            if let Ok((_, inline)) = comment::<'a, VerboseError<&'a str>>(self.inline_comment) {
-                self.inline_comment = "";
+            let parsed_comment = comment::<'a, VerboseError<&'a str>>(self.inline_comment);
+            self.inline_comment = "";
+            if let Ok((_, inline)) = parsed_comment {
                 return Some(inline);
             }
-            self.inline_comment = "";
         }
 
         loop {
@@ -224,7 +224,7 @@ mod tests {
         // Act & Assert
         cases.into_iter().for_each(|(case, expected)| {
             println!("parse_test case: {}", case);
-            let result = tokenize(case);
+            let result: Vec<Token> = tokenize(case).collect();
             assert_that!(result).is_equal_to(expected);
         });
     }
@@ -248,7 +248,7 @@ trim_trailing_whitespace = false
 "##;
 
         // Act
-        let result = tokenize(s);
+        let result: Vec<Token> = tokenize(s).collect();
 
         // Assert
         let expected = vec![

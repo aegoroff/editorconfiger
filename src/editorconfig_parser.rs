@@ -11,38 +11,36 @@ pub struct Section<'a> {
 pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
     let tokens = editorconfig_lexer::tokenize(content);
 
-    tokens
-        .into_iter()
-        .fold(Vec::<Section<'a>>::new(), |mut acc, token| {
-            match token {
-                Token::Head(h) => {
-                    let mut section = Section::default();
-                    section.title = h;
-                    section.extensions = glob::parse(section.title);
+    tokens.fold(Vec::<Section<'a>>::new(), |mut acc, token| {
+        match token {
+            Token::Head(h) => {
+                let mut section = Section::default();
+                section.title = h;
+                section.extensions = glob::parse(section.title);
+                acc.push(section)
+            }
+            Token::Pair(k, v) => {
+                if acc.is_empty() {
+                    let section = Section::<'a> {
+                        extensions: glob::parse("*"),
+                        ..Default::default()
+                    };
                     acc.push(section)
                 }
-                Token::Pair(k, v) => {
-                    if acc.is_empty() {
-                        let section = Section::<'a> {
-                            extensions: glob::parse("*"),
-                            ..Default::default()
-                        };
-                        acc.push(section)
-                    }
-                    if let Some(section) = acc.last_mut() {
-                        let property = Property {
-                            name: k,
-                            value: v,
-                            section: section.title,
-                        };
-                        section.properties.push(property);
-                    }
+                if let Some(section) = acc.last_mut() {
+                    let property = Property {
+                        name: k,
+                        value: v,
+                        section: section.title,
+                    };
+                    section.properties.push(property);
                 }
-                Token::Comment(_) => {}
             }
+            Token::Comment(_) => {}
+        }
 
-            acc
-        })
+        acc
+    })
 }
 
 #[cfg(test)]
