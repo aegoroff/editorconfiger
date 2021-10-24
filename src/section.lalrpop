@@ -2,79 +2,31 @@
 grammar;
 
 pub Defines : Vec<String> = {
-    Star => vec![<>],
-    <n:Star> "." <e:Star> => vec![e],
-    Single => vec![<>],
-    SingleExt,
-    Word => vec![<>],
-    Full => vec![<>],
-    WildList,
-    FullList,
+    <s:Str> => vec![s],
+    <l:List> => l,
+    <l:Set> => l,
+    <p:Str> <l:List> => { let mut v = l.iter().map(|i| format!("{}{}", p, i)).collect(); v },
+    <p:Str> <l:List> <o:Str> => { let mut v = l.iter().map(|i| format!("{}{}{}", p, i, o)).collect(); v },
+    <l:List> <o:Str> => { let mut v = l.iter().map(|i| format!("{}{}", i, o)).collect(); v },
+    <p:Str> <l:Set> => { let mut v = l.iter().map(|i| format!("{}{}", p, i)).collect(); v },
+    <p:Str> <l:Set> <o:Str> => { let mut v = l.iter().map(|i| format!("{}{}{}", p, i, o)).collect(); v },
+    <l:Set> <o:Str> => { let mut v = l.iter().map(|i| format!("{}{}", i, o)).collect(); v },
 }
 
-Star : String = {
-    "*" => String::from(<>),
-    "**" => String::from("*"),
+List : Vec<String> = {
+    "{" <w:ListItems> "}" => w,
 }
 
-Single : String = {
-    <s:Star> "." <w:Word> => s + "." + &w,
-    <s:Star> "." <f:Full> => s + "." + &f,
-    <s1:Star> <s2:Star> "." <w:Word> => s2 + "." + &w,
+Set : Vec<String> = {
+    "[" <w:Str> "]" => w.chars().map(|c| format!("{}", c)).collect(),
 }
 
-SingleExt : Vec<String> = {
-    <s:Word> ".[" <w:Word> "]" => w.chars().map(|c| format!("{}.{}", s, c)).collect(),
-    <s:Star> ".[" <w:Word> "]" => w.chars().map(|c| format!("{}.{}", s, c)).collect(),
-    <s1:Star> <s2:Star> ".[" <w:Word> "]" => w.chars().map(|c| format!("{}.{}", s2, c)).collect(),
-}
-
-Word : String = {
-    r"\w+" => String::from(<>),
-}
-
-Full : String = {
-    <n:Word> "." <e:Word> => format!("{}.{}", n, e),
-    "." <n:Word> "." <e:Word> => format!(".{}.{}", n, e),
-    "." <e:Word> => format!(".{}", e),
-}
-
-WildList : Vec<String> = {
-    <s:Star> ".{" <ws:WildItems> "}" => ws.iter().map(|i| String::from("*.") + i).collect(),
-}
-
-WildItems : Vec<String> = {
-    <w:WildItem> => vec![w],
-    <w:WildItem> "," <ws:WildItems> => { let mut v = vec![w]; v.extend(ws); v }
+ListItems : Vec<String> = {
+    <w:Defines> => w,
+    <w:Defines> "," <ws:ListItems> => { let mut v = w; v.extend(ws); v }
 }
 
 #[inline]
-WildItem : String = {
-    Word,
-    Full,
-}
-
-FullList : Vec<String> = {
-    "{" <ws:Words> "}." <e:Word> => ws.iter().map(|i| format!("{}.{}", i, e)).collect(),
-    "{" <ws:FullItems> "}" => ws,
-}
-
-FullItems : Vec<String> = {
-    <w:FullItem> => w,
-    <w:FullItem> "," <ws:FullItems> => { let mut y = w; y.extend(ws); y },
-    <w:FullList> => w,
-}
-
-#[inline]
-FullItem : Vec<String> = {
-    <w:Word> => vec![w],
-    <w:Full> => vec![w],
-    <w:Single> => vec![w],
-    <w:SingleExt> => w,
-    <w:WildList> => w,
-}
-
-Words : Vec<String> = {
-    <w:Word> => vec![w],
-    <w:Word> "," <ws:Words> => { let mut v = vec![w]; v.extend(ws); v },
+Str : String = {
+    r"[^{},\]\[ \t]+" => String::from(<>),
 }

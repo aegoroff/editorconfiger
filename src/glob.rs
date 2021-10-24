@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 lalrpop_mod!(
     #[allow(clippy::all)]
     #[allow(unused)]
@@ -29,30 +27,8 @@ lalrpop_mod!(
 /// assert_eq!("*", result[0]);
 /// ```
 pub fn parse(string: &str) -> Vec<String> {
-    let path = PathBuf::from(string);
-    let file = path.file_name().unwrap_or_default().to_str().unwrap_or("*");
-    let dir = path.parent();
-    if let Some(dir) = dir {
-        if let Some(dir) = dir.to_str() {
-            parse_file(file)
-                .into_iter()
-                .map(|s| {
-                    let mut p = PathBuf::from(dir);
-                    p.push(s);
-                    String::from(p.to_str().unwrap())
-                })
-                .collect()
-        } else {
-            parse_file(file)
-        }
-    } else {
-        parse_file(file)
-    }
-}
-
-fn parse_file(file: &str) -> Vec<String> {
     let parser = section::DefinesParser::new();
-    return match parser.parse(file) {
+    return match parser.parse(string) {
         Ok(r) => r,
         Err(_e) => vec![],
     };
@@ -68,19 +44,25 @@ mod tests {
         let cases = vec![
             ("22", vec!["22"]),
             ("*.e1", vec!["*.e1"]),
-            ("**.e1", vec!["*.e1"]),
+            ("**.e1", vec!["**.e1"]),
             ("*.{e1}", vec!["*.e1"]),
             ("*.[ch]", vec!["*.c", "*.h"]),
             ("f.e1", vec!["f.e1"]),
             ("f1", vec!["f1"]),
-            ("*.*", vec!["*"]),
+            ("*.*", vec!["*.*"]),
             ("*", vec!["*"]),
-            ("**", vec!["*"]),
+            ("**", vec!["**"]),
             ("*.{e1,e2}", vec!["*.e1", "*.e2"]),
             ("*.{e1,e2,f1.e1}", vec!["*.e1", "*.e2", "*.f1.e1"]),
             ("{f1.e1,{f1.e2, f1.e3}}", vec!["f1.e1", "f1.e2", "f1.e3"]),
-            ("{f1.e1,{f1.e2, {f1.e3, f1.e4}}}", vec!["f1.e1", "f1.e2", "f1.e3", "f1.e4"]),
-            ("{f1.e1,{f1.e2, *.{f1.e3, f1.e4}}}", vec!["f1.e1", "f1.e2", "*.f1.e3", "*.f1.e4"]),
+            (
+                "{f1.e1,{f1.e2, {f1.e3, f1.e4}}}",
+                vec!["f1.e1", "f1.e2", "f1.e3", "f1.e4"],
+            ),
+            (
+                "{f1.e1,{f1.e2, *.{f1.e3, f1.e4}}}",
+                vec!["f1.e1", "f1.e2", "*.f1.e3", "*.f1.e4"],
+            ),
             ("{f1.e1,f1.[ch]}", vec!["f1.e1", "f1.c", "f1.h"]),
             ("{*.e1,*.e2}", vec!["*.e1", "*.e2"]),
             ("{f1,f2}.e1", vec!["f1.e1", "f2.e1"]),
