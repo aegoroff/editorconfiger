@@ -32,10 +32,8 @@ jobs:
         run: rustup update
       - uses: actions/checkout@v2
       - name: Build
-        run: cargo build
-      - name: Run Debug tests
-        run: cargo test
-      - name: Run Release tests
+        run: cargo build --release
+      - name: Tests
         run: cargo test --release
-      - name: Run linter
+      - name: Linter
         run: cargo clippy -- -Dwarnings
