@@ -1,6 +1,7 @@
 [package]
 name = "editorconfiger"
 version = "0.1.1"
+description = "Plain tool to validate and compare .editorconfig files"
 authors = ["egoroff <egoroff@gmail.com>"]
 edition = "2021"
 license = "MIT"
