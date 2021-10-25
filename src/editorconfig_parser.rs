@@ -14,9 +14,11 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
     tokens.fold(Vec::<Section<'a>>::new(), |mut acc, token| {
         match token {
             Token::Head(h) => {
-                let mut section = Section::default();
-                section.title = h;
-                section.extensions = glob::parse(section.title);
+                let section = Section::<'a> {
+                    title: h,
+                    extensions: glob::parse(h),
+                    ..Default::default()
+                };
                 acc.push(section)
             }
             Token::Pair(k, v) => {
