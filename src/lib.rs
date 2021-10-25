@@ -17,6 +17,9 @@ extern crate prettytable;
 extern crate aho_corasick;
 extern crate jwalk;
 extern crate nom;
+
+#[cfg(test)] // <-- not needed in integration tests
+#[macro_use]
 extern crate spectral;
 
 #[cfg(test)] // <-- not needed in integration tests
