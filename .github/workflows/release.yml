@@ -157,7 +157,7 @@ jobs:
           destination_folder: '.'
           user_email: 'egoroff@email.com'
           user_name: 'aegoroff'
-          commit_message: 'release: v'${{ steps.get_version.outputs.VERSION }}
+          commit_message: "release: v${{ steps.get_version.outputs.VERSION }}"
 
       - name: Release Linux tarball
         uses: actions/upload-release-asset@v1
