@@ -146,7 +146,7 @@ jobs:
           cargo install releaser
       - name: Create brew formula
         run: |
-          - releaser b -c . -b https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos/' -u ${{ env.RELEASE_BIN }}.rb
+          - /home/runner/.cargo/bin/releaser b -c . -b https://github.com/{{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos/' -u ${{ env.RELEASE_BIN }}.rb
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
