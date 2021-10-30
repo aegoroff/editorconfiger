@@ -158,6 +158,21 @@ jobs:
           user_name: 'aegoroff'
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
+      - name: Create scoop json
+        run: /home/runner/.cargo/bin/releaser s -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -i './windows/' -e ${{ env.RELEASE_BIN }}.exe -u ${{ env.RELEASE_BIN }}.json
+      - name: Publish scoop json
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
+        with:
+          github_server: 'github.com'
+          source_file: ${{ env.RELEASE_BIN }}.json
+          destination_repo: 'aegoroff/scoop-bucket'
+          user_email: 'egoroff@email.com'
+          user_name: 'aegoroff'
+          commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
+
+
       - name: Release Linux tarball
         uses: actions/upload-release-asset@v1
         env:
