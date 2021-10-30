@@ -149,7 +149,7 @@ jobs:
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
+          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
         with:
           github_server: 'github.com'
           source_file: ${{ env.RELEASE_BIN }}.rb
