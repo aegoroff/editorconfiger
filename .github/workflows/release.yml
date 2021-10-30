@@ -151,9 +151,9 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
         with:
+          github_server: 'github.com'
           source_file: ${{ env.RELEASE_BIN }}.rb
           destination_repo: 'aegoroff/homebrew-tap'
-          destination_folder: '.'
           user_email: 'egoroff@email.com'
           user_name: 'aegoroff'
           commit_message: "release: v${{ steps.get_version.outputs.VERSION }}"
