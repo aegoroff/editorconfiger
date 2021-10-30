@@ -6,8 +6,7 @@ on:
 name: Release
 
 env:
-  RELEASE_BIN: editorconfig
-  REPOSITORY_NAME: editorconfiger
+  RELEASE_BIN: editorconfiger
   RELEASE_DIR: artifacts
   GITHUB_REF: "${{ github.ref }}"
   WINDOWS_TARGET: x86_64-pc-windows-msvc
@@ -146,14 +145,14 @@ jobs:
           rustup default stable
           cargo install releaser
       - name: Create brew formula
-        run: /home/runner/.cargo/bin/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos/' -u ${{ env.REPOSITORY_NAME }}.rb
+        run: /home/runner/.cargo/bin/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos/' -u ${{ env.RELEASE_BIN }}.rb
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
         with:
           github_server: 'github.com'
-          source_file: ${{ env.REPOSITORY_NAME }}.rb
+          source_file: ${{ env.RELEASE_BIN }}.rb
           destination_repo: 'aegoroff/homebrew-tap'
           user_email: 'egoroff@email.com'
           user_name: 'aegoroff'

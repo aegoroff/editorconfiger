@@ -29,7 +29,7 @@ table-test = "0.2.1"
 spectral = "0.6.0"
 
 [[bin]]
-name = "editorconfig"
+name = "editorconfiger"
 
 [profile.release]
 lto = true

@@ -22,7 +22,7 @@ brew upgrade editorconfiger
 ## Command line syntax:
 ```
 USAGE:
-    editorconfig [SUBCOMMAND]
+    editorconfiger [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
