@@ -153,7 +153,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
         with:
           github_server: 'github.com'
-          source_file: ${{ env.RELEASE_BIN }}.rb
+          source_file: ${{ env.REPOSITORY_NAME }}.rb
           destination_repo: 'aegoroff/homebrew-tap'
           user_email: 'egoroff@email.com'
           user_name: 'aegoroff'
