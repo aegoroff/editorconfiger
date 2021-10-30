@@ -19,6 +19,18 @@ Update editorconfiger if already installed:
 ```sh
 brew upgrade editorconfiger
 ```
+**scoop**:
+
+```sh
+scoop bucket add aegoroff https://github.com/aegoroff/scoop-bucket.git
+scoop install editorconfiger
+```
+
+**manually**:
+
+Download the pre-compiled binaries from the [releases](https://github.com/aegoroff/editorconfiger/releases) and
+copy to the desired location.
+
 ## Command line syntax:
 ```
 USAGE:
