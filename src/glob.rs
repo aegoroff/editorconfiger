@@ -37,56 +37,44 @@ pub fn parse(string: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::*;
+    use spectral::prelude::*;
 
-    #[test]
-    fn parse_tests() {
-        // Arrange
-        let cases = vec![
-            ("22", vec!["22"]),
-            ("*.e1", vec!["*.e1"]),
-            ("**.e1", vec!["**.e1"]),
-            ("*.{e1}", vec!["*.e1"]),
-            ("*.[ch]", vec!["*.c", "*.h"]),
-            ("f.e1", vec!["f.e1"]),
-            ("f1", vec!["f1"]),
-            ("*.*", vec!["*.*"]),
-            ("*", vec!["*"]),
-            ("**", vec!["**"]),
-            ("*.{e1,e2}", vec!["*.e1", "*.e2"]),
-            ("*.{e1,e2,f1.e1}", vec!["*.e1", "*.e2", "*.f1.e1"]),
-            ("{f1.e1,{f1.e2, f1.e3}}", vec!["f1.e1", "f1.e2", "f1.e3"]),
-            (
-                "{f1.e1,{f1.e2, {f1.e3, f1.e4}}}",
-                vec!["f1.e1", "f1.e2", "f1.e3", "f1.e4"],
-            ),
-            (
-                "{f1.e1,{f1.e2, *.{f1.e3, f1.e4}}}",
-                vec!["f1.e1", "f1.e2", "*.f1.e3", "*.f1.e4"],
-            ),
-            ("{f1.e1,f1.[ch]}", vec!["f1.e1", "f1.c", "f1.h"]),
-            ("{*.e1,*.e2}", vec!["*.e1", "*.e2"]),
-            ("{f1,f2}.e1", vec!["f1.e1", "f2.e1"]),
-            ("{f1,f2}", vec!["f1", "f2"]),
-            ("{f1,.f2}", vec!["f1", ".f2"]),
-            ("{f1.e1,*.e1}", vec!["f1.e1", "*.e1"]),
-            ("{f1.e1,*.f1.e1}", vec!["f1.e1", "*.f1.e1"]),
-            ("{f1.e1,.f1.e1}", vec!["f1.e1", ".f1.e1"]),
-            ("test/*.{e1, e2}", vec!["test/*.e1", "test/*.e2"]),
-            ("test/*", vec!["test/*"]),
-            ("test/**/*", vec!["test/**/*"]),
-            ("test/{p1,p2}/*", vec!["test/p1/*", "test/p2/*"]),
-        ];
+    #[rstest]
+    #[case("22", vec!["22"])]
+    #[case("*.e1", vec!["*.e1"])]
+    #[case("**.e1", vec!["**.e1"])]
+    #[case("*.{e1}", vec!["*.e1"])]
+    #[case("*.[ch]", vec!["*.c", "*.h"])]
+    #[case("f.e1", vec!["f.e1"])]
+    #[case("f1", vec!["f1"])]
+    #[case("*.*", vec!["*.*"])]
+    #[case("*", vec!["*"])]
+    #[case("**", vec!["**"])]
+    #[case("*.{e1,e2}", vec!["*.e1", "*.e2"])]
+    #[case("*.{e1,e2,f1.e1}", vec!["*.e1", "*.e2", "*.f1.e1"])]
+    #[case("{f1.e1,{f1.e2, f1.e3}}", vec!["f1.e1", "f1.e2", "f1.e3"])]
+    #[case("{f1.e1,{f1.e2, {f1.e3, f1.e4}}}", vec!["f1.e1", "f1.e2", "f1.e3", "f1.e4"])]
+    #[case("{f1.e1,{f1.e2, *.{f1.e3, f1.e4}}}", vec!["f1.e1", "f1.e2", "*.f1.e3", "*.f1.e4"])]
+    #[case("{f1.e1,f1.[ch]}", vec!["f1.e1", "f1.c", "f1.h"])]
+    #[case("{*.e1,*.e2}", vec!["*.e1", "*.e2"])]
+    #[case("{f1,f2}.e1", vec!["f1.e1", "f2.e1"])]
+    #[case("{f1,f2}", vec!["f1", "f2"])]
+    #[case("{f1,.f2}", vec!["f1", ".f2"])]
+    #[case("{f1.e1,*.e1}", vec!["f1.e1", "*.e1"])]
+    #[case("{f1.e1,*.f1.e1}", vec!["f1.e1", "*.f1.e1"])]
+    #[case("{f1.e1,.f1.e1}", vec!["f1.e1", ".f1.e1"])]
+    #[case("test/*.{e1, e2}", vec!["test/*.e1", "test/*.e2"])]
+    #[case("test/*", vec!["test/*"])]
+    #[case("test/**/*", vec!["test/**/*"])]
+    #[case("test/{p1,p2}/*", vec!["test/p1/*", "test/p2/*"])]
+    #[trace]
+    fn parse_cases(#[case] s: &str, #[case] expected: Vec<&str>) {
+        // Act
+        let actual = parse(s);
+        let actual: Vec<&str> = actual.iter().map(|s| &**s).collect();
 
-        // Act & Assert
-        for (validator, input, expected) in table_test!(cases) {
-            let actual = parse(input);
-            let actual = actual.iter().map(|s| &**s).collect();
-
-            validator
-                .given(&format!("{}", input))
-                .when("parse")
-                .then(&format!("it should be {:#?}", expected))
-                .assert_eq(expected, actual);
-        }
+        // Assert
+        assert_that!(actual).is_equal_to(expected);
     }
 }

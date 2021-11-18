@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
 /// Returns only duplicate items iterator
@@ -13,89 +13,52 @@ pub fn only_duplicates<T: Eq + Hash>(iter: impl Iterator<Item = T>) -> impl Iter
 }
 
 /// Returns iterator over unique items from original iterator
-pub fn only_unique<T: Eq + Hash>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = T> {
-    iter.fold(HashMap::new(), |mut h, s| {
-        *h.entry(s).or_insert(0) += 1;
-        h
+pub fn only_unique<T: Eq + Hash + Clone>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = T> {
+    let mut hs = HashSet::new();
+    iter.filter(move |x| {
+        // contains call is important so as not to do redundant clone
+        if !hs.contains(x) {
+            hs.insert(x.clone())
+        } else {
+            false
+        }
     })
-    .into_iter()
-    .map(|(k, _)| k)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::*;
     use spectral::prelude::*;
 
-    #[test]
-    fn only_duplicates_has_duplicates_not_empty() {
+    #[rstest]
+    #[case(vec!["a", "b", "b"], vec!["b"])]
+    #[case(vec!["a", "b"], vec![])]
+    #[case(vec![], vec![])]
+    #[trace]
+    fn only_duplicates_tests(#[case] items: Vec<&str>, #[case] expected: Vec<&str>) {
         // Arrange
-        let items = vec!["a", "b", "b"];
 
         // Act
         let result: Vec<&str> = only_duplicates(items.into_iter()).collect();
 
         // Assert
-        assert_that!(result).has_length(1);
+        assert_that!(result).is_equal_to(expected);
     }
 
-    #[test]
-    fn only_duplicates_no_duplicates_empty() {
+    #[rstest]
+    #[case(vec!["a", "a", "b", "b", "c"], vec!["a", "b", "c"])]
+    #[case(vec!["a", "b", "b"], vec!["a", "b"])]
+    #[case(vec!["a", "b"], vec!["a", "b"])]
+    #[case(vec![], vec![])]
+    #[trace]
+    fn only_unique_tests(#[case] items: Vec<&str>, #[case] expected: Vec<&str>) {
         // Arrange
-        let items = vec!["a", "b"];
-
-        // Act
-        let result: Vec<&str> = only_duplicates(items.into_iter()).collect();
-
-        // Assert
-        assert_that!(result).is_empty();
-    }
-
-    #[test]
-    fn only_duplicates_empty_iter_empty() {
-        // Arrange
-        let items: Vec<&str> = vec![];
-
-        // Act
-        let result: Vec<&str> = only_duplicates(items.into_iter()).collect();
-
-        // Assert
-        assert_that!(result).is_empty();
-    }
-
-    #[test]
-    fn only_unique_has_duplicates_len_as_expected() {
-        // Arrange
-        let items = vec!["a", "b", "b"];
 
         // Act
         let result: Vec<&str> = only_unique(items.into_iter()).collect();
 
         // Assert
-        assert_that!(result).has_length(2);
-    }
-
-    #[test]
-    fn only_unique_no_duplicates_len_as_expected() {
-        // Arrange
-        let items = vec!["a", "b"];
-
-        // Act
-        let result: Vec<&str> = only_unique(items.into_iter()).collect();
-
-        // Assert
-        assert_that!(result).has_length(2);
-    }
-
-    #[test]
-    fn only_unique_empty_iter_empty_empty_result() {
-        // Arrange
-        let items: Vec<&str> = vec![];
-
-        // Act
-        let result: Vec<&str> = only_unique(items.into_iter()).collect();
-
-        // Assert
-        assert_that!(result).is_empty();
+        assert_that!(result).is_equal_to(expected);
     }
 }
