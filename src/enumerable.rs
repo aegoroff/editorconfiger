@@ -1,19 +1,15 @@
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::hash::Hash;
 
 /// Returns only duplicate items iterator
-pub fn only_duplicates<T: Eq + Hash + Clone>(
-    iter: impl Iterator<Item = T>,
-) -> impl Iterator<Item = T> {
-    let mut hs = HashSet::new();
-    iter.filter(move |x| {
-        // contains call is important so as not to do redundant clone
-        if !hs.contains(x) {
-            !hs.insert(x.clone())
-        } else {
-            true
-        }
+pub fn only_duplicates<T: Eq + Ord>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = T> {
+    iter.fold(BTreeMap::new(), |mut h, s| {
+        *h.entry(s).or_insert(0) += 1;
+        h
     })
+    .into_iter()
+    .filter(|(_, v)| *v > 1)
+    .map(|(k, _)| k)
 }
 
 /// Returns iterator over unique items from original iterator
@@ -36,7 +32,9 @@ mod tests {
     use spectral::prelude::*;
 
     #[rstest]
-    #[case(vec!["a", "b", "b", "a"], vec!["b", "a"])]
+    #[case(vec!["a", "b", "b", "a"], vec!["a", "b"])]
+    #[case(vec!["a", "b", "b", "a", "a"], vec!["a", "b"])]
+    #[case(vec!["a", "b", "b", "a", "a", "a"], vec!["a", "b"])]
     #[case(vec!["a", "b", "b"], vec!["b"])]
     #[case(vec!["a", "b"], vec![])]
     #[case(vec![], vec![])]
