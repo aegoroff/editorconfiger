@@ -35,8 +35,11 @@ jobs:
         run: cargo build --release
       - name: Tests
         run: cargo test --release
-      - name: Linter
-        run: cargo clippy --release -- -Dwarnings
+      - name: Run linter
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features --release -- -Dwarnings
       - name: Run audit
         uses: actions-rs/audit-check@v1
         with:
