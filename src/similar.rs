@@ -35,56 +35,22 @@ pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::*;
     use spectral::prelude::*;
 
-    #[test]
-    fn find_suffix_pairs_no_similar_not_found() {
+    #[rstest]
+    #[case(vec!["csharp_space_before_comma", "space_before_semicolon"], vec![])]
+    #[case(vec!["csharp_space_before_comma", "resharper_csharp_space_before_comma"], vec![("resharper_csharp_space_before_comma", "csharp_space_before_comma")])]
+    #[case(vec!["aab", "aaab", "b"], vec![ ("aab", "b"), ("aaab", "aab"), ("aaab", "b")])]
+    #[case(vec!["block_comment_end", "block_comment"], vec![])]
+    #[trace]
+    fn find_suffix_tests(#[case] items: Vec<&str>, #[case] expected: Vec<(&str, &str)>) {
         // Arrange
-        let items = vec!["csharp_space_before_comma", "space_before_semicolon"];
 
         // Act
-        let result = find_suffix_pairs(&items);
+        let actual = find_suffix_pairs(&items);
 
         // Assert
-        assert_that!(result).is_empty();
-    }
-
-    #[test]
-    fn find_suffix_pairs_different_prefix_found() {
-        // Arrange
-        let items = vec![
-            "csharp_space_before_comma",
-            "resharper_csharp_space_before_comma",
-        ];
-
-        // Act
-        let result = find_suffix_pairs(&items);
-
-        // Assert
-        assert_that!(result).has_length(1);
-    }
-
-    #[test]
-    fn find_suffix_pairs_several_matches_found() {
-        // Arrange
-        let items = vec!["aab", "aaab", "b"];
-
-        // Act
-        let result = find_suffix_pairs(&items);
-
-        // Assert
-        assert_that!(result).has_length(3);
-    }
-
-    #[test]
-    fn find_suffix_pairs_different_suffix_not_found() {
-        // Arrange
-        let items = vec!["block_comment_end", "block_comment"];
-
-        // Act
-        let result = find_suffix_pairs(&items);
-
-        // Assert
-        assert_that!(result).is_empty();
+        assert_that!(actual).is_equal_to(expected);
     }
 }

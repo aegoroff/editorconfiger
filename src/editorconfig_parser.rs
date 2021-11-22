@@ -11,7 +11,7 @@ pub struct Section<'a> {
 pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
     let tokens = editorconfig_lexer::tokenize(content);
 
-    tokens.fold(Vec::<Section<'a>>::new(), |mut acc, token| {
+    tokens.fold(Vec::<Section<'a>>::new(), |mut result, token| {
         match token {
             Token::Head(h) => {
                 let section = Section::<'a> {
@@ -19,17 +19,17 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                     extensions: glob::parse(h),
                     ..Default::default()
                 };
-                acc.push(section)
+                result.push(section)
             }
             Token::Pair(k, v) => {
-                if acc.is_empty() {
+                if result.is_empty() {
                     let section = Section::<'a> {
                         extensions: glob::parse("*"),
                         ..Default::default()
                     };
-                    acc.push(section)
+                    result.push(section)
                 }
-                if let Some(section) = acc.last_mut() {
+                if let Some(section) = result.last_mut() {
                     let property = Property {
                         name: k,
                         value: v,
@@ -41,7 +41,7 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
             Token::Comment(_) => {}
         }
 
-        acc
+        result
     })
 }
 
