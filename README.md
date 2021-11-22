@@ -1,4 +1,5 @@
 [![CI](https://github.com/aegoroff/solt/actions/workflows/ci.yml/badge.svg)](https://github.com/aegoroff/solt/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/aegoroff/editorconfiger/branch/main/graph/badge.svg?token=FRCMPWlPN5)](https://codecov.io/gh/aegoroff/editorconfiger)
 
 # editorconfiger
 Plain tool to validate and compare .editorconfig files
