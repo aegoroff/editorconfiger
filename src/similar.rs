@@ -39,10 +39,10 @@ mod tests {
     use spectral::prelude::*;
 
     #[rstest]
-    #[case(vec!["csharp_space_before_comma", "space_before_semicolon"], vec![])]
+    #[case(vec!["a_b_c_d", "b_c_e"], vec![])]
     #[case(vec!["b_c", "a_b_c"], vec![("a_b_c", "b_c")])]
     #[case(vec!["aab", "aaab", "b"], vec![ ("aab", "b"), ("aaab", "aab"), ("aaab", "b")])]
-    #[case(vec!["block_comment_end", "block_comment"], vec![])]
+    #[case(vec!["a_b_c", "a_b"], vec![])]
     #[trace]
     fn find_suffix_tests(#[case] items: Vec<&str>, #[case] expected: Vec<(&str, &str)>) {
         // Arrange
