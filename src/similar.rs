@@ -40,7 +40,7 @@ mod tests {
 
     #[rstest]
     #[case(vec!["csharp_space_before_comma", "space_before_semicolon"], vec![])]
-    #[case(vec!["csharp_space_before_comma", "resharper_csharp_space_before_comma"], vec![("resharper_csharp_space_before_comma", "csharp_space_before_comma")])]
+    #[case(vec!["b_c", "a_b_c"], vec![("a_b_c", "b_c")])]
     #[case(vec!["aab", "aaab", "b"], vec![ ("aab", "b"), ("aaab", "aab"), ("aaab", "b")])]
     #[case(vec!["block_comment_end", "block_comment"], vec![])]
     #[trace]
