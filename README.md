@@ -1,6 +1,6 @@
 [![CI](https://github.com/aegoroff/solt/actions/workflows/ci.yml/badge.svg)](https://github.com/aegoroff/solt/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/aegoroff/editorconfiger/branch/master/graph/badge.svg?token=FRCMPWlPN5)](https://codecov.io/gh/aegoroff/editorconfiger)
-[![](https://tokei.rs/b1/github/aegoroff/editorconfiger?category=code)](https://github.com/XAMPPRocky/tokei).
+[![](https://tokei.rs/b1/github/aegoroff/editorconfiger?category=code)](https://github.com/XAMPPRocky/tokei)
 
 # editorconfiger
 Plain tool to validate and compare .editorconfig files
