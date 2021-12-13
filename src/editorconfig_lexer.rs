@@ -120,7 +120,7 @@ where
             alt((complete::char('#'), complete::char(';'))),
             is_not("\n\r"),
         )),
-        |val: &str| Token::Comment(val),
+        Token::Comment,
     )(input)
 }
 

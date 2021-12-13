@@ -226,15 +226,9 @@ fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
     formatter.format(result);
 }
 
-fn append_to_btree<'a, T>(
-    bree: &mut BTreeMap<&'a str, Vec<T>>,
-    key: &'a str,
-    mut data: &mut Vec<T>,
-) {
+fn append_to_btree<'a, T>(bree: &mut BTreeMap<&'a str, Vec<T>>, key: &'a str, data: &mut Vec<T>) {
     if !data.is_empty() {
-        bree.entry(key)
-            .or_insert_with(Vec::<T>::new)
-            .append(&mut data);
+        bree.entry(key).or_insert_with(Vec::<T>::new).append(data);
     }
 }
 
