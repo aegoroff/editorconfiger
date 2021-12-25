@@ -37,11 +37,13 @@ impl<'a> TokenIterator<'a> {
         let parsed_line = line::<'a, VerboseError<&'a str>>(val);
         self.input = trail;
         if let Ok((comment, token)) = parsed_line {
+            // not parsed trail considered as inline comment
+            // and will be parsed later
             self.inline_comment = comment;
-            return Some(token);
+            Some(token)
+        } else {
+            None
         }
-
-        None
     }
 }
 
@@ -52,6 +54,9 @@ impl<'a> Iterator for TokenIterator<'a> {
         if !self.inline_comment.is_empty() {
             let parsed_comment = comment::<'a, VerboseError<&'a str>>(self.inline_comment);
             self.inline_comment = "";
+            // if there were an error while parsing inline comment (for example it's not started from # or ;)
+            // just throw it without stopping parsing
+            // It may be sensible to warn user about it. Should think over about it.
             if let Ok((_, inline_comment)) = parsed_comment {
                 return Some(inline_comment);
             }
