@@ -61,15 +61,15 @@ jobs:
         if: matrix.build == 'linux'
         run: |
           rustup target add ${{ env.LINUX_TARGET }}
-          cargo build --release --target ${{ env.LINUX_TARGET }}
+          cargo build --release --bin editorconfiger --features="build-binary" --target ${{ env.LINUX_TARGET }}
 
       - name: Build (MacOS)
         if: matrix.build == 'macos'
-        run: cargo build --release
+        run: cargo build --release --bin editorconfiger --features="build-binary"
 
       - name: Build (Windows)
         if: matrix.build == 'windows'
-        run: cargo build --release
+        run: cargo build --release --bin editorconfiger --features="build-binary"
         env:
           RUSTFLAGS: -Ctarget-feature=+crt-static
 
