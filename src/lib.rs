@@ -1,3 +1,4 @@
+#[cfg(feature = "build-binary")]
 pub mod console;
 mod editorconfig_lexer;
 mod editorconfig_parser;
@@ -12,8 +13,6 @@ use std::path::Path;
 
 #[macro_use]
 extern crate lalrpop_util;
-#[macro_use]
-extern crate prettytable;
 extern crate aho_corasick;
 extern crate jwalk;
 extern crate nom;

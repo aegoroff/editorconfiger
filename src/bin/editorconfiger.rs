@@ -1,5 +1,5 @@
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use editorconfiger::console::{Comparator, Error, Formatter};
+use editorconfiger::console::console_impl::{Comparator, Error, Formatter};
 
 #[macro_use]
 extern crate clap;

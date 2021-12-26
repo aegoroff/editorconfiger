@@ -16,13 +16,13 @@ lalrpop = "0.19"
 [dependencies]
 lalrpop-util  = { version = "0.19", features = ["lexer"] }
 regex = "1"
-ansi_term = "0.12"
-prettytable-rs = "^0.8"
 jwalk = "0.6"
 aho-corasick = "0.7"
 nom = "7"
 num_cpus = "1.13.0"
 
+ansi_term = { version = "0.12", optional = true }
+prettytable-rs = { version = "^0.8", optional = true }
 clap = { version = "2", optional = true }
 
 [dev-dependencies]
@@ -31,7 +31,7 @@ spectral = "0.6.0"
 rstest = "0.12.0"
 
 [features]
-build-binary = ["clap"]
+build-binary = ["clap", "ansi_term", "prettytable-rs"]
 
 [[bin]]
 name = "editorconfiger"
