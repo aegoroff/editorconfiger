@@ -128,7 +128,7 @@ pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &
     }
 }
 
-pub fn compare<E: Errorer, F: ComparisonFormatter>(
+pub fn compare_files<E: Errorer, F: ComparisonFormatter>(
     path1: &str,
     path2: &str,
     err: &E,
@@ -136,7 +136,7 @@ pub fn compare<E: Errorer, F: ComparisonFormatter>(
 ) {
     if let Some(c1) = read_from_file(path1, err) {
         if let Some(c2) = read_from_file(path2, err) {
-            compare_files(&c1, &c2, formatter);
+            compare(&c1, &c2, formatter);
         }
     }
 }
@@ -177,7 +177,7 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
     Ok(contents)
 }
 
-fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
+pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
@@ -263,7 +263,7 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
     }
 }
 
-fn compare_files<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
+pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
     let empty = BTreeMap::<&str, &str>::new();
 
     let f1 = editorconfig_parser::parse(content1);
@@ -584,7 +584,7 @@ c = d2
         });
 
         // Act
-        compare_files(config1, config2, &formatter);
+        compare(config1, config2, &formatter);
     }
 
     #[test]
@@ -614,7 +614,7 @@ c = d2
         });
 
         // Act
-        compare_files(config1, config2, &formatter);
+        compare(config1, config2, &formatter);
     }
 
     #[test]
@@ -636,7 +636,7 @@ d = d2
         });
 
         // Act
-        compare_files(config1, config2, &formatter);
+        compare(config1, config2, &formatter);
     }
 
     #[test]
@@ -659,6 +659,6 @@ d = d2
         });
 
         // Act
-        compare_files(config1, config2, &formatter);
+        compare(config1, config2, &formatter);
     }
 }

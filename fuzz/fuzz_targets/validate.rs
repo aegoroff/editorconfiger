@@ -1,26 +1,23 @@
 #![no_main]
 
-use editorconfiger::{Errorer, ValidationFormatter, ValidationResult};
+use editorconfiger::{ValidationFormatter, ValidationResult};
 use libfuzzer_sys::fuzz_target;
 
 extern crate editorconfiger;
 
-fuzz_target!(|data: &[u8]| {
+fuzz_target!(|data: ValidateInuput| {
     let f = Formatter {};
-    let e = Error {};
-    if let Ok(s) = std::str::from_utf8(data) {
-        editorconfiger::validate_one(s, &f, &e)
-    }
+    editorconfiger::validate(data.content, data.path, &f)
 });
+
+#[derive(Clone, Debug, arbitrary::Arbitrary)]
+pub struct ValidateInuput<'a> {
+    pub content: &'a str,
+    pub path: &'a str,
+}
 
 struct Formatter {}
 
 impl ValidationFormatter for Formatter {
     fn format(&self, _result: ValidationResult) {}
-}
-
-pub struct Error {}
-
-impl Errorer for Error {
-    fn error(&self, _path: &str, _err: &str) {}
 }
