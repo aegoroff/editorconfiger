@@ -250,8 +250,9 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
     let similar = similar::find_suffix_pairs(&props)
         .into_iter()
         .filter(|(first, second)| {
-            let first_sections = props_sections.get(first).unwrap();
-            let second_sections = props_sections.get(second).unwrap();
+            let empty = BTreeSet::new();
+            let first_sections = props_sections.get(first).unwrap_or(&empty);
+            let second_sections = props_sections.get(second).unwrap_or(&empty);
             first_sections.intersection(second_sections).count() == 0
         })
         .collect();
@@ -329,6 +330,7 @@ fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, BTreeMap<&'
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::*;
     use spectral::prelude::*;
 
     struct TestFormatter<F>
@@ -399,6 +401,23 @@ e = f"###;
         validate(config, "", &formatter);
     }
 
+    #[rstest]
+    #[case(
+        "S=\u{1b}\u{1b}\u{1e}_=\u{1b}\n\u{1b},\u{1b}s=\u{1b}\u{0}\u{0}\u{1b}\u{1b}1L",
+        "\n*\u{1b}\u{1b}",
+        false
+    )]
+    #[trace]
+    fn validate_arbitrary(#[case] content: &str, #[case] path: &str, #[case] expected: bool) {
+        // Arrange
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert_that!(result.is_ok()).is_equal_to(expected)
+        });
+
+        // Act
+        validate(content, path, &formatter);
+    }
+
     #[test]
     fn validate_success_brackets_in_section_name() {
         // Arrange
@@ -408,7 +427,7 @@ a = b
 c = d
 "###;
         let formatter =
-            TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
+            TestFormatter::new(|result: ValidationResult| assert_that!(result.is_ok()).is_true());
 
         // Act
         validate(config, "", &formatter);
