@@ -30,3 +30,9 @@ name = "compare"
 path = "fuzz_targets/compare.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "glob"
+path = "fuzz_targets/glob.rs"
+test = false
+doc = false
