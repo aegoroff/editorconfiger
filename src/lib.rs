@@ -1,10 +1,10 @@
-#[cfg(feature = "build-binary")]
-pub mod console;
 mod editorconfig_lexer;
 mod editorconfig_parser;
 mod enumerable;
 pub mod glob;
 pub mod similar;
+#[cfg(feature = "build-binary")]
+pub mod console;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -334,22 +334,22 @@ mod tests {
     use spectral::prelude::*;
 
     struct TestFormatter<F>
-    where
-        F: Fn(ValidationResult),
+        where
+            F: Fn(ValidationResult),
     {
         assert: F,
     }
 
     struct TestCompareFormatter<F>
-    where
-        F: Fn(BTreeMap<&str, Vec<CompareItem>>),
+        where
+            F: Fn(BTreeMap<&str, Vec<CompareItem>>),
     {
         assert: F,
     }
 
     impl<F> TestFormatter<F>
-    where
-        F: Fn(ValidationResult),
+        where
+            F: Fn(ValidationResult),
     {
         fn new(assert: F) -> Self {
             Self { assert }
@@ -357,8 +357,8 @@ mod tests {
     }
 
     impl<F> TestCompareFormatter<F>
-    where
-        F: Fn(BTreeMap<&str, Vec<CompareItem>>),
+        where
+            F: Fn(BTreeMap<&str, Vec<CompareItem>>),
     {
         fn new(assert: F) -> Self {
             Self { assert }
@@ -366,8 +366,8 @@ mod tests {
     }
 
     impl<F> ValidationFormatter for TestFormatter<F>
-    where
-        F: Fn(ValidationResult),
+        where
+            F: Fn(ValidationResult),
     {
         fn format(&self, result: ValidationResult) {
             (self.assert)(result);
@@ -375,8 +375,8 @@ mod tests {
     }
 
     impl<F> ComparisonFormatter for TestCompareFormatter<F>
-    where
-        F: Fn(BTreeMap<&str, Vec<CompareItem>>),
+        where
+            F: Fn(BTreeMap<&str, Vec<CompareItem>>),
     {
         fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
             (self.assert)(result);
@@ -403,9 +403,9 @@ e = f"###;
 
     #[rstest]
     #[case(
-        "S=\u{1b}\u{1b}\u{1e}_=\u{1b}\n\u{1b},\u{1b}s=\u{1b}\u{0}\u{0}\u{1b}\u{1b}1L",
-        "\n*\u{1b}\u{1b}",
-        false
+    "S=\u{1b}\u{1b}\u{1e}_=\u{1b}\n\u{1b},\u{1b}s=\u{1b}\u{0}\u{0}\u{1b}\u{1b}1L",
+    "\n*\u{1b}\u{1b}",
+    false
     )]
     #[trace]
     fn validate_arbitrary(#[case] content: &str, #[case] path: &str, #[case] expected: bool) {
