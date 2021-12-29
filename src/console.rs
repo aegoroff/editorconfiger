@@ -1,4 +1,5 @@
-#[cfg(feature = "build-binary")]
+#![cfg(feature = "build-binary")]
+
 use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, ValidationResult};
 use ansi_term::ANSIGenericString;
 use ansi_term::Colour::{Green, Red, Yellow};
