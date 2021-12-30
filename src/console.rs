@@ -120,7 +120,7 @@ impl ComparisonFormatter for Comparator {
                     c2 = cell!(v2);
                 } else {
                     if v1.is_empty() || v2.is_empty() {
-                        // Green because one is missing on other
+                        // Green because one is missing in other
                         c1 = cell!(Fg->v1);
                         c2 = cell!(Fg->v2);
                     } else {
