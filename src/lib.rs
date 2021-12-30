@@ -157,19 +157,14 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
     let file = File::open(filename)?;
     let mut reader = BufReader::new(file);
 
-    let mut with_bom = false;
     // Check if file starts with a BOM marker
     // UTF-8: EF BB BF
     let mut bom = [0u8; 3];
     if let Ok(..) = reader.read_exact(&mut bom) {
-        if &bom == b"\xEF\xBB\xBF" {
-            with_bom = true;
+        if &bom != b"\xEF\xBB\xBF" {
+            // Reset file pointer
+            reader.seek(SeekFrom::Start(0))?;
         }
-    }
-
-    if !with_bom {
-        // Reset file pointer
-        reader.seek(SeekFrom::Start(0))?;
     }
 
     let mut contents = String::new();
