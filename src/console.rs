@@ -70,8 +70,8 @@ impl ValidationFormatter for Formatter {
             for (section, sims) in result.similar_properties {
                 println!("     [{}]:", section);
 
-                for sim in sims {
-                    table.add_row(row![sim.0, sim.1]);
+                for (first, second) in sims {
+                    table.add_row(row![first, second]);
                 }
             }
             table.printstd();
@@ -90,8 +90,8 @@ impl ValidationFormatter for Formatter {
                     let mut table = Table::new();
                     table.set_format(new_format(6));
                     println!("   Similar properties related to {}:", item.ext);
-                    for sim in item.similar {
-                        table.add_row(row![sim.0, sim.1]);
+                    for (first, second) in item.similar {
+                        table.add_row(row![first, second]);
                     }
                     table.printstd();
                 }
