@@ -57,6 +57,13 @@ impl<'input> CompareItem<'input> {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum ValidationState {
+    Valid,
+    Invalid,
+    SomeProblems,
+}
+
 pub struct ValidationResult<'input> {
     pub path: &'input str,
     pub duplicate_sections: Vec<&'input str>,
@@ -78,17 +85,33 @@ pub struct Property<'input> {
 }
 
 impl<'input> ValidationResult<'input> {
-    pub fn is_ok(&self) -> bool {
+    pub fn state(&self) -> ValidationState {
+        ValidationState::from(self)
+    }
+
+    fn is_ok(&self) -> bool {
         self.duplicate_properties.is_empty()
             && self.duplicate_sections.is_empty()
             && self.similar_properties.is_empty()
             && self.ext_problems.is_empty()
     }
 
-    pub fn is_invalid(&self) -> bool {
+    fn is_invalid(&self) -> bool {
         !self.duplicate_properties.is_empty()
             || !self.duplicate_sections.is_empty()
             || self.ext_problems.iter().any(|e| !e.duplicates.is_empty())
+    }
+}
+
+impl ValidationState {
+    fn from(result: &ValidationResult) -> ValidationState {
+        if result.is_ok() {
+            ValidationState::Valid
+        } else if result.is_invalid() {
+            ValidationState::Invalid
+        } else {
+            ValidationState::SomeProblems
+        }
     }
 }
 
@@ -390,7 +413,10 @@ c = d
 [*.md]
 e = f"###;
         let formatter =
-            TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
+            TestFormatter::new(|result: ValidationResult| {
+                assert_that!(result.is_ok()).is_true();
+                assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+            });
 
         // Act
         validate(config, "", &formatter);
@@ -406,7 +432,8 @@ e = f"###;
     fn validate_arbitrary(#[case] content: &str, #[case] path: &str, #[case] expected: bool) {
         // Arrange
         let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert_that!(result.is_ok()).is_equal_to(expected)
+            assert_that!(result.is_ok()).is_equal_to(expected);
+            assert_that(&result.state()).is_equal_to(ValidationState::SomeProblems);
         });
 
         // Act
@@ -422,7 +449,10 @@ a = b
 c = d
 "###;
         let formatter =
-            TestFormatter::new(|result: ValidationResult| assert_that!(result.is_ok()).is_true());
+            TestFormatter::new(|result: ValidationResult| {
+                assert_that!(result.is_ok()).is_true();
+                assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+            });
 
         // Act
         validate(config, "", &formatter);
@@ -437,7 +467,10 @@ a = b # comment 1
 c = d # comment 2
 "###;
         let formatter =
-            TestFormatter::new(|result: ValidationResult| assert_that(&result.is_ok()).is_true());
+            TestFormatter::new(|result: ValidationResult| {
+                assert_that!(result.is_ok()).is_true();
+                assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+            });
 
         // Act
         validate(config, "", &formatter);
@@ -459,6 +492,7 @@ e = f"###;
             assert_that(&result.duplicate_properties.is_empty()).is_false();
             assert_that(&result.duplicate_sections.is_empty()).is_true();
             assert_that(&result.similar_properties.is_empty()).is_true();
+            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
         });
 
         // Act
@@ -482,6 +516,7 @@ e = f"###;
             assert!(result.duplicate_sections.is_empty());
             assert!(!result.similar_properties.is_empty());
             assert_that!(result.ext_problems).is_empty();
+            assert_that(&result.state()).is_equal_to(ValidationState::SomeProblems);
         });
 
         // Act
@@ -506,6 +541,7 @@ e = f"###;
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
             assert_that!(result.ext_problems).is_empty();
+            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
         });
 
         // Act
@@ -528,6 +564,7 @@ a = d
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
             assert_that!(result.ext_problems).has_length(1);
+            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
         });
 
         // Act
@@ -550,6 +587,7 @@ d_a_b_c = d
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
             assert_that!(result.ext_problems).has_length(1);
+            assert_that(&result.state()).is_equal_to(ValidationState::SomeProblems);
         });
 
         // Act
@@ -572,6 +610,7 @@ e = f"###;
             assert!(result.duplicate_properties.is_empty());
             assert!(!result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
+            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
         });
 
         // Act

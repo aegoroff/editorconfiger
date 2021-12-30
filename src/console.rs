@@ -1,6 +1,6 @@
 #![cfg(feature = "build-binary")]
 
-use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, ValidationResult};
+use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, ValidationResult, ValidationState};
 use ansi_term::Colour::{Green, Red, Yellow};
 use prettytable::format::TableFormat;
 use prettytable::{cell, Cell, format, row, Row, Table};
@@ -8,24 +8,6 @@ use std::collections::BTreeMap;
 
 pub struct Formatter {
     only_problems: bool,
-}
-
-enum ValidationState {
-    Valid,
-    Invalid,
-    SomeProblems,
-}
-
-impl ValidationState {
-    fn from(result: &ValidationResult) -> ValidationState {
-        if result.is_ok() {
-            ValidationState::Valid
-        } else if result.is_invalid() {
-            ValidationState::Invalid
-        } else {
-            ValidationState::SomeProblems
-        }
-    }
 }
 
 impl Formatter {
@@ -36,7 +18,7 @@ impl Formatter {
 
 impl ValidationFormatter for Formatter {
     fn format(&self, result: ValidationResult) {
-        let msg = match ValidationState::from(&result) {
+        let msg = match result.state() {
             ValidationState::Valid => Green.paint("valid"),
             ValidationState::Invalid => Red.paint("invalid"),
             ValidationState::SomeProblems => Yellow.paint("has some problems"),
