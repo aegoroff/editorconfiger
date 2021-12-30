@@ -118,17 +118,16 @@ impl ComparisonFormatter for Comparator {
                     // No color
                     c1 = cell!(v1);
                     c2 = cell!(v2);
+                } else if v1.is_empty() || v2.is_empty() {
+                    // Green because one is missing in other
+                    c1 = cell!(Fg->v1);
+                    c2 = cell!(Fg->v2);
                 } else {
-                    if v1.is_empty() || v2.is_empty() {
-                        // Green because one is missing in other
-                        c1 = cell!(Fg->v1);
-                        c2 = cell!(Fg->v2);
-                    } else {
-                        // Yellow because values are different
-                        c1 = cell!(Fy->v1);
-                        c2 = cell!(Fy->v2);
-                    }
+                    // Yellow because values are different
+                    c1 = cell!(Fy->v1);
+                    c2 = cell!(Fy->v2);
                 }
+
                 let r = Row::new(vec![cell!(value.key), c1, c2]);
                 table.add_row(r);
             }
