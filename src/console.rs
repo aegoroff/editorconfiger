@@ -4,7 +4,7 @@ use crate::{CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, Vali
 use ansi_term::ANSIGenericString;
 use ansi_term::Colour::{Green, Red, Yellow};
 use prettytable::format::TableFormat;
-use prettytable::{cell, format, row, Table};
+use prettytable::{cell, Cell, format, row, Row, Table};
 use std::collections::BTreeMap;
 
 pub struct Formatter {
@@ -128,13 +128,20 @@ impl ComparisonFormatter for Comparator {
             for value in values {
                 let v1 = value.first_value.unwrap_or_default();
                 let v2 = value.second_value.unwrap_or_default();
+                let c1: Cell;
+                let c2: Cell;
                 if v1 != v2 && !v1.is_empty() && !v2.is_empty() {
-                    table.add_row(row![value.key, Fy->v1, Fy->v2]);
+                    c1 = cell!(Fy->v1);
+                    c2 = cell!(Fy->v2);
                 } else if v1 != v2 {
-                    table.add_row(row![value.key, Fg->v1, Fg->v2]);
+                    c1 = cell!(Fg->v1);
+                    c2 = cell!(Fg->v2);
                 } else {
-                    table.add_row(row![value.key, v1, v2]);
+                    c1 = cell!(v1);
+                    c2 = cell!(v2);
                 }
+                let r = Row::new(vec![cell!(value.key), c1, c2]);
+                table.add_row(r);
             }
         }
         table.add_row(row![H3=>""]);
