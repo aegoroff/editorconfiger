@@ -105,7 +105,7 @@ impl ComparisonFormatter for Comparator {
 
         for (sect, values) in result {
             if !sect.is_empty() {
-                table.add_row(row![H3=>""]);
+                table.add_empty_row();
             }
 
             table.add_row(row![bFH3=>sect]);
@@ -132,7 +132,7 @@ impl ComparisonFormatter for Comparator {
                 table.add_row(r);
             }
         }
-        table.add_row(row![H3=>""]);
+        table.add_empty_row();
         table.printstd();
     }
 }
