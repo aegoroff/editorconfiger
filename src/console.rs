@@ -5,6 +5,7 @@ use ansi_term::Colour::{Green, Red, Yellow};
 use prettytable::format::TableFormat;
 use prettytable::{cell, Cell, format, row, Row, Table};
 use std::collections::BTreeMap;
+use ansi_term::ANSIGenericString;
 
 pub struct Formatter {
     only_problems: bool,
@@ -18,16 +19,21 @@ impl Formatter {
 
 impl ValidationFormatter for Formatter {
     fn format(&self, result: ValidationResult) {
-        let msg = match result.state() {
-            ValidationState::Valid => Green.paint("valid"),
-            ValidationState::Invalid => Red.paint("invalid"),
-            ValidationState::SomeProblems => Yellow.paint("has some problems"),
-        };
+        let msg: ANSIGenericString<str>;
+        let mut is_ok = false;
+        match result.state() {
+            ValidationState::Valid => {
+                is_ok = true;
+                msg = Green.paint("valid");
+            }
+            ValidationState::Invalid => msg = Red.paint("invalid"),
+            ValidationState::SomeProblems => msg = Yellow.paint("has some problems"),
+        }
 
-        if !self.only_problems || !result.is_ok() {
+        if !self.only_problems || !is_ok {
             println!(" {} {}", result.path, msg);
         }
-        if result.is_ok() {
+        if is_ok {
             return;
         }
 

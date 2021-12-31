@@ -89,7 +89,7 @@ impl<'input> ValidationResult<'input> {
         ValidationState::from(self)
     }
 
-    pub fn is_ok(&self) -> bool {
+    fn is_ok(&self) -> bool {
         self.duplicate_properties.is_empty()
             && self.duplicate_sections.is_empty()
             && self.similar_properties.is_empty()
