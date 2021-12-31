@@ -105,11 +105,7 @@ impl<'input> ValidationResult<'input> {
 
 impl ValidationState {
     pub fn is_ok(&self) -> bool {
-        if let ValidationState::Valid = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, ValidationState::Valid)
     }
 
     fn from(result: &ValidationResult) -> ValidationState {
