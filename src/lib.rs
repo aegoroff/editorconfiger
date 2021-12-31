@@ -1,10 +1,10 @@
+#[cfg(feature = "build-binary")]
+pub mod console;
 mod editorconfig_lexer;
 mod editorconfig_parser;
 mod enumerable;
 pub mod glob;
 pub mod similar;
-#[cfg(feature = "build-binary")]
-pub mod console;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -104,6 +104,14 @@ impl<'input> ValidationResult<'input> {
 }
 
 impl ValidationState {
+    pub fn is_ok(&self) -> bool {
+        if let ValidationState::Valid = self {
+            true
+        } else {
+            false
+        }
+    }
+
     fn from(result: &ValidationResult) -> ValidationState {
         if result.is_ok() {
             ValidationState::Valid
@@ -412,11 +420,10 @@ c = d
 
 [*.md]
 e = f"###;
-        let formatter =
-            TestFormatter::new(|result: ValidationResult| {
-                assert_that!(result.is_ok()).is_true();
-                assert_that(&result.state()).is_equal_to(ValidationState::Valid);
-            });
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert_that!(result.is_ok()).is_true();
+            assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+        });
 
         // Act
         validate(config, "", &formatter);
@@ -440,6 +447,18 @@ e = f"###;
         validate(content, path, &formatter);
     }
 
+    #[rstest]
+    #[case(ValidationState::Valid, true)]
+    #[case(ValidationState::Invalid, false)]
+    #[case(ValidationState::SomeProblems, false)]
+    #[trace]
+    fn is_ok_tests(#[case] state: ValidationState, #[case] expected: bool) {
+        // Arrange
+
+        // Act
+        assert_that!(state.is_ok()).is_equal_to(expected);
+    }
+
     #[test]
     fn validate_success_brackets_in_section_name() {
         // Arrange
@@ -448,11 +467,10 @@ e = f"###;
 a = b
 c = d
 "###;
-        let formatter =
-            TestFormatter::new(|result: ValidationResult| {
-                assert_that!(result.is_ok()).is_true();
-                assert_that(&result.state()).is_equal_to(ValidationState::Valid);
-            });
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert_that!(result.is_ok()).is_true();
+            assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+        });
 
         // Act
         validate(config, "", &formatter);
@@ -466,11 +484,10 @@ c = d
 a = b # comment 1
 c = d # comment 2
 "###;
-        let formatter =
-            TestFormatter::new(|result: ValidationResult| {
-                assert_that!(result.is_ok()).is_true();
-                assert_that(&result.state()).is_equal_to(ValidationState::Valid);
-            });
+        let formatter = TestFormatter::new(|result: ValidationResult| {
+            assert_that!(result.is_ok()).is_true();
+            assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+        });
 
         // Act
         validate(config, "", &formatter);
