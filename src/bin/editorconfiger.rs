@@ -1,4 +1,4 @@
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+use clap::{App, AppSettings, Arg, ArgMatches};
 use editorconfiger::console::{Comparator, Error, Formatter};
 
 #[macro_use]
@@ -12,9 +12,9 @@ fn main() {
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        ("c", Some(cmd)) => compare(cmd),
-        ("vf", Some(cmd)) => validate_file(cmd),
-        ("vd", Some(cmd)) => validate_folder(cmd),
+        Some(("c", cmd)) => compare(cmd),
+        Some(("vf", cmd)) => validate_file(cmd),
+        Some(("vd", cmd)) => validate_folder(cmd),
         _ => {}
     }
 }
@@ -46,37 +46,37 @@ fn compare(cmd: &ArgMatches) {
     editorconfiger::compare_files(path1, path2, &err, &cmp);
 }
 
-fn build_cli() -> App<'static, 'static> {
+fn build_cli() -> App<'static> {
     return App::new(crate_name!())
         .setting(AppSettings::ArgRequiredElseHelp)
         .version(crate_version!())
         .author("egoroff <egoroff@gmail.com>")
         .about(".editorconfig files tool")
         .subcommand(
-            SubCommand::with_name("vf")
+            App::new("vf")
                 .aliases(&["validate-file"])
                 .about("Validate single .editorconfig file")
                 .arg(
-                    Arg::with_name(PATH)
+                    Arg::new(PATH)
                         .help("Path to .editorconfig file")
                         .required(true)
                         .index(1),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("vd")
+            App::new("vd")
                 .aliases(&["validate-dir"])
                 .about("Validate all found .editorconfig files in a directory and all its children")
                 .arg(
-                    Arg::with_name(PATH)
+                    Arg::new(PATH)
                         .help("Path to the directory that contains .editorconfig files")
                         .required(true)
                         .index(1),
                 )
                 .arg(
-                    Arg::with_name("problems")
+                    Arg::new("problems")
                         .long("problems")
-                        .short("p")
+                        .short('p')
                         .takes_value(false)
                         .help(
                             "Show only files that have problems. Correct files will not be shown.",
@@ -85,17 +85,17 @@ fn build_cli() -> App<'static, 'static> {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("c")
+            App::new("c")
                 .aliases(&["compare"])
                 .about("Compare two .editorconfig files")
                 .arg(
-                    Arg::with_name("FILE1")
+                    Arg::new("FILE1")
                         .help("Path to the first .editorconfig file")
                         .required(true)
                         .index(1),
                 )
                 .arg(
-                    Arg::with_name("FILE2")
+                    Arg::new("FILE2")
                         .help("Path to the second .editorconfig file")
                         .required(true)
                         .index(2),
