@@ -6,6 +6,9 @@ extern crate clap;
 extern crate ansi_term;
 
 const PATH: &str = "PATH";
+const FILE1: &str = "FILE1";
+const FILE2: &str = "FILE2";
+const PROBLEMS: &str = "problems";
 
 fn main() {
     let app = build_cli();
@@ -28,7 +31,7 @@ fn validate_file(cmd: &ArgMatches) {
 
 fn validate_folder(cmd: &ArgMatches) {
     let path = cmd.value_of(PATH).unwrap();
-    let only_problems = cmd.is_present("problems");
+    let only_problems = cmd.is_present(PROBLEMS);
     let formatter = Formatter::new(only_problems);
     let err = Error {};
     let results = editorconfiger::validate_all(path, &formatter, &err);
@@ -37,8 +40,8 @@ fn validate_folder(cmd: &ArgMatches) {
 }
 
 fn compare(cmd: &ArgMatches) {
-    let path1 = cmd.value_of("FILE1").unwrap();
-    let path2 = cmd.value_of("FILE2").unwrap();
+    let path1 = cmd.value_of(FILE1).unwrap();
+    let path2 = cmd.value_of(FILE2).unwrap();
     let err = Error {};
     println!(" FILE #1: {}", path1);
     println!(" FILE #2: {}", path2);
@@ -74,8 +77,8 @@ fn build_cli() -> App<'static> {
                         .index(1),
                 )
                 .arg(
-                    Arg::new("problems")
-                        .long("problems")
+                    Arg::new(PROBLEMS)
+                        .long(PROBLEMS)
                         .short('p')
                         .takes_value(false)
                         .help(
@@ -89,13 +92,13 @@ fn build_cli() -> App<'static> {
                 .aliases(&["compare"])
                 .about("Compare two .editorconfig files")
                 .arg(
-                    Arg::new("FILE1")
+                    Arg::new(FILE1)
                         .help("Path to the first .editorconfig file")
                         .required(true)
                         .index(1),
                 )
                 .arg(
-                    Arg::new("FILE2")
+                    Arg::new(FILE2)
                         .help("Path to the second .editorconfig file")
                         .required(true)
                         .index(2),
