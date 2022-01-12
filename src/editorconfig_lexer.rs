@@ -104,11 +104,11 @@ fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug,
 {
-    let comment_start_and_separator_chars = "=;#";
+    const COMMENT_START_AND_SEPARATOR_CHARS: &str = "=;#";
     let parser = sequence::separated_pair(
-        is_not(comment_start_and_separator_chars),
+        is_not(COMMENT_START_AND_SEPARATOR_CHARS),
         complete::char('='),
-        is_not(comment_start_and_separator_chars),
+        is_not(COMMENT_START_AND_SEPARATOR_CHARS),
     );
 
     combinator::map(parser, |(k, v): (&str, &str)| {
