@@ -56,7 +56,7 @@ impl<'a> Iterator for TokenIterator<'a> {
             self.inline_comment = "";
             // if there were an error while parsing inline comment (for example it's not started from # or ;)
             // just throw it without stopping parsing
-            // It may be sensible to warn user about it. Should think over about it.
+            // It may be sensible to warn user about it. Should think over it.
             if let Ok((_, inline_comment)) = parsed_comment {
                 return Some(inline_comment);
             }
