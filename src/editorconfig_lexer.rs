@@ -22,24 +22,24 @@ pub fn tokenize(input: &str) -> impl Iterator<Item = Token> {
 
 struct TokenIterator<'a> {
     input: &'a str,
-    inline_comment: &'a str,
+    not_parsed_trail: &'a str,
 }
 
 impl<'a> TokenIterator<'a> {
     fn new(input: &'a str) -> Self {
         Self {
             input,
-            inline_comment: "",
+            not_parsed_trail: "",
         }
     }
 
     fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Token<'a>> {
         let parsed_line = line::<'a, VerboseError<&'a str>>(val);
         self.input = trail;
-        if let Ok((comment, token)) = parsed_line {
+        if let Ok((remain, token)) = parsed_line {
             // not parsed trail considered as inline comment
             // and will be parsed later
-            self.inline_comment = comment;
+            self.not_parsed_trail = remain;
             Some(token)
         } else {
             None
@@ -51,9 +51,9 @@ impl<'a> Iterator for TokenIterator<'a> {
     type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if !self.inline_comment.is_empty() {
-            let parsed_comment = comment::<'a, VerboseError<&'a str>>(self.inline_comment);
-            self.inline_comment = "";
+        if !self.not_parsed_trail.is_empty() {
+            let parsed_comment = comment::<'a, VerboseError<&'a str>>(self.not_parsed_trail);
+            self.not_parsed_trail = "";
             // if there were an error while parsing inline comment (for example it's not started from # or ;)
             // just throw it without stopping parsing
             // It may be sensible to warn user about it. Should think over it.
