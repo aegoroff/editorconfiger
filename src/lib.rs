@@ -131,7 +131,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
     let parallelism = Parallelism::RayonNewPool(num_cpus::get_physical());
 
     #[cfg(target_os = "windows")]
-    let root = if path.len() == 2 && path.chars().last() == Some(':') {
+    let root = if path.len() == 2 && path.ends_with(':') {
         format!("{}\\", path)
     } else {
         String::from(path)
