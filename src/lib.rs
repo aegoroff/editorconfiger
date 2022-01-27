@@ -130,7 +130,16 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
 ) -> usize {
     let parallelism = Parallelism::RayonNewPool(num_cpus::get_physical());
 
-    let iter = WalkDir::new(path)
+    #[cfg(target_os = "windows")]
+    let root = if path.len() == 2 && path.chars().last() == Some(':') {
+        format!("{}\\", path)
+    } else {
+        String::from(path)
+    };
+    #[cfg(not(target_os = "windows"))]
+    let root = path;
+
+    let iter = WalkDir::new(root)
         .skip_hidden(false)
         .follow_links(false)
         .parallelism(parallelism);
