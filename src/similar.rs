@@ -36,7 +36,6 @@ pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
 mod tests {
     use super::*;
     use rstest::*;
-    use spectral::prelude::*;
 
     #[rstest]
     #[case(vec!["a_b_c_d", "b_c_e"], vec![])]
@@ -51,6 +50,6 @@ mod tests {
         let actual = find_suffix_pairs(&items);
 
         // Assert
-        assert_that!(actual).is_equal_to(expected);
+        assert_eq!(actual, expected);
     }
 }

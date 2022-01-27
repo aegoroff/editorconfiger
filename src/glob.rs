@@ -38,7 +38,6 @@ pub fn parse(string: &str) -> Vec<String> {
 mod tests {
     use super::*;
     use rstest::*;
-    use spectral::prelude::*;
 
     #[rstest]
     #[case("22", vec!["22"])]
@@ -75,6 +74,6 @@ mod tests {
         let actual: Vec<&str> = actual.iter().map(|s| &**s).collect();
 
         // Assert
-        assert_that!(actual).is_equal_to(expected);
+        assert_eq!(actual, expected);
     }
 }

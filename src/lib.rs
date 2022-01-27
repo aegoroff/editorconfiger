@@ -19,10 +19,6 @@ extern crate nom;
 
 #[cfg(test)] // <-- not needed in integration tests
 #[macro_use]
-extern crate spectral;
-
-#[cfg(test)] // <-- not needed in integration tests
-#[macro_use]
 extern crate table_test;
 
 #[cfg(test)] // <-- not needed in integration tests
@@ -353,7 +349,6 @@ fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, BTreeMap<&'
 mod tests {
     use super::*;
     use rstest::*;
-    use spectral::prelude::*;
 
     struct TestFormatter<F>
     where
@@ -417,8 +412,8 @@ c = d
 [*.md]
 e = f"###;
         let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert_that!(result.is_ok()).is_true();
-            assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+            assert!(result.is_ok());
+            assert_eq!(result.state(), ValidationState::Valid);
         });
 
         // Act
@@ -435,8 +430,8 @@ e = f"###;
     fn validate_arbitrary(#[case] content: &str, #[case] path: &str, #[case] expected: bool) {
         // Arrange
         let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert_that!(result.is_ok()).is_equal_to(expected);
-            assert_that(&result.state()).is_equal_to(ValidationState::SomeProblems);
+            assert_eq!(result.is_ok(), expected);
+            assert_eq!(result.state(), ValidationState::SomeProblems);
         });
 
         // Act
@@ -452,7 +447,7 @@ e = f"###;
         // Arrange
 
         // Act
-        assert_that!(state.is_ok()).is_equal_to(expected);
+        assert_eq!(state.is_ok(), expected);
     }
 
     #[test]
@@ -464,8 +459,8 @@ a = b
 c = d
 "###;
         let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert_that!(result.is_ok()).is_true();
-            assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+            assert!(result.is_ok());
+            assert_eq!(result.state(), ValidationState::Valid);
         });
 
         // Act
@@ -481,8 +476,8 @@ a = b # comment 1
 c = d # comment 2
 "###;
         let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert_that!(result.is_ok()).is_true();
-            assert_that(&result.state()).is_equal_to(ValidationState::Valid);
+            assert!(result.is_ok());
+            assert_eq!(result.state(), ValidationState::Valid);
         });
 
         // Act
@@ -502,10 +497,10 @@ c = d
 [*.md]
 e = f"###;
         let formatter = TestFormatter::new(|result: ValidationResult| {
-            assert_that(&result.duplicate_properties.is_empty()).is_false();
-            assert_that(&result.duplicate_sections.is_empty()).is_true();
-            assert_that(&result.similar_properties.is_empty()).is_true();
-            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
+            assert!(!result.duplicate_properties.is_empty());
+            assert!(result.duplicate_sections.is_empty());
+            assert!(result.similar_properties.is_empty());
+            assert_eq!(result.state(), ValidationState::Invalid);
         });
 
         // Act
@@ -528,8 +523,8 @@ e = f"###;
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(!result.similar_properties.is_empty());
-            assert_that!(result.ext_problems).is_empty();
-            assert_that(&result.state()).is_equal_to(ValidationState::SomeProblems);
+            assert!(result.ext_problems.is_empty());
+            assert_eq!(result.state(), ValidationState::SomeProblems);
         });
 
         // Act
@@ -553,8 +548,8 @@ e = f"###;
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert_that!(result.ext_problems).is_empty();
-            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
+            assert!(result.ext_problems.is_empty());
+            assert_eq!(result.state(), ValidationState::Invalid);
         });
 
         // Act
@@ -576,8 +571,8 @@ a = d
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert_that!(result.ext_problems).has_length(1);
-            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
+            assert_eq!(result.ext_problems.len(), 1);
+            assert_eq!(result.state(), ValidationState::Invalid);
         });
 
         // Act
@@ -599,8 +594,8 @@ d_a_b_c = d
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert_that!(result.ext_problems).has_length(1);
-            assert_that(&result.state()).is_equal_to(ValidationState::SomeProblems);
+            assert_eq!(result.ext_problems.len(), 1);
+            assert_eq!(result.state(), ValidationState::SomeProblems);
         });
 
         // Act
@@ -623,7 +618,7 @@ e = f"###;
             assert!(result.duplicate_properties.is_empty());
             assert!(!result.duplicate_sections.is_empty());
             assert!(result.similar_properties.is_empty());
-            assert_that(&result.state()).is_equal_to(ValidationState::Invalid);
+            assert_eq!(result.state(), ValidationState::Invalid);
         });
 
         // Act
@@ -646,7 +641,7 @@ c = d2
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
-            assert_that(res.get("*").unwrap()).has_length(2);
+            assert_eq!(res.get("*").unwrap().len(), 2);
         });
 
         // Act
@@ -673,10 +668,10 @@ c = d2
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
-            assert_that!(res.get("*")).is_some();
-            assert_that(res.get("*").unwrap()).has_length(2);
-            assert_that!(res.get("")).is_some();
-            assert_that(res.get("").unwrap()).has_length(1);
+            assert!(res.get("*").is_some());
+            assert_eq!(res.get("*").unwrap().len(), 2);
+            assert!(res.get("").is_some());
+            assert_eq!(res.get("").unwrap().len(), 1);
         });
 
         // Act
@@ -698,7 +693,7 @@ d = d2
 "###;
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
-            assert_that(res.get("*").unwrap()).has_length(3);
+            assert_eq!(res.get("*").unwrap().len(), 3);
         });
 
         // Act
@@ -720,8 +715,8 @@ d = d2
 "###;
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
-            assert_that(res.get("x").unwrap()).has_length(2);
-            assert_that(res.get("y").unwrap()).has_length(2);
+            assert_eq!(res.get("x").unwrap().len(), 2);
+            assert_eq!(res.get("y").unwrap().len(), 2);
         });
 
         // Act

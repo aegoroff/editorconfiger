@@ -53,7 +53,6 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use spectral::prelude::*;
 
     #[test]
     fn map_several_sections_len_and_content_as_expected() {
@@ -71,9 +70,11 @@ e = f"###;
         let contents = parse(config);
 
         // Assert
-        assert_that!(contents).has_length(3);
-        assert_that!(contents.iter().map(|x| x.title).collect::<Vec<&str>>())
-            .is_equal_to(vec!["", "*", "*.md"]);
+        assert_eq!(contents.len(), 3);
+        assert_eq!(
+            contents.iter().map(|x| x.title).collect::<Vec<&str>>(),
+            vec!["", "*", "*.md"]
+        );
     }
 
     #[test]
@@ -88,7 +89,7 @@ c = d"###;
         let contents = parse(config);
 
         // Assert
-        assert_that!(contents).has_length(1);
-        assert_that!(contents[0].properties).has_length(2);
+        assert_eq!(contents.len(), 1);
+        assert_eq!(contents[0].properties.len(), 2);
     }
 }

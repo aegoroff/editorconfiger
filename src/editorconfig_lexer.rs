@@ -132,7 +132,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use spectral::prelude::*;
 
     #[test]
     fn tokenize_test() {
@@ -282,6 +281,6 @@ trim_trailing_whitespace = false
             Token::Pair("max_line_length", "off"),
             Token::Pair("trim_trailing_whitespace", "false"),
         ];
-        assert_that!(result).is_equal_to(expected);
+        assert_eq!(result, expected);
     }
 }

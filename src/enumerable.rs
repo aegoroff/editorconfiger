@@ -29,7 +29,6 @@ pub fn only_unique<T: Eq + Hash + Clone>(iter: impl Iterator<Item = T>) -> impl 
 mod tests {
     use super::*;
     use rstest::*;
-    use spectral::prelude::*;
 
     #[rstest]
     #[case(vec!["a", "b", "b", "a"], vec!["a", "b"])]
@@ -46,7 +45,7 @@ mod tests {
         let result: Vec<&str> = only_duplicates(items.into_iter()).collect();
 
         // Assert
-        assert_that!(result).is_equal_to(expected);
+        assert_eq!(result, expected);
     }
 
     #[rstest]
@@ -62,6 +61,6 @@ mod tests {
         let result: Vec<&str> = only_unique(items.into_iter()).collect();
 
         // Assert
-        assert_that!(result).is_equal_to(expected);
+        assert_eq!(result, expected);
     }
 }
