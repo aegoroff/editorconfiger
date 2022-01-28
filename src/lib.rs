@@ -130,14 +130,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
 ) -> usize {
     let parallelism = Parallelism::RayonNewPool(num_cpus::get_physical());
 
-    #[cfg(target_os = "windows")]
-    let root = if path.len() == 2 && path.ends_with(':') {
-        format!("{}\\", path)
-    } else {
-        String::from(path)
-    };
-    #[cfg(not(target_os = "windows"))]
-    let root = path;
+    let root = decorate_path(path);
 
     let iter = WalkDir::new(root)
         .skip_hidden(false)
@@ -352,6 +345,17 @@ fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, BTreeMap<&'
         .iter()
         .map(|s| (s.title, map_properties(s)))
         .collect()
+}
+
+fn decorate_path(path: &str) -> String {
+    #[cfg(target_os = "windows")]
+    if path.len() == 2 && path.ends_with(':') {
+        format!("{}\\", path)
+    } else {
+        String::from(path)
+    }
+    #[cfg(not(target_os = "windows"))]
+    String::from(path)
 }
 
 #[cfg(test)]
@@ -730,5 +734,38 @@ d = d2
 
         // Act
         compare(config1, config2, &formatter);
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[rstest]
+    #[case("", "")]
+    #[case("/", "/")]
+    #[case("/home", "/home")]
+    #[case("d:", "d:")]
+    #[trace]
+    fn decorate_path_tests(#[case] raw_path: &str, #[case] expected: &str) {
+        // Arrange
+
+        // Act
+        let actual = decorate_path(raw_path);
+
+        // Assert
+        assert_eq!(actual, expected);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[rstest]
+    #[case("", "")]
+    #[case("/", "/")]
+    #[case("d:", "d:\\")]
+    #[trace]
+    fn decorate_path_tests(#[case] raw_path: &str, #[case] expected: &str) {
+        // Arrange
+
+        // Act
+        let actual = decorate_path(raw_path);
+
+        // Assert
+        assert_eq!(actual, expected);
     }
 }
