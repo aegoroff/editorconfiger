@@ -347,6 +347,8 @@ fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, BTreeMap<&'
         .collect()
 }
 
+/// On Windows added trailing back slash \ if volume and colon passed so as to paths look more pleasant
+/// On Unix just passthrough as is
 fn decorate_path(path: &str) -> String {
     #[cfg(target_os = "windows")]
     if path.len() == 2 && path.ends_with(':') {
