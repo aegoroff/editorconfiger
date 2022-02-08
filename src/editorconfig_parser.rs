@@ -1,11 +1,17 @@
 use crate::editorconfig_lexer::Token;
-use crate::{editorconfig_lexer, glob, Property};
+use crate::{editorconfig_lexer, glob};
 
 #[derive(Default)]
 pub struct Section<'a> {
     pub title: &'a str,
     pub extensions: Vec<String>,
     pub properties: Vec<Property<'a>>,
+}
+
+pub struct Property<'input> {
+    pub name: &'input str,
+    pub value: &'input str,
+    pub section: &'input str,
 }
 
 pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {

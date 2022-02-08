@@ -24,7 +24,7 @@ extern crate table_test;
 #[cfg(test)] // <-- not needed in integration tests
 extern crate rstest;
 
-use crate::editorconfig_parser::Section;
+use crate::editorconfig_parser::{Property, Section};
 use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -72,12 +72,6 @@ pub struct ExtValidationResult<'input> {
     pub ext: String,
     pub duplicates: Vec<&'input str>,
     pub similar: Vec<(&'input str, &'input str)>,
-}
-
-pub struct Property<'input> {
-    pub name: &'input str,
-    pub value: &'input str,
-    pub section: &'input str,
 }
 
 impl<'input> ValidationResult<'input> {
