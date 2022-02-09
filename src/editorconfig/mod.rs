@@ -1,19 +1,16 @@
 mod lexer;
 
-use crate::glob;
 use lexer::Token;
 
 #[derive(Default)]
 pub struct Section<'a> {
     pub title: &'a str,
-    pub extensions: Vec<String>,
     pub properties: Vec<Property<'a>>,
 }
 
 pub struct Property<'input> {
     pub name: &'input str,
     pub value: &'input str,
-    pub section: &'input str,
 }
 
 pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
@@ -24,7 +21,6 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
             Token::Head(h) => {
                 let section = Section::<'a> {
                     title: h,
-                    extensions: glob::parse(h),
                     ..Default::default()
                 };
                 result.push(section)
@@ -33,7 +29,6 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                 // root section case i.e. key value pair without any section
                 if result.is_empty() {
                     let section = Section::<'a> {
-                        extensions: glob::parse("*"),
                         ..Default::default()
                     };
                     result.push(section)
@@ -42,11 +37,7 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                 // it's safe to add key/value pair into the last found section defined
                 // by Token::Head or fake root section added before
                 if let Some(section) = result.last_mut() {
-                    let property = Property {
-                        name: k,
-                        value: v,
-                        section: section.title,
-                    };
+                    let property = Property { name: k, value: v };
                     section.properties.push(property);
                 }
             }

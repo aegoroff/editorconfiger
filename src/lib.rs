@@ -23,7 +23,7 @@ extern crate table_test;
 #[cfg(test)] // <-- not needed in integration tests
 extern crate rstest;
 
-use editorconfig::{Property, Section};
+use editorconfig::Section;
 use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -71,6 +71,12 @@ pub struct ExtValidationResult<'input> {
     pub ext: String,
     pub duplicates: Vec<&'input str>,
     pub similar: Vec<(&'input str, &'input str)>,
+}
+
+/// Property with section that contain it
+struct ExtendedProperty<'input> {
+    pub name: &'input str,
+    pub section: &'input str,
 }
 
 impl<'input> ValidationResult<'input> {
@@ -199,11 +205,15 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
     let mut section_heads = Vec::new();
 
     for sec in &sections {
-        for e in &sec.extensions {
+        let extensions = glob::parse(sec.title);
+        for e in extensions {
             all_ext_props
                 .entry(e)
                 .or_insert_with(Vec::new)
-                .extend(&sec.properties);
+                .extend(sec.properties.iter().map(|x| ExtendedProperty {
+                    name: x.name,
+                    section: sec.title,
+                }));
         }
         section_heads.push(sec.title);
 
@@ -221,7 +231,7 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
 
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
-        .map(|(ext, props)| validate_extension(ext.to_string(), props))
+        .map(|(ext, props)| validate_extension(ext, props))
         .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
@@ -244,7 +254,7 @@ fn append_to_btree<'a, T>(bree: &mut BTreeMap<&'a str, Vec<T>>, key: &'a str, da
     }
 }
 
-fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidationResult<'a> {
+fn validate_extension(ext: String, props: Vec<ExtendedProperty>) -> ExtValidationResult {
     let props_sections = props.into_iter().map(|p| (p.name, p.section)).fold(
         HashMap::new(),
         |mut h, (prop, sect)| {
