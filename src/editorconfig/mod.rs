@@ -1,5 +1,7 @@
-use crate::editorconfig_lexer::Token;
-use crate::{editorconfig_lexer, glob};
+mod lexer;
+
+use crate::glob;
+use lexer::Token;
 
 #[derive(Default)]
 pub struct Section<'a> {
@@ -15,7 +17,7 @@ pub struct Property<'input> {
 }
 
 pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
-    let tokens = editorconfig_lexer::tokenize(content);
+    let tokens = lexer::tokenize(content);
 
     tokens.fold(Vec::<Section<'a>>::new(), |mut result, token| {
         match token {

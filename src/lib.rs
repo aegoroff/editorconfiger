@@ -1,7 +1,6 @@
 #[cfg(feature = "build-binary")]
 pub mod console;
-mod editorconfig_lexer;
-mod editorconfig_parser;
+mod editorconfig;
 mod enumerable;
 pub mod glob;
 pub mod similar;
@@ -24,7 +23,7 @@ extern crate table_test;
 #[cfg(test)] // <-- not needed in integration tests
 extern crate rstest;
 
-use crate::editorconfig_parser::{Property, Section};
+use editorconfig::{Property, Section};
 use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -196,7 +195,7 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
 
-    let sections = editorconfig_parser::parse(content);
+    let sections = editorconfig::parse(content);
     let mut section_heads = Vec::new();
 
     for sec in &sections {
@@ -281,8 +280,8 @@ fn validate_extension<'a>(ext: String, props: Vec<&'a Property>) -> ExtValidatio
 pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
     let empty = BTreeMap::<&str, &str>::new();
 
-    let f1 = editorconfig_parser::parse(content1);
-    let f2 = editorconfig_parser::parse(content2);
+    let f1 = editorconfig::parse(content1);
+    let f2 = editorconfig::parse(content2);
 
     let s1_props = map_sections(&f1);
     let s2_props = map_sections(&f2);
