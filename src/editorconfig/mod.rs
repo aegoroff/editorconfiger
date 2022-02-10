@@ -2,17 +2,21 @@ mod lexer;
 
 use lexer::Token;
 
+/// Named container of properties
 #[derive(Default)]
 pub struct Section<'a> {
+    /// any data between square brackets (i.e. [])
     pub title: &'a str,
     pub properties: Vec<Property<'a>>,
 }
 
+/// Property represents name/value pair
 pub struct Property<'input> {
     pub name: &'input str,
     pub value: &'input str,
 }
 
+/// Parses input str splitting it to sections
 pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
     let tokens = lexer::tokenize(content);
 
@@ -27,10 +31,9 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
             }
             Token::Pair(k, v) => {
                 // root section case i.e. key value pair without any section
+                // so we add section with empty title
                 if result.is_empty() {
-                    let section = Section::<'a> {
-                        ..Default::default()
-                    };
+                    let section = Default::default();
                     result.push(section)
                 }
                 // because tokens stream has order as in original file

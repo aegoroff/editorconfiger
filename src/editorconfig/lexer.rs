@@ -62,6 +62,8 @@ impl<'a> Iterator for TokenIterator<'a> {
             }
         }
 
+        // self.input will point to trail after each self.parse_line call
+        // so we advance over input until EOF
         loop {
             if self.input.is_empty() {
                 break;
