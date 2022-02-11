@@ -206,14 +206,17 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
 
     for sec in &sections {
         let extensions = glob::parse(sec.title);
+        let props_fn = || {
+            sec.properties.iter().map(|x| ExtendedProperty {
+                name: x.name,
+                section: sec.title,
+            })
+        };
         for e in extensions {
             all_ext_props
                 .entry(e)
                 .or_insert_with(Vec::new)
-                .extend(sec.properties.iter().map(|x| ExtendedProperty {
-                    name: x.name,
-                    section: sec.title,
-                }));
+                .extend(props_fn());
         }
         section_heads.push(sec.title);
 
