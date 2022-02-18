@@ -1,4 +1,4 @@
-use clap::{App, AppSettings, Arg, ArgMatches};
+use clap::{command, ArgMatches, Command};
 use editorconfiger::console::{Comparator, Error, Formatter};
 
 #[macro_use]
@@ -49,56 +49,54 @@ fn compare(cmd: &ArgMatches) {
     editorconfiger::compare_files(path1, path2, &err, &cmp);
 }
 
-fn build_cli() -> App<'static> {
-    return App::new(crate_name!())
-        .setting(AppSettings::ArgRequiredElseHelp)
+fn build_cli() -> Command<'static> {
+    return command!(crate_name!())
+        .arg_required_else_help(true)
         .version(crate_version!())
-        .author("egoroff <egoroff@gmail.com>")
-        .about(".editorconfig files tool")
+        .author(crate_authors!("\n"))
+        .about(crate_description!())
         .subcommand(
-            App::new("vf")
+            Command::new("vf")
                 .aliases(&["validate-file"])
                 .about("Validate single .editorconfig file")
                 .arg(
-                    Arg::new(PATH)
+                    arg!([PATH])
                         .help("Path to .editorconfig file")
                         .required(true)
                         .index(1),
                 ),
         )
         .subcommand(
-            App::new("vd")
+            Command::new("vd")
                 .aliases(&["validate-dir"])
                 .about("Validate all found .editorconfig files in a directory and all its children")
                 .arg(
-                    Arg::new(PATH)
-                        .help("Path to the directory that contains .editorconfig files")
+                    arg!([PATH])
+                        .help("Path to the directory that contains .editorconfig filese")
                         .required(true)
                         .index(1),
                 )
                 .arg(
-                    Arg::new(PROBLEMS)
-                        .long(PROBLEMS)
-                        .short('p')
+                    arg!(-p - -problems)
+                        .required(false)
                         .takes_value(false)
                         .help(
                             "Show only files that have problems. Correct files will not be shown.",
-                        )
-                        .required(false),
+                        ),
                 ),
         )
         .subcommand(
-            App::new("c")
+            Command::new("c")
                 .aliases(&["compare"])
                 .about("Compare two .editorconfig files")
                 .arg(
-                    Arg::new(FILE1)
+                    arg!([FILE1])
                         .help("Path to the first .editorconfig file")
                         .required(true)
                         .index(1),
                 )
                 .arg(
-                    Arg::new(FILE2)
+                    arg!([FILE2])
                         .help("Path to the second .editorconfig file")
                         .required(true)
                         .index(2),
