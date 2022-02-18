@@ -77,7 +77,7 @@ fn build_cli() -> Command<'static> {
                         .index(1),
                 )
                 .arg(
-                    arg!(-p - -problems)
+                    arg!(-p --problems)
                         .required(false)
                         .takes_value(false)
                         .help(
