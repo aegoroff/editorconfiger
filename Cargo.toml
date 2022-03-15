@@ -38,3 +38,4 @@ required-features = ["build-binary"]
 
 [profile.release]
 lto = true
+strip = true
