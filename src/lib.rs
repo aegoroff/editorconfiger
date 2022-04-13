@@ -186,7 +186,7 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
     let mut bom = [0u8; 3];
     if let Ok(..) = reader.read_exact(&mut bom) {
         if &bom != b"\xEF\xBB\xBF" {
-            // Reset file pointer
+            // No BOM so reset file pointer back to start
             reader.seek(SeekFrom::Start(0))?;
         }
     }
