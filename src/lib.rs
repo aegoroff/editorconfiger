@@ -177,6 +177,7 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<String> {
     None
 }
 
+/// Reads whole file content into String
 fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Error> {
     let file = File::open(filename)?;
     let mut reader = BufReader::new(file);
