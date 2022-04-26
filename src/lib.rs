@@ -205,20 +205,19 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
     let sections = editorconfig::parse(content);
     let mut section_heads = Vec::new();
 
-    for sec in &sections {
-        let extensions = glob::parse(sec.title);
+    sections.iter().for_each(|sec| {
         let props_fn = || {
             sec.properties.iter().map(|x| ExtendedProperty {
                 name: x.name,
                 section: sec.title,
             })
         };
-        for e in extensions {
+        glob::parse(sec.title).into_iter().for_each(|e| {
             all_ext_props
                 .entry(e)
                 .or_insert_with(Vec::new)
                 .extend(props_fn());
-        }
+        });
         section_heads.push(sec.title);
 
         let names_fn = || sec.properties.iter().map(|item| item.name);
@@ -231,7 +230,7 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
 
         let mut similar = similar::find_suffix_pairs(&unique_props);
         append_to_btree(&mut sim_props, sec.title, &mut similar)
-    }
+    });
 
     let ext_problems: Vec<ExtValidationResult> = all_ext_props
         .into_iter()
