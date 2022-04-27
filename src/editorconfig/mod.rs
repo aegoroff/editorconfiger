@@ -27,21 +27,19 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                     title: h,
                     ..Default::default()
                 };
-                result.push(section)
+                result.push(section);
             }
             Token::Pair(k, v) => {
                 // root section case i.e. key value pair without any section
                 // so we add section with empty title
                 if result.is_empty() {
-                    let section = Default::default();
-                    result.push(section)
+                    result.push(Default::default());
                 }
                 // because tokens stream has order as in original file
                 // it's safe to add key/value pair into the last found section defined
                 // by Token::Head or fake root section added before
                 if let Some(section) = result.last_mut() {
-                    let property = Property { name: k, value: v };
-                    section.properties.push(property);
+                    section.properties.push(Property { name: k, value: v });
                 }
             }
             // Skip comments so far
