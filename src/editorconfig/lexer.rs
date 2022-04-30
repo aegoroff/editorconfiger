@@ -70,12 +70,14 @@ impl<'a> Iterator for TokenIterator<'a> {
             }
             let mut parser = sequence::terminated(complete::not_line_ending, complete::line_ending);
             let parsed: IResult<&'a str, &'a str, VerboseError<&'a str>> = parser(self.input);
-            return match parsed {
-                Ok((trail, val)) => match self.parse_line(trail, val) {
-                    None => continue,
-                    Some(token) => return Some(token),
-                },
-                Err(_) => self.parse_line("", self.input), // EOF
+            return if let Ok((trail, val)) = parsed {
+                if let Some(token) = self.parse_line(trail, val) {
+                    return Some(token);
+                } else {
+                    continue;
+                }
+            } else {
+                self.parse_line("", self.input)
             };
         }
         None
