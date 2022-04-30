@@ -3,7 +3,7 @@
 [![](https://tokei.rs/b1/github/aegoroff/editorconfiger?category=code)](https://github.com/XAMPPRocky/tokei)
 
 # editorconfiger
-Plain tool to validate and compare .editorconfig files
+`editorconfiger` is the plain tool to validate and compare .editorconfig files
 
 ## Install the pre-compiled binary
 
