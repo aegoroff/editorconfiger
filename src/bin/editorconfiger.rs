@@ -23,15 +23,15 @@ fn main() {
 }
 
 fn validate_file(cmd: &ArgMatches) {
-    let path = cmd.value_of(PATH).unwrap();
+    let path = cmd.get_one::<String>(PATH).unwrap();
     let formatter = Formatter::new(false);
     let err = Error {};
     editorconfiger::validate_one(path, &formatter, &err);
 }
 
 fn validate_folder(cmd: &ArgMatches) {
-    let path = cmd.value_of(PATH).unwrap();
-    let only_problems = cmd.is_present(PROBLEMS);
+    let path = cmd.get_one::<String>(PATH).unwrap();
+    let only_problems = cmd.contains_id(PROBLEMS);
     let formatter = Formatter::new(only_problems);
     let err = Error {};
     let results = editorconfiger::validate_all(path, &formatter, &err);
@@ -40,8 +40,8 @@ fn validate_folder(cmd: &ArgMatches) {
 }
 
 fn compare(cmd: &ArgMatches) {
-    let path1 = cmd.value_of(FILE1).unwrap();
-    let path2 = cmd.value_of(FILE2).unwrap();
+    let path1 = cmd.get_one::<String>(FILE1).unwrap();
+    let path2 = cmd.get_one::<String>(FILE2).unwrap();
     let err = Error {};
     println!(" FILE #1: {}", path1);
     println!(" FILE #2: {}", path2);
