@@ -27,7 +27,7 @@ clap = { version = "3.2.5", features = ["std", "color", "suggestions", "cargo"],
 
 [dev-dependencies]
 table-test = "0.2.1"
-rstest = "0.14.0"
+rstest = "0.15.0"
 
 [features]
 build-binary = ["clap", "ansi_term", "prettytable-rs"]
