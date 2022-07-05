@@ -1,9 +1,7 @@
-use clap::{command, ArgMatches, Command};
+use clap::{
+    arg, command, crate_authors, crate_description, crate_name, crate_version, ArgMatches, Command,
+};
 use editorconfiger::console::{Comparator, Error, Formatter};
-
-#[macro_use]
-extern crate clap;
-extern crate ansi_term;
 
 const PATH: &str = "PATH";
 const FILE1: &str = "FILE1";
