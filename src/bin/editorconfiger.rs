@@ -1,9 +1,7 @@
-use clap::{command, ArgMatches, Command};
+use clap::{
+    arg, command, crate_authors, crate_description, crate_name, crate_version, ArgMatches, Command,
+};
 use editorconfiger::console::{Comparator, Error, Formatter};
-
-#[macro_use]
-extern crate clap;
-extern crate ansi_term;
 
 const PATH: &str = "PATH";
 const FILE1: &str = "FILE1";
@@ -36,15 +34,15 @@ fn validate_folder(cmd: &ArgMatches) {
     let err = Error {};
     let results = editorconfiger::validate_all(path, &formatter, &err);
     println!();
-    println!("  Total .editorconfig files found: {}", results);
+    println!("  Total .editorconfig files found: {results}");
 }
 
 fn compare(cmd: &ArgMatches) {
     let path1 = cmd.get_one::<String>(FILE1).unwrap();
     let path2 = cmd.get_one::<String>(FILE2).unwrap();
     let err = Error {};
-    println!(" FILE #1: {}", path1);
-    println!(" FILE #2: {}", path2);
+    println!(" FILE #1: {path1}");
+    println!(" FILE #2: {path2}");
     let cmp = Comparator {};
     editorconfiger::compare_files(path1, path2, &err, &cmp);
 }
