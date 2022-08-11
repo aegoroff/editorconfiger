@@ -5,7 +5,7 @@ use nom::sequence;
 use nom::{character::complete, combinator, IResult};
 
 /// Represents .editorconfig lexical token abstraction that contain necessary data
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Token<'a> {
     /// Section head
     Head(&'a str),

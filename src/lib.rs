@@ -52,7 +52,7 @@ impl<'input> CompareItem<'input> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ValidationState {
     Valid,
     Invalid,
