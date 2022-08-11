@@ -51,7 +51,7 @@ jobs:
         if: matrix.build == 'linux'
         run: |
           sudo apt-get update -y
-          sudo apt-get install musl-tools -y
+          sudo apt-get install musl-tools binutils -y
 
       - name: Install p7zip (MacOS)
         if: matrix.build == 'macos'
