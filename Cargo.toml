@@ -39,3 +39,8 @@ required-features = ["build-binary"]
 [profile.release]
 lto = true
 strip = true
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/x86_64-unknown-linux-musl/release/editorconfiger", dest = "/usr/bin/editorconfiger", mode = "0755" },
+]
