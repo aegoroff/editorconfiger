@@ -96,7 +96,7 @@ jobs:
         run: |
           cargo install cargo-generate-rpm
           cargo generate-rpm --target ${{ env.LINUX_TARGET }}
-          cp ./target/${{ env.LINUX_TARGET }}/generate-rpm/editorconfiger_*.rpm ./${{ env.RELEASE_DIR }}/ 
+          cp ./target/${{ env.LINUX_TARGET }}/generate-rpm/editorconfiger-*.rpm ./${{ env.RELEASE_DIR }}/ 
 
       - name: Create tarball (Windows)
         if: matrix.build == 'windows'
