@@ -38,8 +38,8 @@ jobs:
         id: get_version
         shell: bash
         run: |
-          echo "using version tag ${GITHUB_REF:10}"
-          echo ::set-output name=version::"${GITHUB_REF:10}"
+          echo "using version tag ${GITHUB_REF:11}"
+          echo ::set-output name=version::"${GITHUB_REF:11}"
 
       - name: Install Rust
         if: matrix.rust
@@ -127,8 +127,8 @@ jobs:
         id: get_version
         shell: bash
         run: |
-          echo "using version tag ${GITHUB_REF:10}"
-          echo ::set-output name=version::"${GITHUB_REF:10}"
+          echo "using version tag ${GITHUB_REF:11}"
+          echo ::set-output name=version::"${GITHUB_REF:11}"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
