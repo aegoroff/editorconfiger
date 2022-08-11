@@ -51,7 +51,7 @@ jobs:
         if: matrix.build == 'linux'
         run: |
           sudo apt-get update -y
-          sudo apt-get install musl-tools binutils -y
+          sudo apt-get install musl-tools -y
 
       - name: Install p7zip (MacOS)
         if: matrix.build == 'macos'
@@ -81,7 +81,7 @@ jobs:
       - name: Create tarball (Linux)
         if: matrix.build == 'linux'
         run: |
-          mv ./target/${{ env.LINUX_TARGET }}/release/${{ env.RELEASE_BIN }} ./dist/${{ env.RELEASE_BIN }}
+          cp ./target/${{ env.LINUX_TARGET }}/release/${{ env.RELEASE_BIN }} ./dist/${{ env.RELEASE_BIN }}
           7z a -ttar -so -an ./dist/* | 7z a -si ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET }}.tar.gz
 
       - name: Build Debian release (x86-64)
