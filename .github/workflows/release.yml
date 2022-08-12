@@ -89,14 +89,14 @@ jobs:
         run: |
           cargo install cargo-deb
           cargo deb --no-build --target ${{ env.LINUX_TARGET }}
-          cp ./target/${{ env.LINUX_TARGET }}/debian/editorconfiger_*.deb ./${{ env.RELEASE_DIR }}/
+          cp ./target/${{ env.LINUX_TARGET }}/debian/${{ env.RELEASE_BIN }}_*.deb ./${{ env.RELEASE_DIR }}/
 
       - name: Build RPM release (x86-64)
         if: matrix.build == 'linux'
         run: |
           cargo install cargo-generate-rpm
           cargo generate-rpm --target ${{ env.LINUX_TARGET }}
-          cp ./target/${{ env.LINUX_TARGET }}/generate-rpm/editorconfiger-*.rpm ./${{ env.RELEASE_DIR }}/ 
+          cp ./target/${{ env.LINUX_TARGET }}/generate-rpm/${{ env.RELEASE_BIN }}-*.rpm ./${{ env.RELEASE_DIR }}/ 
 
       - name: Create tarball (Windows)
         if: matrix.build == 'windows'
