@@ -186,7 +186,6 @@ jobs:
           user_name: 'aegoroff'
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
-
       - name: Release Linux tarball
         uses: actions/upload-release-asset@v1
         env:
@@ -196,6 +195,7 @@ jobs:
           asset_path: ./linux/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET }}.tar.gz
           asset_content_type: application/gzip
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET }}.tar.gz
+
       - name: Release DEB package 
         uses: actions/upload-release-asset@v1
         env:
@@ -205,6 +205,7 @@ jobs:
           asset_path: ./linux/${{ env.RELEASE_BIN }}_${{ steps.get_version.outputs.VERSION }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
           asset_name: ${{ env.RELEASE_BIN }}_${{ steps.get_version.outputs.VERSION }}_amd64.deb
+
       - name: Release RPM package
         uses: actions/upload-release-asset@v1
         env:
