@@ -73,7 +73,7 @@ pub struct ExtValidationResult<'input> {
     pub similar: Vec<(&'input str, &'input str)>,
 }
 
-/// Property with section that contain it
+/// Property section assotiation, i.e. property and section that contain it
 struct ExtendedProperty<'input> {
     pub name: &'input str,
     pub section: &'input str,
