@@ -136,8 +136,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .follow_links(false)
         .parallelism(parallelism);
     iter.into_iter()
-        .filter(Result::is_ok)
-        .map(Result::unwrap)
+        .filter_map(|x| x.ok())
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
