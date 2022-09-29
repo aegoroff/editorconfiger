@@ -1,5 +1,5 @@
 use clap::{
-    arg, command, crate_authors, crate_description, crate_name, crate_version, ArgMatches, Command,
+    arg, command, crate_authors, crate_description, crate_name, crate_version, ArgAction, ArgMatches, Command,
 };
 use editorconfiger::console::{Comparator, Error, Formatter};
 
@@ -29,7 +29,7 @@ fn validate_file(cmd: &ArgMatches) {
 
 fn validate_folder(cmd: &ArgMatches) {
     let path = cmd.get_one::<String>(PATH).unwrap();
-    let only_problems = cmd.contains_id(PROBLEMS);
+    let only_problems = cmd.get_flag(PROBLEMS);
     let formatter = Formatter::new(only_problems);
     let err = Error {};
     let results = editorconfiger::validate_all(path, &formatter, &err);
@@ -47,7 +47,7 @@ fn compare(cmd: &ArgMatches) {
     editorconfiger::compare_files(path1, path2, &err, &cmp);
 }
 
-fn build_cli() -> Command<'static> {
+fn build_cli() -> Command {
     return command!(crate_name!())
         .arg_required_else_help(true)
         .version(crate_version!())
@@ -76,8 +76,7 @@ fn build_cli() -> Command<'static> {
                 )
                 .arg(
                     arg!(-p --problems)
-                        .required(false)
-                        .takes_value(false)
+                        .action(ArgAction::SetTrue)
                         .help(
                             "Show only files that have problems. Correct files will not be shown.",
                         ),
