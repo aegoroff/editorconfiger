@@ -48,7 +48,7 @@ fn compare(cmd: &ArgMatches) {
 }
 
 fn build_cli() -> Command {
-    return command!(crate_name!())
+    command!(crate_name!())
         .arg_required_else_help(true)
         .version(crate_version!())
         .author(crate_authors!("\n"))
@@ -98,5 +98,5 @@ fn build_cli() -> Command {
                         .required(true)
                         .index(2),
                 ),
-        );
+        )
 }
