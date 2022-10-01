@@ -55,7 +55,7 @@ fn build_cli() -> Command {
         .about(crate_description!())
         .subcommand(
             Command::new("vf")
-                .aliases(&["validate-file"])
+                .aliases(["validate-file"])
                 .about("Validate single .editorconfig file")
                 .arg(
                     arg!([PATH])
@@ -66,7 +66,7 @@ fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("vd")
-                .aliases(&["validate-dir"])
+                .aliases(["validate-dir"])
                 .about("Validate all found .editorconfig files in a directory and all its children")
                 .arg(
                     arg!([PATH])
@@ -84,7 +84,7 @@ fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("c")
-                .aliases(&["compare"])
+                .aliases(["compare"])
                 .about("Compare two .editorconfig files")
                 .arg(
                     arg!([FILE1])
