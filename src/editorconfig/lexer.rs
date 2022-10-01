@@ -34,16 +34,10 @@ impl<'a> TokenIterator<'a> {
     }
 
     fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Token<'a>> {
-        let parsed_line = line::<'a, VerboseError<&'a str>>(val);
         self.input = trail;
-        if let Ok((remain, token)) = parsed_line {
-            // not parsed trail considered as inline comment
-            // and will be parsed later
-            self.not_parsed_trail = remain;
-            Some(token)
-        } else {
-            None
-        }
+        let (remain, token) = line::<'a, VerboseError<&'a str>>(val).ok()?;
+        self.not_parsed_trail = remain;
+        Some(token)
     }
 }
 
