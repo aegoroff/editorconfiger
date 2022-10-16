@@ -1,7 +1,14 @@
+use std::io;
+
 use clap::{
-    arg, command, crate_authors, crate_description, crate_name, crate_version, ArgAction, ArgMatches, Command,
+    arg, command, crate_authors, crate_description, crate_name, crate_version, ArgAction,
+    ArgMatches, Command,
 };
+use clap_complete::{generate, Shell};
 use editorconfiger::console::{Comparator, Error, Formatter};
+
+#[macro_use]
+extern crate clap;
 
 const PATH: &str = "PATH";
 const FILE1: &str = "FILE1";
@@ -16,6 +23,7 @@ fn main() {
         Some(("c", cmd)) => compare(cmd),
         Some(("vf", cmd)) => validate_file(cmd),
         Some(("vd", cmd)) => validate_folder(cmd),
+        Some(("completion", cmd)) => print_completions(cmd),
         _ => {}
     }
 }
@@ -47,6 +55,14 @@ fn compare(cmd: &ArgMatches) {
     editorconfiger::compare_files(path1, path2, &err, &cmp);
 }
 
+fn print_completions(matches: &ArgMatches) {
+    let mut cmd = build_cli();
+    let bin_name = cmd.get_name().to_string();
+    if let Some(generator) = matches.get_one::<Shell>("generator") {
+        generate(*generator, &mut cmd, bin_name, &mut io::stdout());
+    }
+}
+
 fn build_cli() -> Command {
     command!(crate_name!())
         .arg_required_else_help(true)
@@ -75,11 +91,9 @@ fn build_cli() -> Command {
                         .index(1),
                 )
                 .arg(
-                    arg!(-p --problems)
-                        .action(ArgAction::SetTrue)
-                        .help(
-                            "Show only files that have problems. Correct files will not be shown.",
-                        ),
+                    arg!(-p --problems).action(ArgAction::SetTrue).help(
+                        "Show only files that have problems. Correct files will not be shown.",
+                    ),
                 ),
         )
         .subcommand(
@@ -97,6 +111,16 @@ fn build_cli() -> Command {
                         .help("Path to the second .editorconfig file")
                         .required(true)
                         .index(2),
+                ),
+        )
+        .subcommand(
+            Command::new("completion")
+                .about("Generate the autocompletion script for the specified shell")
+                .arg(
+                    arg!([generator])
+                        .value_parser(value_parser!(Shell))
+                        .required(true)
+                        .index(1),
                 ),
         )
 }
