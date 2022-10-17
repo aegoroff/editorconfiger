@@ -2,13 +2,10 @@ use std::io;
 
 use clap::{
     arg, command, crate_authors, crate_description, crate_name, crate_version, ArgAction,
-    ArgMatches, Command,
+    ArgMatches, Command, value_parser
 };
 use clap_complete::{generate, Shell};
 use editorconfiger::console::{Comparator, Error, Formatter};
-
-#[macro_use]
-extern crate clap;
 
 const PATH: &str = "PATH";
 const FILE1: &str = "FILE1";
