@@ -23,7 +23,7 @@ num_cpus = "1.13.1"
 
 ansi_term = { version = "0.12", optional = true }
 prettytable-rs = { version = "^0.9", optional = true }
-clap = { version = "4.0.15", features = ["std", "color", "suggestions", "cargo"], optional = true }
+clap = { version = "4.0.17", features = ["std", "color", "suggestions", "cargo"], optional = true }
 clap_complete = "4.0.2"
 
 [dev-dependencies]
