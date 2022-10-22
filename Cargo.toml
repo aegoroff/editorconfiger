@@ -24,14 +24,14 @@ num_cpus = "1.13.1"
 ansi_term = { version = "0.12", optional = true }
 prettytable-rs = { version = "^0.9", optional = true }
 clap = { version = "4.0.18", features = ["std", "color", "suggestions", "cargo"], optional = true }
-clap_complete = "4.0.3"
+clap_complete = { version = "4.0.3", optional = true }
 
 [dev-dependencies]
 table-test = "0.2.1"
 rstest = "0.15.0"
 
 [features]
-build-binary = ["clap", "ansi_term", "prettytable-rs"]
+build-binary = ["clap", "clap_complete", "ansi_term", "prettytable-rs"]
 
 [[bin]]
 name = "editorconfiger"
