@@ -35,16 +35,16 @@ copy to the desired location. RPM and DEB packages are available to install unde
 
 ## Command line syntax:
 ```
-USAGE:
-    editorconfiger [SUBCOMMAND]
+Usage: editorconfiger [COMMAND]
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+Commands:
+  vf          Validate single .editorconfig file
+  vd          Validate all found .editorconfig files in a directory and all its children
+  c           Compare two .editorconfig files
+  completion  Generate the autocompletion script for the specified shell
+  help        Print this message or the help of the given subcommand(s)
 
-SUBCOMMANDS:
-    c       Compare two .editorconfig files
-    help    Prints this message or the help of the given subcommand(s)
-    vd      Validate all found .editorconfig files in a directory and all its children
-    vf      Validate single .editorconfig file
+Options:
+  -h, --help     Print help information
+  -V, --version  Print version information
 ```
