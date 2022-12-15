@@ -16,7 +16,7 @@ lalrpop = "0.19"
 [dependencies]
 lalrpop-util  = { version = "0.19", features = ["lexer"] }
 regex = "1"
-jwalk = "0.6"
+jwalk = "0.8"
 aho-corasick = "0.7"
 nom = "7"
 num_cpus = "1.14.0"
