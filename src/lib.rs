@@ -7,7 +7,7 @@ pub mod similar;
 
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::{BufReader, SeekFrom};
+use std::io::BufReader;
 use std::path::Path;
 
 #[macro_use]
@@ -170,7 +170,7 @@ fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<String> {
         Ok(c) => return Some(c),
         Err(e) => err.error(
             path,
-            &format!("Problem opening file or file syntax error - {}", e),
+            &format!("Problem opening file or file syntax error - {e}"),
         ),
     }
     None
@@ -187,7 +187,7 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
     if let Ok(..) = reader.read_exact(&mut bom) {
         if &bom != b"\xEF\xBB\xBF" {
             // No BOM so reset file pointer back to start
-            reader.seek(SeekFrom::Start(0))?;
+            reader.rewind()?;
         }
     }
 
