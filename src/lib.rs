@@ -356,7 +356,7 @@ fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, BTreeMap<&'
 #[cfg(target_os = "windows")]
 fn decorate_path(path: &str) -> String {
     if path.len() == 2 && path.ends_with(':') {
-        format!("{}\\", path)
+        format!("{path}\\")
     } else {
         String::from(path)
     }

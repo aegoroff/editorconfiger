@@ -38,15 +38,15 @@ impl ValidationFormatter for Formatter {
         if !result.duplicate_sections.is_empty() {
             println!("   Duplicate sections:");
             for section in result.duplicate_sections {
-                println!("     {}", section);
+                println!("     {section}");
             }
         }
         if !result.duplicate_properties.is_empty() {
             println!("   Duplicate properties:");
             for (section, duplicates) in result.duplicate_properties {
-                println!("     [{}]:", section);
+                println!("     [{section}]:");
                 for property in duplicates {
-                    println!("       {}", property);
+                    println!("       {property}");
                 }
             }
         }
@@ -56,7 +56,7 @@ impl ValidationFormatter for Formatter {
             table.set_format(new_format(6));
             println!("   Similar properties:");
             for (section, sims) in result.similar_properties {
-                println!("     [{}]:", section);
+                println!("     [{section}]:");
 
                 for (first, second) in sims {
                     table.add_row(row![first, second]);
@@ -70,7 +70,7 @@ impl ValidationFormatter for Formatter {
                 if !item.duplicates.is_empty() {
                     println!("   Duplicates related to {}:", item.ext);
                     for duplicate in item.duplicates {
-                        println!("       {}", duplicate);
+                        println!("       {duplicate}");
                     }
                 }
 
@@ -93,7 +93,7 @@ pub struct Error {}
 
 impl Errorer for Error {
     fn error(&self, path: &str, err: &str) {
-        println!(" {}", path);
+        println!(" {path}");
         println!("  Error: {}", Red.paint(err));
         println!();
     }
