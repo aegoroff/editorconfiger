@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Update rust
         run: rustup update
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build
         run: cargo build --release --bin editorconfiger --features="build-binary"
       - name: Run cargo-tarpaulin
@@ -41,7 +41,7 @@ jobs:
           args: '-- --test-threads 1'
       - name: Upload to codecov.io
         if: matrix.build == 'linux'
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
       - name: Tests
         if: matrix.build != 'linux'
         run: cargo test --release
