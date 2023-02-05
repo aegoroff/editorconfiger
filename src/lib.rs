@@ -231,13 +231,13 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
         append_to_btree(&mut sim_props, sec.title, &mut similar)
     });
 
-    let ext_problems: Vec<ExtValidationResult> = all_ext_props
+    let ext_problems = all_ext_props
         .into_iter()
         .map(|(ext, props)| validate_extension(ext, props))
         .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
-    let dup_sect: Vec<&str> = enumerable::only_duplicates(section_heads.into_iter()).collect();
+    let dup_sect = enumerable::only_duplicates(section_heads.into_iter()).collect();
 
     let result = ValidationResult {
         path,

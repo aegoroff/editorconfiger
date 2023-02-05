@@ -1,8 +1,8 @@
 use std::io;
 
 use clap::{
-    arg, command, crate_authors, crate_description, crate_name, crate_version, ArgAction,
-    ArgMatches, Command, value_parser
+    arg, command, crate_authors, crate_description, crate_name, crate_version, value_parser,
+    ArgAction, ArgMatches, Command,
 };
 use clap_complete::{generate, Shell};
 use editorconfiger::console::{Comparator, Error, Formatter};
@@ -88,7 +88,7 @@ fn build_cli() -> Command {
                         .index(1),
                 )
                 .arg(
-                    arg!(-p --problems).action(ArgAction::SetTrue).help(
+                    arg!(-p - -problems).action(ArgAction::SetTrue).help(
                         "Show only files that have problems. Correct files will not be shown.",
                     ),
                 ),
