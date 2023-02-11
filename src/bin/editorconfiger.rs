@@ -88,7 +88,7 @@ fn build_cli() -> Command {
                         .index(1),
                 )
                 .arg(
-                    arg!(-p - -problems).action(ArgAction::SetTrue).help(
+                    arg!(-p --problems).action(ArgAction::SetTrue).help(
                         "Show only files that have problems. Correct files will not be shown.",
                     ),
                 ),
