@@ -17,10 +17,10 @@ pub fn only_unique<T: Eq + Hash + Clone>(iter: impl Iterator<Item = T>) -> impl 
     let mut hs = HashSet::new();
     iter.filter(move |x| {
         // contains call is important so as not to do redundant clone
-        if !hs.contains(x) {
-            hs.insert(x.clone())
-        } else {
+        if hs.contains(x) {
             false
+        } else {
+            hs.insert(x.clone())
         }
     })
 }

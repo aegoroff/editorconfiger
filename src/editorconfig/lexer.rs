@@ -67,9 +67,8 @@ impl<'a> Iterator for TokenIterator<'a> {
             return if let Ok((trail, val)) = parsed {
                 if let Some(token) = self.parse_line(trail, val) {
                     return Some(token);
-                } else {
-                    continue;
                 }
+                continue;
             } else {
                 self.parse_line("", self.input)
             };

@@ -33,7 +33,7 @@ pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
                 // root section case i.e. key value pair without any section
                 // so we add section with empty title
                 if result.is_empty() {
-                    result.push(Default::default());
+                    result.push(Section::default());
                 }
                 // because tokens stream has order as in original file
                 // it's safe to add key/value pair into the last found section defined

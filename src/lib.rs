@@ -150,7 +150,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
 
 pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &V, err: &E) {
     if let Some(c) = read_from_file(path, err) {
-        validate(&c, path, formatter)
+        validate(&c, path, formatter);
     }
 }
 
@@ -231,7 +231,7 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
         let unique_props: Vec<&str> = enumerable::only_unique(names_fn()).collect();
 
         let mut similar = similar::find_suffix_pairs(&unique_props);
-        append_to_btree(&mut sim_props, sec.title, &mut similar)
+        append_to_btree(&mut sim_props, sec.title, &mut similar);
     }
 
     let ext_problems = all_ext_props
