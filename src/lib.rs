@@ -43,6 +43,7 @@ pub struct CompareItem<'input> {
 }
 
 impl<'input> CompareItem<'input> {
+    #[must_use]
     pub fn only_second(key: &'input str, second_value: &'input str) -> Self {
         CompareItem {
             key,
@@ -80,6 +81,7 @@ struct ExtendedProperty<'input> {
 }
 
 impl<'input> ValidationResult<'input> {
+    #[must_use]
     pub fn state(&self) -> ValidationState {
         ValidationState::from(self)
     }
@@ -99,6 +101,7 @@ impl<'input> ValidationResult<'input> {
 }
 
 impl ValidationState {
+    #[must_use]
     pub fn is_ok(&self) -> bool {
         matches!(self, ValidationState::Valid)
     }
@@ -136,7 +139,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .follow_links(false)
         .parallelism(parallelism);
     iter.into_iter()
-        .filter_map(|x| x.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
@@ -204,19 +207,19 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
     let sections = editorconfig::parse(content);
     let mut section_heads = Vec::new();
 
-    sections.iter().for_each(|sec| {
+    for sec in &sections {
         let props_fn = || {
             sec.properties.iter().map(|x| ExtendedProperty {
                 name: x.name,
                 section: sec.title,
             })
         };
-        glob::parse(sec.title).into_iter().for_each(|e| {
+        for e in glob::parse(sec.title) {
             all_ext_props
                 .entry(e)
                 .or_insert_with(Vec::new)
                 .extend(props_fn());
-        });
+        }
         section_heads.push(sec.title);
 
         let names_fn = || sec.properties.iter().map(|item| item.name);
@@ -229,7 +232,7 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
 
         let mut similar = similar::find_suffix_pairs(&unique_props);
         append_to_btree(&mut sim_props, sec.title, &mut similar)
-    });
+    }
 
     let ext_problems = all_ext_props
         .into_iter()
@@ -371,7 +374,7 @@ fn decorate_path(path: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::*;
+    use rstest::rstest;
 
     struct TestFormatter<F>
     where

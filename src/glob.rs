@@ -26,6 +26,7 @@ lalrpop_mod!(
 /// assert_eq!(1, result.len());
 /// assert_eq!("*", result[0]);
 /// ```
+#[must_use]
 pub fn parse(string: &str) -> Vec<String> {
     let parser = section::DefinesParser::new();
     return match parser.parse(string) {
@@ -37,7 +38,7 @@ pub fn parse(string: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::*;
+    use rstest::rstest;
 
     #[rstest]
     #[case("22", vec!["22"])]

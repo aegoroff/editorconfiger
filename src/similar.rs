@@ -12,6 +12,7 @@ use aho_corasick::{AhoCorasickBuilder, MatchKind};
 /// let result = similar::find_suffix_pairs(&items);
 /// assert_eq!(vec![("ab", "b")], result);
 /// ```
+#[must_use]
 pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
     let machine = AhoCorasickBuilder::new()
         .match_kind(MatchKind::Standard)
@@ -35,7 +36,7 @@ pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::*;
+    use rstest::rstest;
 
     #[rstest]
     #[case(vec!["a_b_c_d", "b_c_e"], vec![])]

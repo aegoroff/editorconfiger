@@ -14,6 +14,7 @@ pub struct Formatter {
 }
 
 impl Formatter {
+    #[must_use]
     pub fn new(only_problems: bool) -> Self {
         Self { only_problems }
     }

@@ -28,7 +28,7 @@ pub fn only_unique<T: Eq + Hash + Clone>(iter: impl Iterator<Item = T>) -> impl 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::*;
+    use rstest::rstest;
 
     #[rstest]
     #[case(vec!["a", "b", "b", "a"], vec!["a", "b"])]
