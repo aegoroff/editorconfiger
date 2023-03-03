@@ -33,6 +33,22 @@ scoop install editorconfiger
 Download the pre-compiled binaries from the [releases](https://github.com/aegoroff/editorconfiger/releases) and
 copy to the desired location. RPM and DEB packages are available to install under RedHat or Debian based Linux distros.
 
+**install deb package on Arch Linux**:
+
+1. Install [debtap](https://github.com/helixarch/debtap) from AUR using yay:
+```sh
+ yay -S debtap
+```
+2. Create equivalent package using debtap:
+```sh
+ sudo debtap -u
+ debtap editorconfiger_x.x.x_amd64.deb
+ ```
+3. Install using pacman:
+```sh
+sudo pacman -U editorconfiger-x.x.x-1-x86_64.pkg.tar.zst
+```
+
 ## Command line syntax:
 ```
 Usage: editorconfiger [COMMAND]
