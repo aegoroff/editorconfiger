@@ -28,6 +28,16 @@ scoop bucket add aegoroff https://github.com/aegoroff/scoop-bucket.git
 scoop install editorconfiger
 ```
 
+**AUR (Arch Linux User Repository)**:
+
+```sh
+ yay -S editorconfiger
+```
+or if yay reports that package not found force updating repo info
+```sh
+yay -Syyu editorconfiger
+```
+
 **manually**:
 
 Download the pre-compiled binaries from the [releases](https://github.com/aegoroff/editorconfiger/releases) and
