@@ -30,6 +30,15 @@ scoop install editorconfiger
 
 **AUR (Arch Linux User Repository)**:
 
+install binary package:
+```sh
+ yay -S editorconfiger-bin
+```
+or if yay reports that package not found force updating repo info
+```sh
+yay -Syyu editorconfiger-bin
+```
+install using cargo so builiding on target machine:
 ```sh
  yay -S editorconfiger
 ```
@@ -37,6 +46,7 @@ or if yay reports that package not found force updating repo info
 ```sh
 yay -Syyu editorconfiger
 ```
+
 
 **manually**:
 
