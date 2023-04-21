@@ -15,7 +15,7 @@ lalrpop = "=0.19.9"
 
 [dependencies]
 lalrpop-util  = { version = "=0.19.9", features = ["lexer"] }
-regex = "=1.7.3"
+regex = "=1.8.1"
 jwalk = "=0.8.1"
 aho-corasick = "=1.0.1"
 nom = "=7.1.3"
