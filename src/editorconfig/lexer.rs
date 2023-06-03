@@ -236,7 +236,7 @@ mod tests {
             let actual: Vec<Token> = tokenize(input).collect();
 
             validator
-                .given(&input.to_string())
+                .given(input)
                 .when("tokenize")
                 .then(&format!("it should be {expected:#?}"))
                 .assert_eq(expected, actual);
