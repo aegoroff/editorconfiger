@@ -8,8 +8,7 @@ pub fn only_duplicates<T: Eq + Ord>(iter: impl Iterator<Item = T>) -> impl Itera
         h
     })
     .into_iter()
-    .filter(|(_, v)| *v > 1)
-    .map(|(k, _)| k)
+    .filter_map(|(k, count)| if count > 1 { Some(k) } else { None })
 }
 
 /// Returns iterator over unique items from original iterator

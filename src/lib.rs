@@ -270,8 +270,13 @@ fn validate_extension(ext: String, props: Vec<ExtendedProperty>) -> ExtValidatio
 
     let duplicates: Vec<&str> = props_sections
         .iter()
-        .filter(|(_, sections)| (*sections).len() > 1)
-        .map(|(p, _)| *p)
+        .filter_map(|(p, sections)| {
+            if (*sections).len() > 1 {
+                Some(*p)
+            } else {
+                None
+            }
+        })
         .collect();
 
     let props: Vec<&str> = props_sections.keys().copied().collect();
