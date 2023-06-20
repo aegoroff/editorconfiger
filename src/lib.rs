@@ -1,3 +1,4 @@
+#![warn(unused_extern_crates)]
 #[cfg(feature = "build-binary")]
 pub mod console;
 mod editorconfig;
@@ -12,9 +13,6 @@ use std::path::Path;
 
 #[macro_use]
 extern crate lalrpop_util;
-extern crate aho_corasick;
-extern crate jwalk;
-extern crate nom;
 
 #[cfg(test)] // <-- not needed in integration tests
 #[macro_use]
