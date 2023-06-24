@@ -1,4 +1,6 @@
 #![warn(unused_extern_crates)]
+#![warn(clippy::unwrap_in_result)]
+#![warn(clippy::unwrap_used)]
 #[cfg(feature = "build-binary")]
 pub mod console;
 mod editorconfig;
@@ -376,6 +378,8 @@ fn decorate_path(path: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_in_result)]
+    #![allow(clippy::unwrap_used)]
     use super::*;
     use rstest::rstest;
 
