@@ -1,6 +1,8 @@
 lalrpop_mod!(
     #[allow(clippy::all)]
     #[allow(unused)]
+    #[allow(clippy::unwrap_in_result)]
+    #[allow(clippy::unwrap_used)]
     pub section
 );
 
