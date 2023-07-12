@@ -17,13 +17,13 @@ pub struct Property<'input> {
 }
 
 /// Parses input str splitting it to sections
-pub fn parse<'a>(content: &'a str) -> Vec<Section<'a>> {
+pub fn parse(content: &str) -> Vec<Section<'_>> {
     let tokens = lexer::tokenize(content);
 
-    tokens.fold(Vec::<Section<'a>>::new(), |mut result, token| {
+    tokens.fold(vec![], |mut result, token| {
         match token {
             Token::Head(h) => {
-                let section = Section::<'a> {
+                let section = Section::<'_> {
                     title: h,
                     ..Default::default()
                 };
