@@ -188,11 +188,9 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
     // Check if file starts with a BOM marker
     // UTF-8: EF BB BF
     let mut bom = [0u8; 3];
-    if let Ok(..) = reader.read_exact(&mut bom) {
-        if &bom != b"\xEF\xBB\xBF" {
-            // No BOM so reset file pointer back to start
-            reader.rewind()?;
-        }
+    if reader.read_exact(&mut bom).is_ok() && &bom != b"\xEF\xBB\xBF" {
+        // No BOM so reset file pointer back to start
+        reader.rewind()?;
     }
 
     let mut contents = String::new();
