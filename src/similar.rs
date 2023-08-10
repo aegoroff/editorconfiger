@@ -1,7 +1,6 @@
 use aho_corasick::{AhoCorasickBuilder, MatchKind};
 
-/// This function finds all pairs where the first item is a &str
-/// and the second it's suffix
+/// This function finds all pairs where the second item is the suffix of the first one
 ///
 /// # Example
 ///
@@ -22,7 +21,10 @@ pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
     if let Ok(aho) = machine {
         items
             .iter()
-            .flat_map(|item| aho.find_overlapping_iter(*item).map(move |mat| (*item, mat)))
+            .flat_map(|item| {
+                aho.find_overlapping_iter(*item)
+                    .map(move |mat| (*item, mat))
+            })
             .filter(|(_item, mat)| !mat.is_empty())
             .map(|(item, mat)| (item, &item[mat.start()..mat.end()]))
             .filter(|(item, found)| *item != *found && (*item).ends_with(*found))
