@@ -435,14 +435,14 @@ mod tests {
     #[test]
     fn validate_success() {
         // Arrange
-        let config = r###"
+        let config = r#"
 root = true
 [*]
 a = b
 c = d
 
 [*.md]
-e = f"###;
+e = f"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.is_ok());
             assert_eq!(result.state(), ValidationState::Valid);
@@ -485,11 +485,11 @@ e = f"###;
     #[test]
     fn validate_success_brackets_in_section_name() {
         // Arrange
-        let config = r###"
+        let config = r#"
 [[*]]
 a = b
 c = d
-"###;
+"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.is_ok());
             assert_eq!(result.state(), ValidationState::Valid);
@@ -502,11 +502,11 @@ c = d
     #[test]
     fn validate_success_inline_comments() {
         // Arrange
-        let config = r###"
+        let config = r#"
 [*]
 a = b # comment 1
 c = d # comment 2
-"###;
+"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.is_ok());
             assert_eq!(result.state(), ValidationState::Valid);
@@ -519,7 +519,7 @@ c = d # comment 2
     #[test]
     fn validate_fail_duplicate_keys_in_not_root() {
         // Arrange
-        let config = r###"
+        let config = r#"
 root = true
 [*]
 a = b
@@ -527,7 +527,7 @@ a = e
 c = d
 
 [*.md]
-e = f"###;
+e = f"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -542,7 +542,7 @@ e = f"###;
     #[test]
     fn validate_fail_similar_keys_in_not_root() {
         // Arrange
-        let config = r###"
+        let config = r#"
 root = true
 [*]
 ab = b
@@ -550,7 +550,7 @@ dab = e
 c = d
 
 [*.md]
-e = f"###;
+e = f"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -566,7 +566,7 @@ e = f"###;
     #[test]
     fn validate_fail_duplicate_keys_in_root() {
         // Arrange
-        let config = r###"
+        let config = r#"
 root = true
 root = false
 
@@ -575,7 +575,7 @@ a = b
 c = d
 
 [*.md]
-e = f"###;
+e = f"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(!result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -591,14 +591,14 @@ e = f"###;
     #[test]
     fn validate_fail_duplicate_keys_ext_across_different_sections() {
         // Arrange
-        let config = r###"
+        let config = r#"
 [*.{md,txt}]
 a = b
 c = d
 
 [*.md]
 a = d
-"###;
+"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -614,14 +614,14 @@ a = d
     #[test]
     fn validate_fail_similar_keys_ext_across_different_sections() {
         // Arrange
-        let config = r###"
+        let config = r#"
 [*.{md,txt}]
 a_b_c = b
 x = d
 
 [*.md]
 d_a_b_c = d
-"###;
+"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(result.duplicate_sections.is_empty());
@@ -637,7 +637,7 @@ d_a_b_c = d
     #[test]
     fn validate_fail_duplicate_sections() {
         // Arrange
-        let config = r###"
+        let config = r#"
 root = true
 
 [*]
@@ -645,7 +645,7 @@ a = b
 c = d
 
 [*]
-e = f"###;
+e = f"#;
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert!(result.duplicate_properties.is_empty());
             assert!(!result.duplicate_sections.is_empty());
@@ -660,16 +660,16 @@ e = f"###;
     #[test]
     fn compare_plain() {
         // Arrange
-        let config1 = r###"
+        let config1 = r#"
 [*]
 a = b
 c = d
-"###;
-        let config2 = r###"
+"#;
+        let config2 = r#"
 [*]
 a = b1
 c = d2
-"###;
+"#;
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
@@ -683,20 +683,20 @@ c = d2
     #[test]
     fn compare_plain_with_general() {
         // Arrange
-        let config1 = r###"
+        let config1 = r#"
 root = true
 
 [*]
 a = b
 c = d
-"###;
-        let config2 = r###"
+"#;
+        let config2 = r#"
 root = true
 
 [*]
 a = b1
 c = d2
-"###;
+"#;
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
@@ -713,16 +713,16 @@ c = d2
     #[test]
     fn compare_keys_different() {
         // Arrange
-        let config1 = r###"
+        let config1 = r#"
 [*]
 a = b
 c = d
-"###;
-        let config2 = r###"
+"#;
+        let config2 = r#"
 [*]
 a = b1
 d = d2
-"###;
+"#;
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(1, res.len());
             assert_eq!(res.get("*").unwrap().len(), 3);
@@ -735,16 +735,16 @@ d = d2
     #[test]
     fn compare_sections_different() {
         // Arrange
-        let config1 = r###"
+        let config1 = r#"
 [x]
 a = b
 c = d
-"###;
-        let config2 = r###"
+"#;
+        let config2 = r#"
 [y]
 a = b1
 d = d2
-"###;
+"#;
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
             assert_eq!(res.get("x").unwrap().len(), 2);

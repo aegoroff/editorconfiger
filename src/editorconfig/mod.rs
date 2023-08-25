@@ -57,14 +57,14 @@ mod tests {
     #[test]
     fn map_several_sections_len_and_content_as_expected() {
         // Arrange
-        let config = r###"
+        let config = r#"
 root = true
 [*]
 a = b
 c = d
 
 [*.md]
-e = f"###;
+e = f"#;
 
         // Act
         let contents = parse(config);
@@ -80,10 +80,10 @@ e = f"###;
     #[test]
     fn map_test_properties_len_as_expected() {
         // Arrange
-        let config = r###"
+        let config = r#"
 [*]
 a = b
-c = d"###;
+c = d"#;
 
         // Act
         let contents = parse(config);

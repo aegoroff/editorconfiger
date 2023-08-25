@@ -246,7 +246,7 @@ mod tests {
     #[test]
     fn tokenize_real_file() {
         // Arrange
-        let s = r##"# Editor configuration, see http://editorconfig.org
+        let s = r#"# Editor configuration, see http://editorconfig.org
 root = true
 
 [*]
@@ -259,7 +259,7 @@ trim_trailing_whitespace = true : error
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
-"##;
+"#;
 
         // Act
         let result: Vec<Token> = tokenize(s).collect();
