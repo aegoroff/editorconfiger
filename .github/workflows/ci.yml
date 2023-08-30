@@ -46,11 +46,13 @@ jobs:
         if: matrix.build != 'linux'
         run: cargo test --release
       - name: Run linter
+        if: matrix.build == 'linux'
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features --bin editorconfiger --release -- -Dwarnings
       - name: Run audit
+        if: matrix.build == 'linux'
         uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
