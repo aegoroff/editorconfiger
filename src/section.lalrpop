@@ -5,12 +5,12 @@ pub Defines : Vec<String> = {
     <s:Str> => vec![s],
     <l:List> => l,
     <l:Set> => l,
-    <p:Str> <l:List> => { let v = l.iter().map(|i| format!("{}{}", p, i)).collect(); v },
-    <p:Str> <l:List> <o:Str> => { let v = l.iter().map(|i| format!("{}{}{}", p, i, o)).collect(); v },
-    <l:List> <o:Str> => { let v = l.iter().map(|i| format!("{}{}", i, o)).collect(); v },
-    <p:Str> <l:Set> => { let v = l.iter().map(|i| format!("{}{}", p, i)).collect(); v },
-    <p:Str> <l:Set> <o:Str> => { let v = l.iter().map(|i| format!("{}{}{}", p, i, o)).collect(); v },
-    <l:Set> <o:Str> => { let v = l.iter().map(|i| format!("{}{}", i, o)).collect(); v },
+    <p:Str> <l:List> => { let v = l.iter().map(|i| format!("{p}{i}")).collect(); v },
+    <p:Str> <l:List> <o:Str> => { let v = l.iter().map(|i| format!("{p}{i}{o}")).collect(); v },
+    <l:List> <o:Str> => { let v = l.iter().map(|i| format!("{i}{o}")).collect(); v },
+    <p:Str> <l:Set> => { let v = l.iter().map(|i| format!("{p}{i}")).collect(); v },
+    <p:Str> <l:Set> <o:Str> => { let v = l.iter().map(|i| format!("{p}{i}{o}")).collect(); v },
+    <l:Set> <o:Str> => { let v = l.iter().map(|i| format!("{i}{o}")).collect(); v },
 }
 
 List : Vec<String> = {
@@ -18,7 +18,7 @@ List : Vec<String> = {
 }
 
 Set : Vec<String> = {
-    "[" <w:Str> "]" => w.chars().map(|c| format!("{}", c)).collect(),
+    "[" <w:Str> "]" => w.chars().map(|c| format!("{c}")).collect(),
 }
 
 ListItems : Vec<String> = {

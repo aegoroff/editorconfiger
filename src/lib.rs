@@ -305,11 +305,11 @@ pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter
     let s1_props = map_sections(&f1);
     let s2_props = map_sections(&f2);
 
-    let result: BTreeMap<&str, Vec<CompareItem>> = f1
+    let result: BTreeMap<&str, Vec<CompareItem>> = s1_props
         .iter()
         .map(|s1| {
-            let props1 = map_properties(s1);
-            let props2 = s2_props.get(s1.title).unwrap_or(&empty);
+            let props1 = s1.1;
+            let props2 = s2_props.get(s1.0).unwrap_or(&empty);
             (s1, props1, props2)
         })
         .map(|(s1, props1, props2)| {
@@ -328,19 +328,19 @@ pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter
                         .map(|(k, v)| CompareItem::only_second(k, v)),
                 )
                 .collect();
-            (s1.title, items)
+            (*s1.0, items)
         })
         .chain(
             // Sections missing in the first
-            f2.iter()
-                .filter(|s| s1_props.get(s.title).is_none())
+            s2_props.iter()
+                .filter(|s| s1_props.get(s.0).is_none())
                 .map(|s| {
                     let items: Vec<CompareItem> = s
-                        .properties
+                        .1
                         .iter()
-                        .map(|p| CompareItem::only_second(p.name, p.value))
+                        .map(|p| CompareItem::only_second(p.0, p.1))
                         .collect();
-                    (s.title, items)
+                    (*s.0, items)
                 }),
         )
         .collect();
@@ -353,10 +353,14 @@ fn map_properties<'a>(s1: &'a Section<'a>) -> BTreeMap<&'a str, &'a str> {
 }
 
 fn map_sections<'a>(sections: &'a [Section<'a>]) -> HashMap<&'a str, BTreeMap<&'a str, &'a str>> {
-    sections
-        .iter()
-        .map(|s| (s.title, map_properties(s)))
-        .collect()
+    let mut result = HashMap::new();
+    for s in sections {
+        result
+            .entry(s.title)
+            .or_insert(map_properties(s))
+            .extend(map_properties(s));
+    }
+    result
 }
 
 /// On Windows added trailing back slash \ if volume and colon passed so as to paths look more pleasant
@@ -749,6 +753,36 @@ d = d2
             assert_eq!(2, res.len());
             assert_eq!(res.get("x").unwrap().len(), 2);
             assert_eq!(res.get("y").unwrap().len(), 2);
+        });
+
+        // Act
+        compare(config1, config2, &formatter);
+    }
+
+    #[test]
+    fn compare_several_sections_with_same_name() {
+        // Arrange
+        let config1 = r#"
+[*]
+a = 1
+c = 2
+
+[*]
+b = 3
+d = 4
+"#;
+        let config2 = r#"
+[*]
+a = 5
+c = 6
+
+[*]
+b = 7
+d = 8
+"#;
+        let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
+            assert_eq!(1, res.len());
+            assert_eq!(res.get("*").unwrap().len(), 4);
         });
 
         // Act
