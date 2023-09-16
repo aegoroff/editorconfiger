@@ -28,8 +28,6 @@ use editorconfig::Section;
 use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-pub type AnyError = Box<dyn std::error::Error>;
-
 const EDITOR_CONFIG: &str = ".editorconfig";
 
 pub trait Errorer {
@@ -332,14 +330,14 @@ pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter
         })
         .chain(
             // Sections missing in the first
-            s2_props.iter()
+            s2_props
+                .iter()
                 .filter(|s| s1_props.get(s.0).is_none())
                 .map(|s| {
-                    let items: Vec<CompareItem> = s
-                        .1
-                        .iter()
-                        .map(|p| CompareItem::only_second(p.0, p.1))
-                        .collect();
+                    let items: Vec<CompareItem> =
+                        s.1.iter()
+                            .map(|p| CompareItem::only_second(p.0, p.1))
+                            .collect();
                     (*s.0, items)
                 }),
         )
