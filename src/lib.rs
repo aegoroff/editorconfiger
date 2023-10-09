@@ -252,15 +252,15 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
 
 fn append_to_btree<'a, T>(bree: &mut BTreeMap<&'a str, Vec<T>>, key: &'a str, data: &mut Vec<T>) {
     if !data.is_empty() {
-        bree.entry(key).or_insert_with(Vec::<T>::new).append(data);
+        bree.entry(key).or_default().append(data);
     }
 }
 
 fn validate_extension(ext: String, props: Vec<ExtendedProperty>) -> ExtValidationResult {
     let props_sections = props.into_iter().map(|p| (p.name, p.section)).fold(
         HashMap::new(),
-        |mut h, (prop, sect)| {
-            h.entry(prop).or_insert_with(BTreeSet::new).insert(sect);
+        |mut h: HashMap<&str, BTreeSet<&str>>, (prop, sect)| {
+            h.entry(prop).or_default().insert(sect);
             h
         },
     );
