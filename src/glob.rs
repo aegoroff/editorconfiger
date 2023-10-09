@@ -3,7 +3,7 @@ lalrpop_mod!(
     #[allow(unused)]
     #[allow(clippy::unwrap_in_result)]
     #[allow(clippy::unwrap_used)]
-    pub section
+    section
 );
 
 /// Parses .editorconfig section title string and extracts all extensions into
