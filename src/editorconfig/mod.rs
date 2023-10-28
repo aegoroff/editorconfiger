@@ -16,7 +16,7 @@ pub struct Property<'input> {
     pub value: &'input str,
 }
 
-/// Parses input str to Section's vector (array).
+/// Parses input str to [`Section`] vector (array).
 /// Sections order matches original file sections order.
 pub fn parse(content: &str) -> Vec<Section<'_>> {
     let tokens = lexer::tokenize(content);
