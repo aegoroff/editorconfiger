@@ -3,7 +3,7 @@ lalrpop_mod!(
     #[allow(unused)]
     #[allow(clippy::unwrap_in_result)]
     #[allow(clippy::unwrap_used)]
-    section
+    glob
 );
 
 /// Parses .editorconfig section title string and extracts all extensions into
@@ -30,7 +30,7 @@ lalrpop_mod!(
 /// ```
 #[must_use]
 pub fn parse(string: &str) -> Vec<String> {
-    let parser = section::DefinesParser::new();
+    let parser = glob::DefinesParser::new();
     return match parser.parse(string) {
         Ok(r) => r,
         Err(_e) => vec![],
