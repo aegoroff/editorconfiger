@@ -71,9 +71,9 @@ mod tests {
     #[case("test/**/*", vec!["test/**/*"])]
     #[case("test/{p1,p2}/*", vec!["test/p1/*", "test/p2/*"])]
     #[trace]
-    fn parse_cases(#[case] s: &str, #[case] expected: Vec<&str>) {
+    fn parse_cases(#[case] input_str: &str, #[case] expected: Vec<&str>) {
         // Act
-        let actual = parse(s);
+        let actual = parse(input_str);
         let actual: Vec<&str> = actual.iter().map(|s| &**s).collect();
 
         // Assert
