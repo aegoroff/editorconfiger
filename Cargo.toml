@@ -46,3 +46,6 @@ panic = 'abort'
 assets = [
     { source = "target/x86_64-unknown-linux-musl/release/editorconfiger", dest = "/usr/bin/editorconfiger", mode = "0755" },
 ]
+
+[lints.rust]
+unsafe_code = "forbid"
