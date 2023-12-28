@@ -28,7 +28,6 @@ pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
             .filter(|(_item, mat)| !mat.is_empty())
             .map(|(item, mat)| (item, &item[mat.start()..mat.end()]))
             .filter(|(item, found)| *item != *found && (*item).ends_with(*found))
-            .map(|(item, found)| (item, found))
             .collect()
     } else {
         Vec::new()
