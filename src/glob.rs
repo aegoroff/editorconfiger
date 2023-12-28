@@ -13,6 +13,7 @@ lalrpop_mod!(
     #[allow(clippy::unused_self)]
     #[allow(clippy::needless_pass_by_value)]
     #[allow(clippy::unnested_or_patterns)]
+    #[allow(clippy::needless_raw_string_hashes)]
     glob
 );
 
