@@ -33,14 +33,14 @@ jobs:
             rust: stable
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Query version number
         id: get_version
         shell: bash
         run: |
           echo "using version tag ${GITHUB_REF:11}"
-          echo ::set-output name=version::"${GITHUB_REF:11}"
+          echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
 
       - name: Install Rust
         if: matrix.rust
@@ -113,7 +113,7 @@ jobs:
           7z a -ttar -so -an ./dist/* | 7z a -si ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_TARGET }}.tar.gz
 
       - name: Upload Zip
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build }}
           path: ./${{ env.RELEASE_DIR }}
@@ -142,13 +142,13 @@ jobs:
     needs: [ build, generate-changelog ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Query version number
         id: get_version
         shell: bash
         run: |
           echo "using version tag ${GITHUB_REF:11}"
-          echo ::set-output name=version::"${GITHUB_REF:11}"
+          echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -160,19 +160,19 @@ jobs:
           body: "${{ needs.generate-changelog.outputs.release_body }}"
 
       - name: Download Linux tarball
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: linux
           path: linux
 
       - name: Download Windows tarball
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows
           path: windows
 
       - name: Download MacOS tarball
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: macos
           path: macos
@@ -188,7 +188,6 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
         with:
-          github_server: 'github.com'
           source_file: ${{ env.RELEASE_BIN }}.rb
           destination_repo: 'aegoroff/homebrew-tap'
           user_email: 'egoroff@email.com'
@@ -202,7 +201,6 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
         with:
-          github_server: 'github.com'
           source_file: ${{ env.RELEASE_BIN }}.json
           destination_repo: 'aegoroff/scoop-bucket'
           user_email: 'egoroff@email.com'
