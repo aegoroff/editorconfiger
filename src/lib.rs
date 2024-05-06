@@ -332,7 +332,7 @@ pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter
             // Sections missing in the first
             s2_props
                 .iter()
-                .filter(|s| s1_props.get(s.0).is_none())
+                .filter(|s| !s1_props.contains_key(s.0))
                 .map(|s| {
                     let items: Vec<CompareItem> =
                         s.1.iter()
