@@ -4,7 +4,7 @@ version = "0.4.6"
 description = "Plain tool to validate and compare .editorconfig files"
 authors = ["egoroff <egoroff@gmail.com>"]
 keywords = ["editorconfig"]
-homepage = "https://github.com/aegoroff/editorconfiger"
+repository = "https://github.com/aegoroff/editorconfiger"
 edition = "2021"
 license = "MIT"
 
