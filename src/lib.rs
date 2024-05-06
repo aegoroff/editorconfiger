@@ -702,9 +702,9 @@ c = d2
 
         let formatter = TestCompareFormatter::new(|res: BTreeMap<&str, Vec<CompareItem>>| {
             assert_eq!(2, res.len());
-            assert!(res.get("*").is_some());
+            assert!(res.contains_key("*"));
             assert_eq!(res.get("*").unwrap().len(), 2);
-            assert!(res.get("").is_some());
+            assert!(res.contains_key(""));
             assert_eq!(res.get("").unwrap().len(), 1);
         });
 
