@@ -28,7 +28,7 @@ clap_complete = { version = "=4.5.2", optional = true }
 
 [dev-dependencies]
 table-test = "=0.2.1"
-rstest = "=0.19.0"
+rstest = "=0.20.0"
 
 [features]
 build-binary = ["clap", "clap_complete", "ansi_term", "prettytable-rs"]
