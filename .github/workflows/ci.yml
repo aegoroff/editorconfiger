@@ -52,16 +52,16 @@ jobs:
           args: "--release --bin editorconfiger --features=\"build-binary\""
           strip: true
       - name: Build Debian package
-        if: matrix.build == 'linux-64' || matrix.build == 'linux-aarch64'
+        if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
           cargo install cargo-deb
-          cargo deb --no-build --target ${{ matrix.target }}
+          cargo deb --no-build --target ${{ matrix.target }} --variant=${{ matrix.build }}
           ls -lah ./target/${{ matrix.target }}/debian/
       - name: Build RPM package
-        if: matrix.build == 'linux-64' || matrix.build == 'linux-aarch64'
+        if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
           cargo install cargo-generate-rpm
-          cargo generate-rpm --target ${{ matrix.target }}
+          cargo generate-rpm --target ${{ matrix.target }} --variant=${{ matrix.build }}
           ls -lah ./target/${{ matrix.target }}/generate-rpm/
       - name: Run cargo-tarpaulin
         if: matrix.build == 'linux-x64'

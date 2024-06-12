@@ -42,14 +42,24 @@ lto = true
 strip = true
 panic = 'abort'
 
-[package.metadata.deb]
+[package.metadata.deb.linux-x64]
 assets = [
     ["target/x86_64-unknown-linux-musl/release/editorconfiger", "usr/bin/", "755"],
 ]
 
-[package.metadata.generate-rpm]
+[package.metadata.deb.linux-aarch64]
+assets = [
+    ["target/aarch64-unknown-linux-musl/release/editorconfiger", "usr/bin/", "755"],
+]
+
+[package.metadata.generate-rpm.linux-x64]
 assets = [
     { source = "target/x86_64-unknown-linux-musl/release/editorconfiger", dest = "/usr/bin/editorconfiger", mode = "0755" },
+]
+
+[package.metadata.generate-rpm.linux-aarch64]
+assets = [
+    { source = "target/aarch64-unknown-linux-musl/release/editorconfiger", dest = "/usr/bin/editorconfiger", mode = "0755" },
 ]
 
 [lints.rust]

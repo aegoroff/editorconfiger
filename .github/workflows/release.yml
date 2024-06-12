@@ -77,17 +77,17 @@ jobs:
           7z a -ttar -so -an ./dist/* | 7z a -si ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ matrix.target }}.tar.gz
 
       - name: Build Debian release
-        if: matrix.build == 'linux-64' || matrix.build == 'linux-aarch64'
+        if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
           cargo install cargo-deb
-          cargo deb --no-build --target ${{ matrix.target }}
+          cargo deb --no-build --target ${{ matrix.target }} --variant=${{ matrix.build }}
           cp ./target/${{ matrix.target }}/debian/${{ env.RELEASE_BIN }}_*.deb ./${{ env.RELEASE_DIR }}/
 
       - name: Build RPM release
-        if: matrix.build == 'linux-64' || matrix.build == 'linux-aarch64'
+        if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
           cargo install cargo-generate-rpm
-          cargo generate-rpm --target ${{ matrix.target }}
+          cargo generate-rpm --target ${{ matrix.target }} --variant=${{ matrix.build }}
           cp ./target/${{ matrix.target }}/generate-rpm/${{ env.RELEASE_BIN }}-*.rpm ./${{ env.RELEASE_DIR }}/
 
       - name: Create tarball (Windows)
