@@ -56,7 +56,7 @@ jobs:
           command: "build"
           target: ${{ matrix.target }}
           toolchain: ${{ matrix.rust }}
-          args: "--workspace --release"
+          args: "--release --bin editorconfiger --features=\"build-binary\""
           strip: true
 
       - name: Create artifact directory
