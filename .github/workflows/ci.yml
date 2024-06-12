@@ -51,6 +51,18 @@ jobs:
           toolchain: ${{ matrix.rust }}
           args: "--release --bin editorconfiger --features=\"build-binary\""
           strip: true
+      - name: Build Debian package
+        if: matrix.build == 'linux-64' || matrix.build == 'linux-aarch64'
+        run: |
+          cargo install cargo-deb
+          cargo deb --no-build --target ${{ matrix.target }}
+          ls -lah ./target/${{ matrix.target }}/debian/
+      - name: Build RPM package
+        if: matrix.build == 'linux-64' || matrix.build == 'linux-aarch64'
+        run: |
+          cargo install cargo-generate-rpm
+          cargo generate-rpm --target ${{ matrix.target }}
+          ls -lah ./target/${{ matrix.target }}/generate-rpm/
       - name: Run cargo-tarpaulin
         if: matrix.build == 'linux-x64'
         uses: actions-rs/tarpaulin@v0.1
