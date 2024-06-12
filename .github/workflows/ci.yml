@@ -15,24 +15,40 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [ linux, macos, windows ]
+        build: [linux, macos-x64, macos-arm64, windows]
         include:
           - build: linux
             os: ubuntu-latest
             rust: stable
-          - build: macos
+            target: x86_64-unknown-linux-musl
+          - build: macos-x64
             os: macos-latest
             rust: stable
+            target: x86_64-apple-darwin
+          - build: macos-arm64
+            os: macos-latest
+            rust: stable
+            target: aarch64-apple-darwin
           - build: windows
             os: windows-latest
             rust: stable
+            target: x86_64-pc-windows-msvc
 
     steps:
       - name: Update rust
+        if: matrix.build == 'linux'
         run: rustup update
       - uses: actions/checkout@v4
       - name: Build
         run: cargo build --release --bin editorconfiger --features="build-binary"
+      - name: Build
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "build"
+          target: ${{ matrix.target }}
+          toolchain: ${{ matrix.rust }}
+          args: "--release --bin editorconfiger --features=\"build-binary\""
+          strip: true
       - name: Run cargo-tarpaulin
         if: matrix.build == 'linux'
         uses: actions-rs/tarpaulin@v0.1
@@ -44,9 +60,14 @@ jobs:
         uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      - name: Tests
+      - name: Run tests
         if: matrix.build != 'linux'
-        run: cargo test --release
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "test"
+          target: ${{ matrix.target }}
+          toolchain: ${{ matrix.rust }}
+          args: "--release"
       - name: Run linter
         if: matrix.build == 'linux'
         uses: actions-rs/clippy-check@v1
