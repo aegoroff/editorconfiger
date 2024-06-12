@@ -12,7 +12,8 @@ env:
   WINDOWS_TARGET: x86_64-pc-windows-msvc
   MACOS_X64_TARGET: x86_64-apple-darwin
   MACOS_ARM64_TARGET: aarch64-apple-darwin
-  LINUX_TARGET: x86_64-unknown-linux-musl
+  LINUX_X64_TARGET: x86_64-unknown-linux-musl
+  LINUX_AARCH64_TARGET: aarch64-unknown-linux-musl
   RELEASER_VER: 0.12.2
 
 jobs:
@@ -21,12 +22,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [linux, macos-x64, macos-arm64, windows]
+        build: [linux-x64, linux-aarch64, macos-x64, macos-arm64, windows]
         include:
-          - build: linux
+          - build: linux-x64
             os: ubuntu-latest
             rust: stable
             target: x86_64-unknown-linux-musl
+          - build: linux-aarch64
+            os: ubuntu-latest
+            rust: stable
+            target: aarch64-unknown-linux-musl
           - build: macos-x64
             os: macos-latest
             rust: stable
@@ -65,21 +70,21 @@ jobs:
           mkdir dist
 
       - name: Create tarball (Linux)
-        if: matrix.build == 'linux'
+        if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
           cp ./target/${{ matrix.target }}/release/${{ env.RELEASE_BIN }} ./dist/${{ env.RELEASE_BIN }}
           cp ./LICENSE.txt ./dist/
           7z a -ttar -so -an ./dist/* | 7z a -si ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ matrix.target }}.tar.gz
 
       - name: Build Debian release (x86-64)
-        if: matrix.build == 'linux'
+        if: matrix.build == 'linux-64'
         run: |
           cargo install cargo-deb
           cargo deb --no-build --target ${{ matrix.target }}
           cp ./target/${{ matrix.target }}/debian/${{ env.RELEASE_BIN }}_*.deb ./${{ env.RELEASE_DIR }}/
 
       - name: Build RPM release (x86-64)
-        if: matrix.build == 'linux'
+        if: matrix.build == 'linux-64'
         run: |
           cargo install cargo-generate-rpm
           cargo generate-rpm --target ${{ matrix.target }}
@@ -146,11 +151,17 @@ jobs:
           release_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
 
-      - name: Download Linux tarball
+      - name: Download Linux x64 tarball
         uses: actions/download-artifact@v4
         with:
-          name: linux
-          path: linux
+          name: linux-x64
+          path: linux-x64
+
+      - name: Download Linux aarch64 tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-aarch64
+          path: linux-aarch64
 
       - name: Download Windows tarball
         uses: actions/download-artifact@v4
@@ -175,7 +186,7 @@ jobs:
           curl -L  -o releaser.tar.gz https://github.com/aegoroff/releaser/releases/download/${{ env.RELEASER_VER }}/releaser-${{ env.RELEASER_VER }}-x86_64-unknown-linux-musl.tar.gz
           tar -xf releaser.tar.gz
       - name: Create brew formula
-        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux/' -m './macos-x64/' -a './macos-arm64/' -u ${{ env.RELEASE_BIN }}.rb
+        run: ${{ github.workspace }}/releaser b -c . -b https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.VERSION }}/ -l './linux-x64/' -m './macos-x64/' -a './macos-arm64/' -u ${{ env.RELEASE_BIN }}.rb
       - name: Publish brew formula
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
@@ -200,15 +211,25 @@ jobs:
           user_name: "aegoroff"
           commit_message: "release: ${{ steps.get_version.outputs.VERSION }}"
 
-      - name: Release Linux tarball
+      - name: Release Linux x64 tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET }}.tar.gz
+          asset_path: ./linux-x64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_X64_TARGET }}.tar.gz
           asset_content_type: application/gzip
-          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_TARGET }}.tar.gz
+          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_X64_TARGET }}.tar.gz
+
+      - name: Release Linux aarch64 tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./linux-aarch64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_AARCH64_TARGET }}.tar.gz
+          asset_content_type: application/gzip
+          asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ env.LINUX_AARCH64_TARGET }}.tar.gz
 
       - name: Release DEB package
         uses: actions/upload-release-asset@v1
@@ -216,7 +237,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux/${{ env.RELEASE_BIN }}_${{ steps.get_version.outputs.VERSION }}-1_amd64.deb
+          asset_path: ./linux-x64/${{ env.RELEASE_BIN }}_${{ steps.get_version.outputs.VERSION }}-1_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
           asset_name: ${{ env.RELEASE_BIN }}_${{ steps.get_version.outputs.VERSION }}-1_amd64.deb
 
@@ -226,7 +247,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-1.x86_64.rpm
+          asset_path: ./linux-x64/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-1.x86_64.rpm
           asset_content_type: application/octet-stream
           asset_name: ${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-1.x86_64.rpm
 
