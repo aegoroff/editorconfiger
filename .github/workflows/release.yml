@@ -83,7 +83,7 @@ jobs:
           [[ -d ./target/release/ ]] || mkdir ./target/release/
           [[ -f ./target/release/${{ env.RELEASE_BIN }} ]] || cp ./target/${{ matrix.target }}/release/${{ env.RELEASE_BIN }} ./target/release/
           cp ./target/${{ matrix.target }}/release/${{ env.RELEASE_BIN }} ./target/release/
-          cargo deb --no-build --target ${{ matrix.target }}
+          cargo deb --no-strip --no-build --target ${{ matrix.target }}
           cp ./target/${{ matrix.target }}/debian/${{ env.RELEASE_BIN }}_*.deb ./${{ env.RELEASE_DIR }}/
 
       - name: Build RPM release
@@ -92,7 +92,7 @@ jobs:
           cargo install cargo-generate-rpm
           [[ -d ./target/release/ ]] || mkdir ./target/release/
           [[ -f ./target/release/${{ env.RELEASE_BIN }} ]] || cp ./target/${{ matrix.target }}/release/${{ env.RELEASE_BIN }} ./target/release/
-          cargo generate-rpm --target ${{ matrix.target }}
+          cargo generate-rpm --no-strip --no-build --target ${{ matrix.target }}
           cp ./target/${{ matrix.target }}/generate-rpm/${{ env.RELEASE_BIN }}-*.rpm ./${{ env.RELEASE_DIR }}/
 
       - name: Create tarball (Windows)
