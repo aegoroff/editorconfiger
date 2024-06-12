@@ -64,7 +64,7 @@ jobs:
         if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
           cargo install cargo-generate-rpm
-          cargo generate-rpm --no-build --target ${{ matrix.target }}
+          cargo generate-rpm --target ${{ matrix.target }}
           ls -lah ./target/${{ matrix.target }}/generate-rpm/
       - name: Run cargo-tarpaulin
         if: matrix.build == 'linux-x64'

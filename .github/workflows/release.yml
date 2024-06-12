@@ -90,7 +90,7 @@ jobs:
         if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
           cargo install cargo-generate-rpm
-          cargo generate-rpm --no-build --target ${{ matrix.target }}
+          cargo generate-rpm --target ${{ matrix.target }}
           cp ./target/${{ matrix.target }}/generate-rpm/${{ env.RELEASE_BIN }}-*.rpm ./${{ env.RELEASE_DIR }}/
 
       - name: Create tarball (Windows)
