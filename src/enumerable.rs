@@ -1,14 +1,27 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
 /// Returns only duplicate items iterator
-pub fn only_duplicates<T: Eq + Ord>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = T> {
-    iter.fold(BTreeMap::new(), |mut h, s| {
-        *h.entry(s).or_insert(0) += 1;
-        h
+pub fn only_duplicates<T: Eq + Hash + Clone>(
+    iter: impl Iterator<Item = T>,
+) -> impl Iterator<Item = T> {
+    let mut counter = HashMap::new();
+    iter.filter_map(move |x| {
+        let count = if let Some(count) = counter.get(&x) {
+            *count
+        } else {
+            0
+        };
+        // to avoid redundant clone in case of many duplicates
+        if count < 2 {
+            *counter.entry(x.clone()).or_insert(0) += 1;
+        }
+        if count == 1 {
+            Some(x)
+        } else {
+            None
+        }
     })
-    .into_iter()
-    .filter_map(|(k, count)| if count > 1 { Some(k) } else { None })
 }
 
 /// Returns iterator over unique items from original iterator
@@ -30,9 +43,9 @@ mod tests {
     use rstest::rstest;
 
     #[rstest]
-    #[case(vec!["a", "b", "b", "a"], vec!["a", "b"])]
-    #[case(vec!["a", "b", "b", "a", "a"], vec!["a", "b"])]
-    #[case(vec!["a", "b", "b", "a", "a", "a"], vec!["a", "b"])]
+    #[case(vec!["a", "b", "b", "a"], vec!["b", "a"])]
+    #[case(vec!["a", "b", "b", "a", "a"], vec!["b", "a"])]
+    #[case(vec!["a", "b", "b", "a", "a", "a"], vec!["b", "a"])]
     #[case(vec!["a", "b", "b"], vec!["b"])]
     #[case(vec!["a", "b"], vec![])]
     #[case(vec![], vec![])]
