@@ -1,5 +1,3 @@
-#![cfg(feature = "build-binary")]
-
 use crate::{
     CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, ValidationResult,
     ValidationState,
