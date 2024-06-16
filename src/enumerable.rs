@@ -1,7 +1,20 @@
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
-/// Returns only duplicate items iterator
+/// Filters out items from the original iterator, returning only those that appear more than once.
+///
+/// This function takes an iterator of items and returns a new iterator that yields only the items
+/// that appear more than once (duplicates). Each item is yielded exactly once, regardless of how
+/// many times it appears in the original iterator.
+///
+/// # Type Parameters
+/// - `T`: The type of the items in the iterator. It must implement `Eq`, `Hash`, and `Clone`.
+///
+/// # Arguments
+/// - `iter`: An iterator over items of type `T`.
+///
+/// # Returns
+/// An iterator over items of type `T` that appear more than once in the original iterator.
 pub fn only_duplicates<T: Eq + Hash + Clone>(
     iter: impl Iterator<Item = T>,
 ) -> impl Iterator<Item = T> {
@@ -24,7 +37,20 @@ pub fn only_duplicates<T: Eq + Hash + Clone>(
     })
 }
 
-/// Returns iterator over unique items from original iterator
+/// Filters out duplicate items from the original iterator, returning only unique items.
+///
+/// This function takes an iterator of items and returns a new iterator that yields only the unique
+/// items (no duplicates). Each item is yielded exactly once, and in the order of their first occurrence
+/// in the original iterator.
+///
+/// # Type Parameters
+/// - `T`: The type of the items in the iterator. It must implement `Eq`, `Hash`, and `Clone`.
+///
+/// # Arguments
+/// - `iter`: An iterator over items of type `T`.
+///
+/// # Returns
+/// An iterator over items of type `T` that appear only once in the original iterator.
 pub fn only_unique<T: Eq + Hash + Clone>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = T> {
     let mut hs = HashSet::new();
     iter.filter(move |x| {
