@@ -30,6 +30,21 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 const EDITOR_CONFIG: &str = ".editorconfig";
 
+/// A trait for reporting errors related to configuration validation.
+///
+/// This trait defines a single method, `error`, which is used to report errors encountered
+/// during the validation of configuration files. Implementors of this trait can define
+/// custom behavior for error reporting, such as logging the error to a file, printing it
+/// to the console, or sending it to an external monitoring service.
+///
+/// # Methods
+///
+/// * `error` - Reports an error encountered during validation.
+///
+/// # Parameters
+///
+/// * `path` - A string slice that holds the path of the configuration file where the error occurred.
+/// * `err` - A string slice that holds the error message.
 pub trait Errorer {
     fn error(&self, path: &str, err: &str);
 }
@@ -59,6 +74,34 @@ pub enum ValidationState {
     SomeProblems,
 }
 
+/// Represents the result of validating a configuration file.
+///
+/// This struct holds various details about the validation process,
+/// including paths, duplicate sections, duplicate properties,
+/// external problems, and similar properties.
+///
+/// # Fields
+///
+/// * `path` - The path of the configuration file being validated.
+/// * `duplicate_sections` - A list of sections that are duplicated within the file.
+/// * `duplicate_properties` - A map where the keys are property names and the values are vectors of sections in which the properties are duplicated.
+/// * `ext_problems` - A list of extended validation results containing details about duplicates and similar properties found in external files.
+/// * `similar_properties` - A map where the keys are property names and the values are vectors of tuples, each containing a pair of similar properties.
+///
+/// # Example
+///
+/// ```
+/// use std::collections::BTreeMap;
+/// use editorconfiger::ValidationResult;
+///
+/// let validation_result = ValidationResult {
+///     path: "path/to/config.file",
+///     duplicate_sections: vec!["section1", "section2"],
+///     duplicate_properties: BTreeMap::new(),
+///     ext_problems: vec![],
+///     similar_properties: BTreeMap::new(),
+/// };
+/// ```
 pub struct ValidationResult<'input> {
     pub path: &'input str,
     pub duplicate_sections: Vec<&'input str>,
@@ -67,6 +110,27 @@ pub struct ValidationResult<'input> {
     pub similar_properties: BTreeMap<&'input str, Vec<(&'input str, &'input str)>>,
 }
 
+/// Represents the result of an extensions validation process.
+///
+/// This struct holds details about duplicates and similar properties found for an extension
+///
+/// # Fields
+///
+/// * `ext` - A string representing the extension being validated.
+/// * `duplicates` - A list of properties that are duplicated within extension section.
+/// * `similar` - A list of tuples, each containing a pair of similar properties found.
+///
+/// # Example
+///
+/// ```
+/// use editorconfiger::ExtValidationResult;
+///
+/// let ext_validation_result = ExtValidationResult {
+///     ext: "extension".to_string(),
+///     duplicates: vec!["property1", "property2"],
+///     similar: vec![("property1", "property1_similar")],
+/// };
+/// ```
 pub struct ExtValidationResult<'input> {
     pub ext: String,
     pub duplicates: Vec<&'input str>,
@@ -116,14 +180,96 @@ impl ValidationState {
     }
 }
 
+/// Trait for formatting the results of a validation process.
+///
+/// This trait defines a method that must be implemented to format and display the results
+/// of validating a configuration file. The formatting implementation can vary depending
+/// on the use case, such as printing to the console, logging, or generating a report.
+///
+/// # Example
+///
+/// ```
+/// use editorconfiger::{ValidationFormatter, ValidationResult};
+///
+/// struct MyFormatter;
+///
+/// impl ValidationFormatter for MyFormatter {
+///     fn format(&self, result: ValidationResult) {
+///         // ...
+///     }
+/// }
+/// ```
+///
+/// # Method
+///
+/// * `format` - Formats the validation result.
+///
+/// # Parameters
+///
+/// * `result` - The `ValidationResult` struct containing the details of the validation process.
 pub trait ValidationFormatter {
     fn format(&self, result: ValidationResult);
 }
 
+/// Trait for formatting the results of comparing two configuration files.
+///
+/// This trait defines a method that must be implemented to format and display the results
+/// of comparing two configuration files. The formatting implementation can vary depending
+/// on the use case, such as printing to the console, logging, or generating a report.
+///
+/// # Example
+///
+/// ```
+/// use editorconfiger::{ComparisonFormatter, CompareItem};
+/// use std::collections::BTreeMap;
+///
+/// struct MyComparisonFormatter;
+///
+/// impl ComparisonFormatter for MyComparisonFormatter {
+///     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>) {
+///         // ...
+///     }
+/// }
+/// ```
+///
+/// # Method
+///
+/// * `format` - Formats the comparison result.
+///
+/// # Parameters
+///
+/// * `result` - A `BTreeMap` where the keys are section names and the values are vectors of `CompareItem`
+///              structs, each containing details about the differences found during the comparison.
 pub trait ComparisonFormatter {
     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>);
 }
 
+/// Validates all .editorconfig files in a given directory and its subdirectories.
+///
+/// This function traverses the directory specified by `path` and validates all files
+/// that match the .editorconfig filename. It uses parallelism to speed up the process
+/// by leveraging all available physical CPU cores. The function returns the number of
+/// configuration files that were validated.
+///
+/// # Parameters
+///
+/// * `path` - A string slice that holds the path to the directory to be traversed.
+/// * `formatter` - A reference to an implementation of the [`ValidationFormatter`] trait,
+///                 which will be used to format the validation results.
+/// * `err` - A reference to an implementation of the `Errorer` trait, which will be used
+///           to handle any errors that occur during file reading or validation.
+///
+/// # Returns
+///
+/// * `usize` - The number of configuration files that were validated.
+///
+///
+/// # Implementation Details
+///
+/// * The function uses the `WalkDir` crate to recursively traverse the directory.
+/// * Files are filtered to only include those that match the .editorconfig filename.
+/// * The [`validate_one`] function is called for each matching file to perform the validation.
+/// * The `Rayon` crate is used to parallelize the file traversal and validation process.
 pub fn validate_all<V: ValidationFormatter, E: Errorer>(
     path: &str,
     formatter: &V,
@@ -147,12 +293,39 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .count()
 }
 
+/// Validates a single .editorconfig file.
+///
+/// This function reads the content of the configuration file specified by `path`,
+/// and then validates it using the provided `formatter` to format the validation results.
+/// If there is an error reading the file, the provided `err` handler will be used to handle it.
+///
+/// # Parameters
+///
+/// * `path` - A string slice that holds the path to the configuration file to be validated.
+/// * `formatter` - A reference to an implementation of the `ValidationFormatter` trait,
+///                 which will be used to format the validation results.
+/// * `err` - A reference to an implementation of the [`Errorer`] trait, which will be used
+///           to handle any errors that occur during file reading or validation.
 pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &V, err: &E) {
     if let Some(c) = read_from_file(path, err) {
         validate(&c, path, formatter);
     }
 }
 
+/// Compares two .editorconfig files and formats the comparison results.
+///
+/// This function reads the contents of two configuration files specified by `path1` and `path2`,
+/// and then compares them using the provided `formatter` to format the comparison results.
+/// If there is an error reading either file, the provided `err` handler will be used to handle it.
+///
+/// # Parameters
+///
+/// * `path1` - A string slice that holds the path to the first .editorconfig file to be compared.
+/// * `path2` - A string slice that holds the path to the second .editorconfig file to be compared.
+/// * `err` - A reference to an implementation of the [`Errorer`] trait, which will be used
+///           to handle any errors that occur during file reading.
+/// * `formatter` - A reference to an implementation of the [`ComparisonFormatter`] trait,
+///                 which will be used to format the comparison results.
 pub fn compare_files<E: Errorer, F: ComparisonFormatter>(
     path1: &str,
     path2: &str,
@@ -196,6 +369,37 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
     Ok(contents)
 }
 
+/// Validates the content of an .editorconfig file.
+///
+/// This function parses the provided content of an .editorconfig file, checks for duplicate
+/// and similar properties within sections, and validates properties with extended glob patterns.
+/// The results of these validations are formatted using the provided `formatter`.
+///
+/// # Parameters
+///
+/// * `content` - A string slice that holds the content of the .editorconfig file to be validated.
+/// * `path` - A string slice that holds the path to the configuration file, used for reporting purposes.
+/// * `formatter` - A reference to an implementation of the `ValidationFormatter` trait,
+///                 which will be used to format the validation results.
+///
+/// The function performs the following steps:
+///
+/// 1. Parses the content into sections.
+/// 2. Iterates over each section to collect properties and their associated section titles.
+/// 3. Checks for duplicate properties within each section and stores them.
+/// 4. Checks for similar properties within each section and stores them.
+/// 5. Validates properties with extended glob patterns and checks for duplicate and similar properties.
+/// 6. Checks for duplicate section titles.
+/// 7. Constructs a [`ValidationResult`] with all the gathered information.
+/// 8. Uses the provided `formatter` to format the validation results.
+///
+/// The [`ValidationResult`] includes:
+///
+/// * The path of the validated file.
+/// * A list of duplicate section titles.
+/// * A map of duplicate properties by section.
+/// * A map of similar properties by section.
+/// * A list of problems with properties that have extended glob patterns.
 pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
@@ -294,6 +498,30 @@ fn validate_extension(ext: String, props: Vec<ExtendedProperty>) -> ExtValidatio
     }
 }
 
+/// Compares the properties of two .editorconfig files contents and formats the comparison result.
+///
+/// # Arguments
+///
+/// * `content1` - A string slice holding the first .editorconfig content.
+/// * `content2` - A string slice holding the second .editorconfig content.
+/// * `formatter` - A reference to an implementation of the [`ComparisonFormatter`] trait,
+///                 which will be used to format the comparison results.
+///
+/// The function performs the following steps:
+///
+/// 1. Parses the two configuration contents into sections.
+/// 2. Maps the sections to their properties for both contents.
+/// 3. Iterates over the sections of the first content and compares each property with the corresponding section in the second content.
+/// 4. Collects the comparison results, including properties that are only in the first content, only in the second content, or in both with different values.
+/// 5. Identifies sections that are missing in the first content but present in the second content and includes their properties in the result.
+/// 6. Constructs a `BTreeMap` where the key is the section title and the value is a list of [`]CompareItem`] representing the comparison results for each property.
+/// 7. Uses the provided `formatter` to format the comparison results.
+///
+/// The resulting `BTreeMap` includes:
+///
+/// * Section titles as keys.
+/// * Lists of [`CompareItem`] for each section, representing the property comparisons.
+///   - Each [`CompareItem`] includes the property key, its value in the first content (if any), and its value in the second content (if any).
 pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
     let empty = BTreeMap::<&str, &str>::new();
 
