@@ -51,7 +51,6 @@ assets = [
 assets = [
     { source = "target/release/editorconfiger", dest = "/usr/bin/editorconfiger", mode = "0755" },
 ]
-auto-req = 'no'
 
 [lints.rust]
 unsafe_code = "forbid"
