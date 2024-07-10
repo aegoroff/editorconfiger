@@ -89,7 +89,7 @@ jobs:
       - name: Build RPM release
         if: matrix.build == 'linux-x64' || matrix.build == 'linux-aarch64'
         run: |
-          cargo install cargo-generate-rpm
+          cargo install cargo-generate-rpm --version 0.14.0
           cargo generate-rpm --target ${{ matrix.target }}
           cp ./target/${{ matrix.target }}/generate-rpm/${{ env.RELEASE_BIN }}-*.rpm ./${{ env.RELEASE_DIR }}/
 
