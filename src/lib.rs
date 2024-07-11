@@ -25,6 +25,7 @@ extern crate table_test;
 extern crate rstest;
 
 use editorconfig::Section;
+use enumerable::IteratorExt;
 use jwalk::{Parallelism, WalkDir};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -425,11 +426,11 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
 
         let names_fn = || sec.properties.iter().map(|item| item.name);
 
-        let mut duplicate_pops: Vec<&str> = enumerable::only_duplicates(names_fn()).collect();
+        let mut duplicate_pops: Vec<&str> = names_fn().only_duplicates().collect();
 
         append_to_btree(&mut dup_props, sec.title, &mut duplicate_pops);
 
-        let unique_props: Vec<&str> = enumerable::only_unique(names_fn()).collect();
+        let unique_props: Vec<&str> = names_fn().unique().collect();
 
         let mut similar = similar::find_suffix_pairs(&unique_props);
         append_to_btree(&mut sim_props, sec.title, &mut similar);
@@ -441,7 +442,7 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
         .filter(|r| !r.duplicates.is_empty() || !r.similar.is_empty())
         .collect();
 
-    let dup_sect = enumerable::only_duplicates(section_heads.into_iter()).collect();
+    let dup_sect = section_heads.into_iter().only_duplicates().collect();
 
     let result = ValidationResult {
         path,
