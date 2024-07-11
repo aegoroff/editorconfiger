@@ -27,6 +27,11 @@ pub trait IteratorExt: Iterator {
     }
 }
 
+/// Returns an iterator that contains only the unique elements from `self`.
+///
+/// This iterator is a drop-in replacement for `self` until it has seen each item in
+/// `self`. After that, no more items will be yielded. The order of items is preserved.
+///
 pub struct UniqueIterator<I>
 where
     I: Iterator,
@@ -36,6 +41,7 @@ where
     seen: HashSet<I::Item>,
 }
 
+/// Returns an iterator that yields only the items from `self` that appear more than once in the original iteration.
 pub struct OnlyDuplicatesIterator<I>
 where
     I: Iterator,
