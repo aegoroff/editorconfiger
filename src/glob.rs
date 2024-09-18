@@ -42,10 +42,7 @@ lalrpop_mod!(
 #[must_use]
 pub fn parse(string: &str) -> Vec<String> {
     let parser = glob::DefinesParser::new();
-    return match parser.parse(string) {
-        Ok(r) => r,
-        Err(_e) => vec![],
-    };
+    parser.parse(string).unwrap_or_default()
 }
 
 #[cfg(test)]
