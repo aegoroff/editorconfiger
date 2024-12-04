@@ -144,7 +144,7 @@ struct ExtendedProperty<'input> {
     pub section: &'input str,
 }
 
-impl<'input> ValidationResult<'input> {
+impl ValidationResult<'_> {
     #[must_use]
     pub fn state(&self) -> ValidationState {
         ValidationState::from(self)
