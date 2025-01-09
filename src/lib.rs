@@ -285,7 +285,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .follow_links(false)
         .parallelism(parallelism);
     iter.into_iter()
-        .filter_map(std::result::Result::ok)
+        .filter_map(Result::ok)
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
