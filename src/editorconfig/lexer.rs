@@ -26,6 +26,7 @@ struct TokenIterator<'a> {
 }
 
 impl<'a> TokenIterator<'a> {
+    /// Creates a new `TokenIterator` to parse the given input string.
     fn new(input: &'a str) -> Self {
         Self {
             input,
@@ -33,6 +34,10 @@ impl<'a> TokenIterator<'a> {
         }
     }
 
+    /// Parses a line of text and returns the appropriate token if successful.
+    /// 
+    /// This method takes the remaining trail after parsing and updates the iterator's state accordingly.
+    /// If parsing fails, it returns `None`.
     fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Token<'a>> {
         self.input = trail;
         let (remain, token) = line::<'a, Error<&'a str>>(val).ok()?;
