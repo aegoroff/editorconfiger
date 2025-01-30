@@ -25,6 +25,8 @@ prettytable-rs = { version = "=0.10.0", optional = true }
 clap = { version = "=4.5.27", features = ["std", "color", "suggestions", "cargo"], optional = true }
 clap_complete = { version = "=4.5.44", optional = true }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+mimalloc-rust = "=0.2.1"
 
 [dev-dependencies]
 table-test = "=0.2.1"

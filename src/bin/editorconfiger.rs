@@ -9,6 +9,13 @@ use clap::{
 use clap_complete::{generate, Shell};
 use editorconfiger::console::{Comparator, Error, Formatter};
 
+#[cfg(target_os = "linux")]
+use mimalloc_rust::GlobalMiMalloc;
+
+#[cfg(target_os = "linux")]
+#[global_allocator]
+static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
+
 const PATH: &str = "PATH";
 const FILE1: &str = "FILE1";
 const FILE2: &str = "FILE2";
