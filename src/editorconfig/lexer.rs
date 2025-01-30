@@ -1,8 +1,8 @@
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
-use nom::error::{FromExternalError, ParseError, VerboseError};
-use nom::sequence;
+use nom::error::{FromExternalError, ParseError, Error};
 use nom::{character::complete, combinator, IResult};
+use nom::{sequence, Parser};
 
 /// Represents .editorconfig lexical token abstraction that contain necessary data
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -35,7 +35,7 @@ impl<'a> TokenIterator<'a> {
 
     fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Token<'a>> {
         self.input = trail;
-        let (remain, token) = line::<'a, VerboseError<&'a str>>(val).ok()?;
+        let (remain, token) = line::<'a, Error<&'a str>>(val).ok()?;
         self.not_parsed_trail = remain;
         Some(token)
     }
@@ -46,7 +46,7 @@ impl<'a> Iterator for TokenIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if !self.not_parsed_trail.is_empty() {
-            let parsed_comment = comment::<'a, VerboseError<&'a str>>(self.not_parsed_trail);
+            let parsed_comment = comment::<'a, Error<&'a str>>(self.not_parsed_trail);
             self.not_parsed_trail = "";
             // if there were an error while parsing inline comment (for example it's not started from # or ;)
             // just throw it and continue parsing
@@ -63,7 +63,7 @@ impl<'a> Iterator for TokenIterator<'a> {
                 break;
             }
             let mut parser = sequence::terminated(complete::not_line_ending, complete::line_ending);
-            let parsed: IResult<&'a str, &'a str, VerboseError<&'a str>> = parser(self.input);
+            let parsed: IResult<&'a str, &'a str, Error<&'a str>> = parser.parse(self.input);
             return if let Ok((trail, val)) = parsed {
                 if let Some(token) = self.parse_line(trail, val) {
                     return Some(token);
@@ -81,7 +81,7 @@ fn line<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
 where
     E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
 {
-    alt((head::<E>, key_value::<E>, comment::<E>))(input)
+    alt((head::<E>, key_value::<E>, comment::<E>)).parse(input)
 }
 
 fn head<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
@@ -94,7 +94,8 @@ where
     combinator::map_res(parser, |val: &str| match val.rfind(']') {
         Some(ix) => Ok(Token::Head(&val[..ix])),
         None => Err(nom::Err::Failure(']')),
-    })(input)
+    })
+    .parse(input)
 }
 
 fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
@@ -110,7 +111,8 @@ where
 
     combinator::map(parser, |(k, v): (&str, &str)| {
         Token::Pair(k.trim(), v.trim())
-    })(input)
+    })
+    .parse(input)
 }
 
 fn comment<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
@@ -123,7 +125,8 @@ where
             is_not("\n\r"),
         )),
         Token::Comment,
-    )(input)
+    )
+    .parse(input)
 }
 
 #[cfg(test)]
