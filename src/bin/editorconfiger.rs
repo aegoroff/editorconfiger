@@ -10,11 +10,11 @@ use clap_complete::{generate, Shell};
 use editorconfiger::console::{Comparator, Error, Formatter};
 
 #[cfg(target_os = "linux")]
-use mimalloc_rust::GlobalMiMalloc;
+use mimalloc::MiMalloc;
 
 #[cfg(target_os = "linux")]
 #[global_allocator]
-static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
+static GLOBAL: MiMalloc = MiMalloc;
 
 const PATH: &str = "PATH";
 const FILE1: &str = "FILE1";
@@ -97,7 +97,7 @@ fn build_cli() -> Command {
                         .index(1),
                 )
                 .arg(
-                    arg!(-p --problems).action(ArgAction::SetTrue).help(
+                    arg!(-p - -problems).action(ArgAction::SetTrue).help(
                         "Show only files that have problems. Correct files will not be shown.",
                     ),
                 ),
