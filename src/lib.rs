@@ -289,8 +289,11 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .filter(|f| f.file_type().is_file())
         .map(|f| f.path())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
-        .map(|f| f.to_str().unwrap_or("").to_string())
-        .inspect(|p| validate_one(p, formatter, err))
+        .inspect(|p| {
+            if let Some(p) = p.to_str() {
+                validate_one(p, formatter, err)    
+            }
+        })
         .count()
 }
 
