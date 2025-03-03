@@ -30,7 +30,7 @@ mimalloc = "=0.1.43"
 
 [dev-dependencies]
 table-test = "=0.2.1"
-rstest = "=0.24.0"
+rstest = "=0.25.0"
 
 [features]
 build-binary = ["clap", "clap_complete", "ansi_term", "prettytable-rs"]
