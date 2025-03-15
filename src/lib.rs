@@ -292,7 +292,7 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .inspect(|p| {
             if let Some(p) = p.to_str() {
                 if let Err(e) = validate_one(p, formatter, err) {
-                    println!("{p}: {e:?}");
+                    println!(" {p}: {e:?}");
                 }
             }
         })

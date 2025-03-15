@@ -1,4 +1,4 @@
-use miette::{miette, LabeledSpan, Result};
+use miette::{miette, LabeledSpan, Result, SourceSpan};
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::error::{Error, FromExternalError, ParseError};
@@ -25,6 +25,7 @@ struct TokenIterator<'a> {
     input: &'a str,
     not_parsed_trail: &'a str,
     offset: usize,
+    original_input_len: usize,
 }
 
 impl<'a> TokenIterator<'a> {
@@ -34,6 +35,7 @@ impl<'a> TokenIterator<'a> {
             input,
             not_parsed_trail: "",
             offset: 0,
+            original_input_len: input.len(),
         }
     }
 
@@ -42,7 +44,7 @@ impl<'a> TokenIterator<'a> {
     /// This method takes the remaining trail after parsing and updates the iterator's state accordingly.
     /// If no data to parse (val argument), it returns `None`.
     fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Result<Token<'a>>> {
-        self.offset += val.len();
+        self.offset = self.original_input_len - trail.len() - val.len() - 1;
         self.input = trail;
         if val.is_empty() {
             return None;
@@ -66,9 +68,10 @@ impl<'a> TokenIterator<'a> {
                     }
                     nom::Err::Failure(ref f) => f.to_string(),
                 };
+                let span = SourceSpan::new(self.offset.into(), val.len());
                 let report = miette!(
                     labels = vec![LabeledSpan::at(
-                        self.offset..self.offset + val.len(),
+                        span,
                         format!("The problem is here. Details: {msg}")
                     ),],
                     help = "Incorrect .editorconfig file syntax",
