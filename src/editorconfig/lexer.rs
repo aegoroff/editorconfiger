@@ -178,136 +178,124 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_case::test_case;
 
-    #[test]
-    fn tokenize_test() {
-        // Arrange
-        let cases = vec![
-            ("", vec![]),
-            ("[*.md]", vec![Token::Head("*.md")]),
-            (
-                "[*.md] ; test",
-                vec![Token::Head("*.md"), Token::Comment("; test")],
-            ),
-            ("[*.[md]]", vec![Token::Head("*.[md]")]),
-            ("[*.[md]", vec![Token::Head("*.[md")]),
-            ("[ *.[md] ]", vec![Token::Head(" *.[md] ")]),
-            ("[a]\n[b]", vec![Token::Head("a"), Token::Head("b")]),
-            ("[a]\r\n[b]", vec![Token::Head("a"), Token::Head("b")]),
-            ("[a]\n\n[b]", vec![Token::Head("a"), Token::Head("b")]),
-            ("[a]", vec![Token::Head("a")]),
-            ("[a]\r\n", vec![Token::Head("a")]),
-            ("[a]\nk=v", vec![Token::Head("a"), Token::Pair("k", "v")]),
-            (
-                "[a]\nk=v ; test",
-                vec![
-                    Token::Head("a"),
-                    Token::Pair("k", "v"),
-                    Token::Comment("; test"),
-                ],
-            ),
-            (
-                "[a]\nk=v#",
-                vec![Token::Head("a"), Token::Pair("k", "v"), Token::Comment("#")],
-            ),
-            (
-                "[a]\nk=v#\n[b]\nk1=v1#",
-                vec![
-                    Token::Head("a"),
-                    Token::Pair("k", "v"),
-                    Token::Comment("#"),
-                    Token::Head("b"),
-                    Token::Pair("k1", "v1"),
-                    Token::Comment("#"),
-                ],
-            ),
-            (
-                "[a]\nk=v ; test\n[b]",
-                vec![
-                    Token::Head("a"),
-                    Token::Pair("k", "v"),
-                    Token::Comment("; test"),
-                    Token::Head("b"),
-                ],
-            ),
-            (
-                "[a]\nk=v; test",
-                vec![
-                    Token::Head("a"),
-                    Token::Pair("k", "v"),
-                    Token::Comment("; test"),
-                ],
-            ),
-            (
-                "[a]\nk=v\n[b]",
-                vec![Token::Head("a"), Token::Pair("k", "v"), Token::Head("b")],
-            ),
-            (
-                "[a]\n# test\nk=v\n[b]",
-                vec![
-                    Token::Head("a"),
-                    Token::Comment("# test"),
-                    Token::Pair("k", "v"),
-                    Token::Head("b"),
-                ],
-            ),
-            (
-                "[a]\n; test\nk=v\n[b]",
-                vec![
-                    Token::Head("a"),
-                    Token::Comment("; test"),
-                    Token::Pair("k", "v"),
-                    Token::Head("b"),
-                ],
-            ),
-            (
-                "[a]\n# test\nk = v \n[b]",
-                vec![
-                    Token::Head("a"),
-                    Token::Comment("# test"),
-                    Token::Pair("k", "v"),
-                    Token::Head("b"),
-                ],
-            ),
-            (
-                "[a\n# test\nk = v \n[b]",
-                vec![
-                    Token::Comment("# test"),
-                    Token::Pair("k", "v"),
-                    Token::Head("b"),
-                ],
-            ),
-            (
-                "[a\n# test\nk =  \n[b]",
-                vec![
-                    Token::Comment("# test"),
-                    Token::Pair("k", ""),
-                    Token::Head("b"),
-                ],
-            ),
-            (
-                "[a\n# test\nk = v \n[b]test",
-                vec![
-                    Token::Comment("# test"),
-                    Token::Pair("k", "v"),
-                    Token::Head("b"),
-                ],
-            ),
-            ("#", vec![Token::Comment("#")]),
-            ("# ", vec![Token::Comment("# ")]),
-            ("# a", vec![Token::Comment("# a")]),
-        ];
+    #[test_case("", vec![] ; "Empty input")]
+    #[test_case("[*.md]", vec![Token::Head("*.md")] ; "Only head with glob")]
+    #[test_case("[*.md] ; test",vec![Token::Head("*.md"), Token::Comment("; test")] ; "Only head and comment after")]
+    #[test_case("[*.[md]]", vec![Token::Head("*.[md]")] ; "Only head with squares inside")]
+    #[test_case("[*.[md]", vec![Token::Head("*.[md")] ; "Only head with single square inside")]
+    #[test_case("[ *.[md] ]", vec![Token::Head(" *.[md] ")] ; "Only head with spaces and squares")]
+    #[test_case("[a]\n[b]", vec![Token::Head("a"), Token::Head("b")] ; "Two heads")]
+    #[test_case("[a]\r\n[b]", vec![Token::Head("a"), Token::Head("b")] ; "Two heads win")]
+    #[test_case("[a]\n\n[b]", vec![Token::Head("a"), Token::Head("b")] ; "Two heads with empty line in between")]
+    #[test_case("[a]", vec![Token::Head("a")] ; "Only head plain")]
+    #[test_case("[a]\r\n", vec![Token::Head("a")] ; "Only head and carriage return")]
+    #[test_case("[a]\nk=v", vec![Token::Head("a"), Token::Pair("k", "v")] ; "Single section with one pair")]
+    #[test_case(
+        "[a]\nk=v ; test",
+        vec![
+            Token::Head("a"),
+            Token::Pair("k", "v"),
+            Token::Comment("; test"),
+        ] ; "Inlined comment"
+    )]
+    #[test_case(
+        "[a]\nk=v#",
+        vec![Token::Head("a"), Token::Pair("k", "v"), Token::Comment("#")] ; "Inlined empty comment"
+    )]
+    #[test_case(
+        "[a]\nk=v#\n[b]\nk1=v1#",
+        vec![
+            Token::Head("a"),
+            Token::Pair("k", "v"),
+            Token::Comment("#"),
+            Token::Head("b"),
+            Token::Pair("k1", "v1"),
+            Token::Comment("#"),
+        ] ; "Two sections with comments"
+    )]
+    #[test_case(
+        "[a]\nk=v ; test\n[b]",
+        vec![
+            Token::Head("a"),
+            Token::Pair("k", "v"),
+            Token::Comment("; test"),
+            Token::Head("b"),
+        ] ; "Two sections with comments second empty"
+    )]
+    #[test_case(
+        "[a]\nk=v; test",
+        vec![
+            Token::Head("a"),
+            Token::Pair("k", "v"),
+            Token::Comment("; test"),
+        ] ; "Section with pair and inlined comment"
+    )]
+    #[test_case(
+        "[a]\nk=v\n[b]",
+        vec![Token::Head("a"), Token::Pair("k", "v"), Token::Head("b")] ; "Two sections without comments"
+    )]
+    #[test_case(
+        "[a]\n# test\nk=v\n[b]",
+        vec![
+            Token::Head("a"),
+            Token::Comment("# test"),
+            Token::Pair("k", "v"),
+            Token::Head("b"),
+        ] ; "Two sections first starts with comment and second is empty"
+    )]
+    #[test_case(
+        "[a]\n; test\nk=v\n[b]",
+        vec![
+            Token::Head("a"),
+            Token::Comment("; test"),
+            Token::Pair("k", "v"),
+            Token::Head("b"),
+        ] ; "Section first starts with comment that defined by semicolon and second is empty"
+    )]
+    #[test_case(
+        "[a]\n# test\nk = v \n[b]",
+        vec![
+            Token::Head("a"),
+            Token::Comment("# test"),
+            Token::Pair("k", "v"),
+            Token::Head("b"),
+        ] ; "Section first starts with comment that defined by hash and second is empty"
+    )]
+    #[test_case(
+        "[a\n# test\nk = v \n[b]",
+        vec![
+            Token::Comment("# test"),
+            Token::Pair("k", "v"),
+            Token::Head("b"),
+        ] ; "Two sections first has invalid header and second is empty"
+    )]
+    #[test_case(
+        "[a\n# test\nk =  \n[b]",
+        vec![
+            Token::Comment("# test"),
+            Token::Pair("k", ""),
+            Token::Head("b"),
+        ] ; "Two sections first has invalid header, no value in pair and second section is empty"
+    )]
+    #[test_case(
+        "[a\n# test\nk = v \n[b]test",
+        vec![
+            Token::Comment("# test"),
+            Token::Pair("k", "v"),
+            Token::Head("b"),
+        ] ; "Two sections first has invalid header, first line is comment starts with hash and second section is empty"
+    )]
+    #[test_case("#", vec![Token::Comment("#")] ; "Only comment hash")]
+    #[test_case("# ", vec![Token::Comment("# ")] ; "Only comment hash and space after")]
+    #[test_case("# a", vec![Token::Comment("# a")] ; "Only comment line")]
+    fn tokenizing(input: &str, expected: Vec<Token>) {
+        // Act
+        let actual: Vec<Token> = tokenize(input).filter_map(|t| t.ok()).collect();
 
-        // Act & Assert
-        for (validator, input, expected) in table_test!(cases) {
-            let actual: Vec<Token> = tokenize(input).filter_map(|t| t.ok()).collect();
-
-            validator
-                .given(input)
-                .when("tokenize")
-                .then(&format!("it should be {expected:?}"))
-                .assert_eq(expected, actual);
-        }
+        // Assert
+        assert_eq!(expected, actual);
     }
 
     #[test]

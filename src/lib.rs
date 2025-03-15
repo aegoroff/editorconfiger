@@ -18,10 +18,6 @@ use std::path::Path;
 extern crate lalrpop_util;
 
 #[cfg(test)] // <-- not needed in integration tests
-#[macro_use]
-extern crate table_test;
-
-#[cfg(test)] // <-- not needed in integration tests
 extern crate rstest;
 
 use editorconfig::Section;
