@@ -1,6 +1,7 @@
+use miette::{miette, LabeledSpan, Result};
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
-use nom::error::{FromExternalError, ParseError, Error};
+use nom::error::{Error, FromExternalError, ParseError};
 use nom::{character::complete, combinator, IResult};
 use nom::{sequence, Parser};
 
@@ -16,13 +17,14 @@ pub enum Token<'a> {
 }
 
 /// Splits input into tokens
-pub fn tokenize(input: &str) -> impl Iterator<Item = Token> {
+pub fn tokenize(input: &str) -> impl Iterator<Item = Result<Token<'_>>> {
     TokenIterator::new(input)
 }
 
 struct TokenIterator<'a> {
     input: &'a str,
     not_parsed_trail: &'a str,
+    offset: usize,
 }
 
 impl<'a> TokenIterator<'a> {
@@ -31,33 +33,66 @@ impl<'a> TokenIterator<'a> {
         Self {
             input,
             not_parsed_trail: "",
+            offset: 0,
         }
     }
 
     /// Parses a line of text and returns the appropriate token if successful.
-    /// 
+    ///
     /// This method takes the remaining trail after parsing and updates the iterator's state accordingly.
-    /// If parsing fails, it returns `None`.
-    fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Token<'a>> {
+    /// If no data to parse (val argument), it returns `None`.
+    fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Result<Token<'a>>> {
+        self.offset += val.len();
         self.input = trail;
-        let (remain, token) = line::<'a, Error<&'a str>>(val).ok()?;
-        self.not_parsed_trail = remain;
-        Some(token)
+        if val.is_empty() {
+            return None;
+        }
+        let r = line::<'a, Error<&'a str>>(val);
+        match r {
+            Ok((remain, token)) => {
+                self.not_parsed_trail = remain;
+                Some(Ok(token))
+            }
+            Err(e) => {
+                let msg = match e {
+                    nom::Err::Incomplete(needed) => match needed {
+                        nom::Needed::Unknown => "not enough data in input".to_owned(),
+                        nom::Needed::Size(non_zero) => {
+                            format!("not enough {non_zero} bytes in input")
+                        }
+                    },
+                    nom::Err::Error(ref e) => {
+                        format!("error occured with '{}' code", e.code.description())
+                    }
+                    nom::Err::Failure(ref f) => f.to_string(),
+                };
+                let report = miette!(
+                    labels = vec![LabeledSpan::at(
+                        self.offset..self.offset + val.len(),
+                        format!("The problem is here. Details: {msg}")
+                    ),],
+                    help = "Incorrect .editorconfig file syntax",
+                    "Lexer error"
+                );
+                Some(Err(report))
+            }
+        }
     }
 }
 
 impl<'a> Iterator for TokenIterator<'a> {
-    type Item = Token<'a>;
+    type Item = Result<Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if !self.not_parsed_trail.is_empty() {
             let parsed_comment = comment::<'a, Error<&'a str>>(self.not_parsed_trail);
+
             self.not_parsed_trail = "";
             // if there were an error while parsing inline comment (for example it's not started from # or ;)
             // just throw it and continue parsing
             // It may be sensible to warn user about it. Should think over it.
             if let Ok((_, inline_comment)) = parsed_comment {
-                return Some(inline_comment);
+                return Some(Ok(inline_comment));
             }
         }
 
@@ -127,7 +162,7 @@ where
     combinator::map(
         combinator::recognize(sequence::preceded(
             alt((complete::char('#'), complete::char(';'))),
-            is_not("\n\r"),
+            alt((is_not("\n\r"), combinator::eof)),
         )),
         Token::Comment,
     )
@@ -163,6 +198,21 @@ mod tests {
                     Token::Head("a"),
                     Token::Pair("k", "v"),
                     Token::Comment("; test"),
+                ],
+            ),
+            (
+                "[a]\nk=v#",
+                vec![Token::Head("a"), Token::Pair("k", "v"), Token::Comment("#")],
+            ),
+            (
+                "[a]\nk=v#\n[b]\nk1=v1#",
+                vec![
+                    Token::Head("a"),
+                    Token::Pair("k", "v"),
+                    Token::Comment("#"),
+                    Token::Head("b"),
+                    Token::Pair("k1", "v1"),
+                    Token::Comment("#"),
                 ],
             ),
             (
@@ -237,16 +287,19 @@ mod tests {
                     Token::Head("b"),
                 ],
             ),
+            ("#", vec![Token::Comment("#")]),
+            ("# ", vec![Token::Comment("# ")]),
+            ("# a", vec![Token::Comment("# a")]),
         ];
 
         // Act & Assert
         for (validator, input, expected) in table_test!(cases) {
-            let actual: Vec<Token> = tokenize(input).collect();
+            let actual: Vec<Token> = tokenize(input).filter_map(|t| t.ok()).collect();
 
             validator
                 .given(input)
                 .when("tokenize")
-                .then(&format!("it should be {expected:#?}"))
+                .then(&format!("it should be {expected:?}"))
                 .assert_eq(expected, actual);
         }
     }
@@ -270,7 +323,7 @@ trim_trailing_whitespace = false
 "#;
 
         // Act
-        let result: Vec<Token> = tokenize(s).collect();
+        let result: Vec<Token> = tokenize(s).filter_map(|t| t.ok()).collect();
 
         // Assert
         let expected = vec![

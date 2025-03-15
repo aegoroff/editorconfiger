@@ -21,24 +21,25 @@ const FILE1: &str = "FILE1";
 const FILE2: &str = "FILE2";
 const PROBLEMS: &str = "problems";
 
-fn main() {
+fn main() -> miette::Result<()> {
     let app = build_cli();
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        Some(("c", cmd)) => compare(cmd),
-        Some(("vf", cmd)) => validate_file(cmd),
+        Some(("c", cmd)) => compare(cmd)?,
+        Some(("vf", cmd)) => validate_file(cmd)?,
         Some(("vd", cmd)) => validate_folder(cmd),
         Some(("completion", cmd)) => print_completions(cmd),
         _ => {}
-    }
+    };
+    Ok(())
 }
 
-fn validate_file(cmd: &ArgMatches) {
+fn validate_file(cmd: &ArgMatches) -> miette::Result<()> {
     let path = cmd.get_one::<String>(PATH).unwrap();
     let formatter = Formatter::new(false);
     let err = Error {};
-    editorconfiger::validate_one(path, &formatter, &err);
+    editorconfiger::validate_one(path, &formatter, &err)
 }
 
 fn validate_folder(cmd: &ArgMatches) {
@@ -51,14 +52,14 @@ fn validate_folder(cmd: &ArgMatches) {
     println!("  Total .editorconfig files found: {results}");
 }
 
-fn compare(cmd: &ArgMatches) {
+fn compare(cmd: &ArgMatches) -> miette::Result<()> {
     let path1 = cmd.get_one::<String>(FILE1).unwrap();
     let path2 = cmd.get_one::<String>(FILE2).unwrap();
     let err = Error {};
     println!(" FILE #1: {path1}");
     println!(" FILE #2: {path2}");
-    let cmp = Comparator {};
-    editorconfiger::compare_files(path1, path2, &err, &cmp);
+    let comparator = Comparator {};
+    editorconfiger::compare_files(path1, path2, &err, &comparator)
 }
 
 fn print_completions(matches: &ArgMatches) {

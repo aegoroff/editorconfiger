@@ -291,7 +291,9 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .filter(|p| p.ends_with(EDITOR_CONFIG))
         .inspect(|p| {
             if let Some(p) = p.to_str() {
-                validate_one(p, formatter, err)    
+                if let Err(e) = validate_one(p, formatter, err) {
+                    println!("{e}");
+                }
             }
         })
         .count()
@@ -310,10 +312,15 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
 ///                 which will be used to format the validation results.
 /// * `err` - A reference to an implementation of the [`Errorer`] trait, which will be used
 ///           to handle any errors that occur during file reading or validation.
-pub fn validate_one<V: ValidationFormatter, E: Errorer>(path: &str, formatter: &V, err: &E) {
+pub fn validate_one<V: ValidationFormatter, E: Errorer>(
+    path: &str,
+    formatter: &V,
+    err: &E,
+) -> miette::Result<()> {
     if let Some(c) = read_from_file(path, err) {
-        validate(&c, path, formatter);
+        validate(&c, path, formatter)?;
     }
+    Ok(())
 }
 
 /// Compares two .editorconfig files and formats the comparison results.
@@ -335,12 +342,13 @@ pub fn compare_files<E: Errorer, F: ComparisonFormatter>(
     path2: &str,
     err: &E,
     formatter: &F,
-) {
+) -> miette::Result<()> {
     if let Some(c1) = read_from_file(path1, err) {
         if let Some(c2) = read_from_file(path2, err) {
-            compare(&c1, &c2, formatter);
+            compare(&c1, &c2, formatter)?;
         }
     }
+    Ok(())
 }
 
 fn read_from_file<E: Errorer>(path: &str, err: &E) -> Option<String> {
@@ -382,7 +390,7 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
 /// # Parameters
 ///
 /// * `content` - A string slice that holds the content of the .editorconfig file to be validated.
-/// * `path` - A string slice that holds the path to the configuration file, used for reporting purposes.
+/// * `path` - A string slice that holds the original file path, used for reporting purposes.
 /// * `formatter` - A reference to an implementation of the `ValidationFormatter` trait,
 ///                 which will be used to format the validation results.
 ///
@@ -404,12 +412,16 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
 /// * A map of duplicate properties by section.
 /// * A map of similar properties by section.
 /// * A list of problems with properties that have extended glob patterns.
-pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V) {
+pub fn validate<V: ValidationFormatter>(
+    content: &str,
+    path: &str,
+    formatter: &V,
+) -> miette::Result<()> {
     let mut dup_props = BTreeMap::new();
     let mut sim_props = BTreeMap::new();
     let mut all_ext_props = BTreeMap::new();
 
-    let sections = editorconfig::parse(content);
+    let sections = editorconfig::parse(content)?;
     let mut section_heads = Vec::new();
 
     for sec in &sections {
@@ -456,6 +468,7 @@ pub fn validate<V: ValidationFormatter>(content: &str, path: &str, formatter: &V
     };
 
     formatter.format(result);
+    Ok(())
 }
 
 fn append_to_btree<'a, T>(bree: &mut BTreeMap<&'a str, Vec<T>>, key: &'a str, data: &mut Vec<T>) {
@@ -526,11 +539,15 @@ fn validate_extension(ext: String, props: Vec<ExtendedProperty>) -> ExtValidatio
 /// * Section titles as keys.
 /// * Lists of [`CompareItem`] for each section, representing the property comparisons.
 ///   - Each [`CompareItem`] includes the property key, its value in the first content (if any), and its value in the second content (if any).
-pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter: &F) {
+pub fn compare<F: ComparisonFormatter>(
+    content1: &str,
+    content2: &str,
+    formatter: &F,
+) -> miette::Result<()> {
     let empty = BTreeMap::<&str, &str>::new();
 
-    let f1 = editorconfig::parse(content1);
-    let f2 = editorconfig::parse(content2);
+    let f1 = editorconfig::parse(content1)?;
+    let f2 = editorconfig::parse(content2)?;
 
     let s1_props = map_sections(&f1);
     let s2_props = map_sections(&f2);
@@ -576,6 +593,7 @@ pub fn compare<F: ComparisonFormatter>(content1: &str, content2: &str, formatter
         .collect();
 
     formatter.format(result);
+    Ok(())
 }
 
 fn map_properties<'a>(s1: &'a Section<'a>) -> BTreeMap<&'a str, &'a str> {
@@ -683,7 +701,10 @@ e = f"#;
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[rstest]
@@ -701,7 +722,10 @@ e = f"#;
         });
 
         // Act
-        validate(content, path, &formatter);
+        let r = validate(content, path, &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[rstest]
@@ -730,7 +754,10 @@ c = d
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -747,7 +774,10 @@ c = d # comment 2
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -770,7 +800,10 @@ e = f"#;
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -794,7 +827,10 @@ e = f"#;
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -819,7 +855,10 @@ e = f"#;
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -842,7 +881,10 @@ a = d
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -865,7 +907,10 @@ d_a_b_c = d
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -888,7 +933,10 @@ e = f"#;
         });
 
         // Act
-        validate(config, "", &formatter);
+        let r = validate(config, "", &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -911,7 +959,10 @@ c = d2
         });
 
         // Act
-        compare(config1, config2, &formatter);
+        let r = compare(config1, config2, &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -941,7 +992,10 @@ c = d2
         });
 
         // Act
-        compare(config1, config2, &formatter);
+        let r = compare(config1, config2, &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -963,7 +1017,10 @@ d = d2
         });
 
         // Act
-        compare(config1, config2, &formatter);
+        let r = compare(config1, config2, &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -986,7 +1043,10 @@ d = d2
         });
 
         // Act
-        compare(config1, config2, &formatter);
+        let r = compare(config1, config2, &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[test]
@@ -1016,7 +1076,10 @@ d = 8
         });
 
         // Act
-        compare(config1, config2, &formatter);
+        let r = compare(config1, config2, &formatter);
+
+        // Assert
+        assert!(r.is_ok());
     }
 
     #[cfg(not(target_os = "windows"))]

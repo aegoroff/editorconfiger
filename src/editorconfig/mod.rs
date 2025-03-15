@@ -1,6 +1,7 @@
 mod lexer;
 
 use lexer::Token;
+use miette::Result;
 
 /// Named container of properties
 #[derive(Default)]
@@ -18,11 +19,13 @@ pub struct Property<'input> {
 
 /// Parses input str to [`Section`] vector (array).
 /// Sections order matches original file sections order.
-pub fn parse(content: &str) -> Vec<Section<'_>> {
+pub fn parse(content: &str) -> Result<Vec<Section<'_>>> {
     let tokens = lexer::tokenize(content);
 
-    tokens.fold(vec![], |mut result, token| {
-        match token {
+    let mut result = vec![];
+
+    for token in tokens {
+        match token.map_err(|e| e.with_source_code(content.to_owned()))? {
             Token::Head(h) => {
                 let section = Section::<'_> {
                     title: h,
@@ -46,9 +49,9 @@ pub fn parse(content: &str) -> Vec<Section<'_>> {
             // Skip comments so far
             Token::Comment(_) => {}
         }
+    }
 
-        result
-    })
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -68,7 +71,7 @@ c = d
 e = f"#;
 
         // Act
-        let contents = parse(config);
+        let contents = parse(config).expect("Parsing failed");
 
         // Assert
         assert_eq!(contents.len(), 3);
@@ -87,7 +90,7 @@ a = b
 c = d"#;
 
         // Act
-        let contents = parse(config);
+        let contents = parse(config).expect("Parsing failed");
 
         // Assert
         assert_eq!(contents.len(), 1);
