@@ -7,7 +7,7 @@ extern crate editorconfiger;
 
 fuzz_target!(|data: ValidateInuput| {
     let f = Formatter {};
-    editorconfiger::validate(data.content, data.path, &f)
+    editorconfiger::validate(data.content, data.path, &f);
 });
 
 #[derive(Clone, Debug, arbitrary::Arbitrary)]
