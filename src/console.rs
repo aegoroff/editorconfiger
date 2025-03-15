@@ -2,7 +2,8 @@ use crate::{
     CompareItem, ComparisonFormatter, Errorer, ValidationFormatter, ValidationResult,
     ValidationState,
 };
-use ansi_term::Colour::{Green, Red, Yellow};
+use console::style;
+
 use prettytable::format::TableFormat;
 use prettytable::{cell, format, row, Cell, Row, Table};
 use std::collections::BTreeMap;
@@ -22,9 +23,9 @@ impl ValidationFormatter for Formatter {
     fn format(&self, result: ValidationResult) {
         let state = result.state();
         let msg = match state {
-            ValidationState::Valid => Green.paint("valid"),
-            ValidationState::Invalid => Red.paint("invalid"),
-            ValidationState::SomeProblems => Yellow.paint("has some problems"),
+            ValidationState::Valid => style("valid").green(),
+            ValidationState::Invalid => style("invalid").red(),
+            ValidationState::SomeProblems => style("has some problems").yellow(),
         };
 
         if !self.only_problems || !state.is_ok() {
@@ -93,7 +94,7 @@ pub struct Error {}
 impl Errorer for Error {
     fn error(&self, path: &str, err: &str) {
         println!(" {path}");
-        println!("  Error: {}", Red.paint(err));
+        println!("  Error: {}", style(err).red());
         println!();
     }
 }
