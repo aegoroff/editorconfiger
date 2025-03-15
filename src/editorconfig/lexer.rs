@@ -44,7 +44,10 @@ impl<'a> TokenIterator<'a> {
     /// This method takes the remaining trail after parsing and updates the iterator's state accordingly.
     /// If no data to parse (val argument), it returns `None`.
     fn parse_line(&mut self, trail: &'a str, val: &'a str) -> Option<Result<Token<'a>>> {
-        self.offset = self.original_input_len - trail.len() - val.len() - 1;
+        self.offset = self.original_input_len - trail.len() - val.len();
+        if self.offset > 0 {
+            self.offset -= 1;
+        }
         self.input = trail;
         if val.is_empty() {
             return None;
