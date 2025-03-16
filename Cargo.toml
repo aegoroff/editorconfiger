@@ -24,6 +24,8 @@ console = {version = "=0.15.11", optional = true }
 prettytable-rs = { version = "=0.10.0", optional = true }
 clap = { version = "=4.5.32", features = ["std", "color", "suggestions", "cargo"], optional = true }
 clap_complete = { version = "=4.5.46", optional = true }
+bugreport = { version = "=0.5.1", optional = true }
+
 miette = { version = "=7.5.0", features = ["fancy"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -34,7 +36,7 @@ rstest = "=0.25.0"
 test-case = "=3.3.1"
 
 [features]
-build-binary = ["clap", "clap_complete", "console", "prettytable-rs"]
+build-binary = ["clap", "clap_complete", "console", "prettytable-rs", "bugreport"]
 
 [[bin]]
 name = "editorconfiger"

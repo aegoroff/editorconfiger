@@ -2,6 +2,12 @@
 #![allow(clippy::unwrap_used)]
 use std::io;
 
+use bugreport::{
+    bugreport,
+    collector::{CompileTimeInformation, EnvironmentVariables, OperatingSystem, SoftwareVersion},
+    format::Markdown,
+};
+
 use clap::{
     arg, command, crate_authors, crate_description, crate_name, crate_version, value_parser,
     ArgAction, ArgMatches, Command,
@@ -30,6 +36,7 @@ fn main() -> miette::Result<()> {
         Some(("vf", cmd)) => validate_file(cmd)?,
         Some(("vd", cmd)) => validate_folder(cmd),
         Some(("completion", cmd)) => print_completions(cmd),
+        Some(("bugreport", cmd)) => print_bugreport(cmd),
         _ => {}
     };
     Ok(())
@@ -68,6 +75,15 @@ fn print_completions(matches: &ArgMatches) {
     if let Some(generator) = matches.get_one::<Shell>("generator") {
         generate(*generator, &mut cmd, bin_name, &mut io::stdout());
     }
+}
+
+fn print_bugreport(_matches: &ArgMatches) {
+    bugreport!()
+        .info(SoftwareVersion::default())
+        .info(OperatingSystem::default())
+        .info(EnvironmentVariables::list(&["SHELL", "TERM"]))
+        .info(CompileTimeInformation::default())
+        .print::<Markdown>();
 }
 
 fn build_cli() -> Command {
@@ -129,5 +145,9 @@ fn build_cli() -> Command {
                         .required(true)
                         .index(1),
                 ),
+        )
+        .subcommand(
+            Command::new("bugreport")
+                .about("Collect information about the system and the environment that users can send along with a bug report"),
         )
 }
