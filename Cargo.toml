@@ -5,7 +5,7 @@ description = "Plain tool to validate and compare .editorconfig files"
 authors = ["egoroff <egoroff@gmail.com>"]
 keywords = ["editorconfig"]
 repository = "https://github.com/aegoroff/editorconfiger"
-edition = "2021"
+edition = "2024"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
