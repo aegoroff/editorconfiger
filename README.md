@@ -78,6 +78,7 @@ Commands:
   vd          Validate all found .editorconfig files in a directory and all its children
   c           Compare two .editorconfig files
   completion  Generate the autocompletion script for the specified shell
+  bugreport   Collect information about the system and the environment that users can send along with a bug report
   help        Print this message or the help of the given subcommand(s)
 
 Options:
