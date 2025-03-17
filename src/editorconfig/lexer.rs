@@ -1,9 +1,9 @@
-use miette::{miette, LabeledSpan, Result, SourceSpan};
+use miette::{LabeledSpan, Result, SourceSpan, miette};
 use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::error::{Error, FromExternalError, ParseError};
-use nom::{character::complete, combinator, IResult};
-use nom::{sequence, Parser};
+use nom::{IResult, character::complete, combinator};
+use nom::{Parser, sequence};
 
 /// Represents .editorconfig lexical token abstraction that contain necessary data
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -152,7 +152,7 @@ where
     let parser = sequence::separated_pair(
         is_not(COMMENT_START_AND_SEPARATOR_CHARS),
         complete::char('='),
-        is_not(COMMENT_START_AND_SEPARATOR_CHARS),
+        alt((is_not(COMMENT_START_AND_SEPARATOR_CHARS), combinator::eof)),
     );
 
     combinator::map(parser, |(k, v): (&str, &str)| {
@@ -192,6 +192,9 @@ mod tests {
     #[test_case("[a]", vec![Token::Head("a")] ; "Only head plain")]
     #[test_case("[a]\r\n", vec![Token::Head("a")] ; "Only head and carriage return")]
     #[test_case("[a]\nk=v", vec![Token::Head("a"), Token::Pair("k", "v")] ; "Single section with one pair")]
+    #[test_case("[a]\nk=", vec![Token::Head("a"), Token::Pair("k", "")] ; "Single section with one pair without value")]
+    #[test_case("[a]\nk= ", vec![Token::Head("a"), Token::Pair("k", "")] ; "Single section with one pair without value with space after eq")]
+    #[test_case("[a]\nk=\n[b]", vec![Token::Head("a"), Token::Pair("k", ""), Token::Head("b")] ; "Two sections with one pair without value")]
     #[test_case(
         "[a]\nk=v ; test",
         vec![
