@@ -1,5 +1,3 @@
-#![allow(clippy::unwrap_in_result)]
-#![allow(clippy::unwrap_used)]
 use std::io;
 
 use bugreport::{
@@ -9,10 +7,10 @@ use bugreport::{
 };
 
 use clap::{
-    arg, command, crate_authors, crate_description, crate_name, crate_version, value_parser,
-    ArgAction, ArgMatches, Command,
+    Arg, ArgAction, ArgMatches, Command, arg, command, crate_authors, crate_description,
+    crate_name, crate_version, value_parser,
 };
-use clap_complete::{generate, Shell};
+use clap_complete::{Shell, generate};
 use editorconfiger::console::{Comparator, Error, Formatter};
 
 #[cfg(target_os = "linux")]
@@ -25,33 +23,40 @@ static GLOBAL: MiMalloc = MiMalloc;
 const PATH: &str = "PATH";
 const FILE1: &str = "FILE1";
 const FILE2: &str = "FILE2";
-const PROBLEMS: &str = "problems";
+const COMPARE_CMD: &str = "c";
+const VALIDATE_FILE_CMD: &str = "vf";
+const VALIDATE_DIR_CMD: &str = "vd";
+const COMPLETION_CMD: &str = "completion";
+const BUGREPORT_CMD: &str = "bugreport";
+const PROBLEMS_OPT: &str = "problems";
 
 fn main() -> miette::Result<()> {
     let app = build_cli();
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        Some(("c", cmd)) => compare(cmd)?,
-        Some(("vf", cmd)) => validate_file(cmd)?,
-        Some(("vd", cmd)) => validate_folder(cmd),
-        Some(("completion", cmd)) => print_completions(cmd),
-        Some(("bugreport", cmd)) => print_bugreport(cmd),
+        Some((COMPARE_CMD, cmd)) => compare(cmd)?,
+        Some((VALIDATE_FILE_CMD, cmd)) => validate_file(cmd)?,
+        Some((VALIDATE_DIR_CMD, cmd)) => validate_folder(cmd),
+        Some((COMPLETION_CMD, cmd)) => print_completions(cmd),
+        Some((BUGREPORT_CMD, cmd)) => print_bugreport(cmd),
         _ => {}
     };
     Ok(())
 }
 
 fn validate_file(cmd: &ArgMatches) -> miette::Result<()> {
-    let path = cmd.get_one::<String>(PATH).unwrap();
+    let empty = String::new();
+    let path = cmd.get_one::<String>(PATH).unwrap_or(&empty);
     let formatter = Formatter::new(false);
     let err = Error {};
     editorconfiger::validate_one(path, &formatter, &err)
 }
 
 fn validate_folder(cmd: &ArgMatches) {
-    let path = cmd.get_one::<String>(PATH).unwrap();
-    let only_problems = cmd.get_flag(PROBLEMS);
+    let empty = String::new();
+    let path = cmd.get_one::<String>(PATH).unwrap_or(&empty);
+    let only_problems = cmd.get_flag(PROBLEMS_OPT);
     let formatter = Formatter::new(only_problems);
     let err = Error {};
     let results = editorconfiger::validate_all(path, &formatter, &err);
@@ -60,8 +65,9 @@ fn validate_folder(cmd: &ArgMatches) {
 }
 
 fn compare(cmd: &ArgMatches) -> miette::Result<()> {
-    let path1 = cmd.get_one::<String>(FILE1).unwrap();
-    let path2 = cmd.get_one::<String>(FILE2).unwrap();
+    let empty = String::new();
+    let path1 = cmd.get_one::<String>(FILE1).unwrap_or(&empty);
+    let path2 = cmd.get_one::<String>(FILE2).unwrap_or(&empty);
     let err = Error {};
     println!(" FILE #1: {path1}");
     println!(" FILE #2: {path2}");
@@ -93,7 +99,7 @@ fn build_cli() -> Command {
         .author(crate_authors!("\n"))
         .about(crate_description!())
         .subcommand(
-            Command::new("vf")
+            Command::new(VALIDATE_FILE_CMD)
                 .aliases(["validate-file"])
                 .about("Validate single .editorconfig file")
                 .arg(
@@ -104,7 +110,7 @@ fn build_cli() -> Command {
                 ),
         )
         .subcommand(
-            Command::new("vd")
+            Command::new(VALIDATE_DIR_CMD)
                 .aliases(["validate-dir"])
                 .about("Validate all found .editorconfig files in a directory and all its children")
                 .arg(
@@ -114,13 +120,16 @@ fn build_cli() -> Command {
                         .index(1),
                 )
                 .arg(
-                    arg!(-p - -problems).action(ArgAction::SetTrue).help(
-                        "Show only files that have problems. Correct files will not be shown.",
+                    Arg::new(PROBLEMS_OPT)
+                        .long(PROBLEMS_OPT)
+                        .short('p')
+                        .action(ArgAction::SetTrue)
+                        .help("Show only files that have problems. Correct files will not be shown.",
                     ),
                 ),
         )
         .subcommand(
-            Command::new("c")
+            Command::new(COMPARE_CMD)
                 .aliases(["compare"])
                 .about("Compare two .editorconfig files")
                 .arg(
@@ -137,7 +146,7 @@ fn build_cli() -> Command {
                 ),
         )
         .subcommand(
-            Command::new("completion")
+            Command::new(COMPLETION_CMD)
                 .about("Generate the autocompletion script for the specified shell")
                 .arg(
                     arg!([generator])
@@ -147,7 +156,7 @@ fn build_cli() -> Command {
                 ),
         )
         .subcommand(
-            Command::new("bugreport")
+            Command::new(BUGREPORT_CMD)
                 .about("Collect information about the system and the environment that users can send along with a bug report"),
         )
 }
