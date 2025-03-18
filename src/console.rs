@@ -5,7 +5,7 @@ use crate::{
 use console::style;
 
 use prettytable::format::TableFormat;
-use prettytable::{cell, format, row, Cell, Row, Table};
+use prettytable::{Cell, Row, Table, cell, format, row};
 use std::collections::BTreeMap;
 
 pub struct Formatter {

@@ -10,8 +10,8 @@ pub mod glob;
 pub mod similar;
 
 use std::fs::File;
-use std::io::prelude::*;
 use std::io::BufReader;
+use std::io::prelude::*;
 use std::path::Path;
 
 #[macro_use]
