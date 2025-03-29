@@ -6,6 +6,7 @@
 pub mod console;
 mod editorconfig;
 mod enumerable;
+pub mod glb;
 pub mod glob;
 pub mod similar;
 
