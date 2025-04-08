@@ -41,7 +41,7 @@ fn main() -> miette::Result<()> {
         Some((COMPLETION_CMD, cmd)) => print_completions(cmd),
         Some((BUGREPORT_CMD, cmd)) => print_bugreport(cmd),
         _ => {}
-    };
+    }
     Ok(())
 }
 
