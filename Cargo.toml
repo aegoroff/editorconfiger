@@ -29,7 +29,7 @@ bugreport = { version = "=0.5.1", optional = true }
 miette = { version = "=7.5.0", features = ["fancy"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-mimalloc = "=0.1.44"
+mimalloc = "=0.1.46"
 
 [dev-dependencies]
 rstest = "=0.25.0"
