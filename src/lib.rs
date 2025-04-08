@@ -236,7 +236,7 @@ pub trait ValidationFormatter {
 /// # Parameters
 ///
 /// * `result` - A `BTreeMap` where the keys are section names and the values are vectors of `CompareItem`
-///              structs, each containing details about the differences found during the comparison.
+///   structs, each containing details about the differences found during the comparison.
 pub trait ComparisonFormatter {
     fn format(&self, result: BTreeMap<&str, Vec<CompareItem>>);
 }
@@ -252,9 +252,9 @@ pub trait ComparisonFormatter {
 ///
 /// * `path` - A string slice that holds the path to the directory to be traversed.
 /// * `formatter` - A reference to an implementation of the [`ValidationFormatter`] trait,
-///                 which will be used to format the validation results.
+///   which will be used to format the validation results.
 /// * `err` - A reference to an implementation of the `Errorer` trait, which will be used
-///           to handle any errors that occur during file reading or validation.
+///   to handle any errors that occur during file reading or validation.
 ///
 /// # Returns
 ///
@@ -305,9 +305,9 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
 ///
 /// * `path` - A string slice that holds the path to the configuration file to be validated.
 /// * `formatter` - A reference to an implementation of the `ValidationFormatter` trait,
-///                 which will be used to format the validation results.
+///   which will be used to format the validation results.
 /// * `err` - A reference to an implementation of the [`Errorer`] trait, which will be used
-///           to handle any errors that occur during file reading or validation.
+///   to handle any errors that occur during file reading or validation.
 pub fn validate_one<V: ValidationFormatter, E: Errorer>(
     path: &str,
     formatter: &V,
@@ -330,9 +330,9 @@ pub fn validate_one<V: ValidationFormatter, E: Errorer>(
 /// * `path1` - A string slice that holds the path to the first .editorconfig file to be compared.
 /// * `path2` - A string slice that holds the path to the second .editorconfig file to be compared.
 /// * `err` - A reference to an implementation of the [`Errorer`] trait, which will be used
-///           to handle any errors that occur during file reading.
+///   to handle any errors that occur during file reading.
 /// * `formatter` - A reference to an implementation of the [`ComparisonFormatter`] trait,
-///                 which will be used to format the comparison results.
+///   which will be used to format the comparison results.
 pub fn compare_files<E: Errorer, F: ComparisonFormatter>(
     path1: &str,
     path2: &str,
@@ -388,7 +388,7 @@ fn read_file_content<P: AsRef<Path>>(filename: P) -> Result<String, std::io::Err
 /// * `content` - A string slice that holds the content of the .editorconfig file to be validated.
 /// * `path` - A string slice that holds the original file path, used for reporting purposes.
 /// * `formatter` - A reference to an implementation of the `ValidationFormatter` trait,
-///                 which will be used to format the validation results.
+///   which will be used to format the validation results.
 ///
 /// The function performs the following steps:
 ///
@@ -518,7 +518,7 @@ fn validate_extension(ext: String, props: Vec<ExtendedProperty>) -> ExtValidatio
 /// * `content1` - A string slice holding the first .editorconfig content.
 /// * `content2` - A string slice holding the second .editorconfig content.
 /// * `formatter` - A reference to an implementation of the [`ComparisonFormatter`] trait,
-///                 which will be used to format the comparison results.
+///   which will be used to format the comparison results.
 ///
 /// The function performs the following steps:
 ///
