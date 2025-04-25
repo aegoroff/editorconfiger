@@ -1087,7 +1087,7 @@ d = 8
     }
 
     #[cfg(target_os = "windows")]
-    #[test_case("", "")]
+    #[test_case("", "" ; "empty string")]
     #[test_case("/", "/")]
     #[test_case("d:", "d:\\")]
     #[test_case("dd:", "dd:")]
