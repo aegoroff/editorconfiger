@@ -1087,12 +1087,10 @@ d = 8
     }
 
     #[cfg(target_os = "windows")]
-    #[rstest]
     #[test_case("", "")]
     #[test_case("/", "/")]
     #[test_case("d:", "d:\\")]
     #[test_case("dd:", "dd:")]
-    #[trace]
     fn decorate_path_tests(raw_path: &str, expected: &str) {
         // Arrange
 
