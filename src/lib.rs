@@ -17,9 +17,6 @@ use std::path::Path;
 #[macro_use]
 extern crate lalrpop_util;
 
-#[cfg(test)] // <-- not needed in integration tests
-extern crate rstest;
-
 use editorconfig::Section;
 use enumerable::IteratorExt;
 use jwalk::{Parallelism, WalkDir};
@@ -628,7 +625,7 @@ mod tests {
     #![allow(clippy::unwrap_in_result)]
     #![allow(clippy::unwrap_used)]
     use super::*;
-    use rstest::rstest;
+    use test_case::test_case;
 
     struct TestFormatter<F>
     where
@@ -703,14 +700,12 @@ e = f"#;
         assert!(r.is_ok());
     }
 
-    #[rstest]
-    #[case(
+    #[test_case(
         "S=\u{1b}\u{1b}\u{1e}_=\u{1b}\n\u{1b},\u{1b}s=\u{1b}\u{0}\u{0}\u{1b}\u{1b}1L",
         "\n*\u{1b}\u{1b}",
         false
     )]
-    #[trace]
-    fn validate_arbitrary(#[case] content: &str, #[case] path: &str, #[case] expected: bool) {
+    fn validate_arbitrary(content: &str, path: &str, expected: bool) {
         // Arrange
         let formatter = TestFormatter::new(|result: ValidationResult| {
             assert_eq!(result.is_ok(), expected);
@@ -724,12 +719,10 @@ e = f"#;
         assert!(r.is_ok());
     }
 
-    #[rstest]
-    #[case(ValidationState::Valid, true)]
-    #[case(ValidationState::Invalid, false)]
-    #[case(ValidationState::SomeProblems, false)]
-    #[trace]
-    fn is_ok_tests(#[case] state: ValidationState, #[case] expected: bool) {
+    #[test_case(ValidationState::Valid, true)]
+    #[test_case(ValidationState::Invalid, false)]
+    #[test_case(ValidationState::SomeProblems, false)]
+    fn is_ok_tests(state: ValidationState, expected: bool) {
         // Arrange
 
         // Act
@@ -1079,13 +1072,11 @@ d = 8
     }
 
     #[cfg(not(target_os = "windows"))]
-    #[rstest]
-    #[case("", "")]
-    #[case("/", "/")]
-    #[case("/home", "/home")]
-    #[case("d:", "d:")]
-    #[trace]
-    fn decorate_path_tests(#[case] raw_path: &str, #[case] expected: &str) {
+    #[test_case("", "" ; "empty string")]
+    #[test_case("/", "/")]
+    #[test_case("/home", "/home")]
+    #[test_case("d:", "d:")]
+    fn decorate_path_tests(raw_path: &str, expected: &str) {
         // Arrange
 
         // Act
@@ -1097,12 +1088,12 @@ d = 8
 
     #[cfg(target_os = "windows")]
     #[rstest]
-    #[case("", "")]
-    #[case("/", "/")]
-    #[case("d:", "d:\\")]
-    #[case("dd:", "dd:")]
+    #[test_case("", "")]
+    #[test_case("/", "/")]
+    #[test_case("d:", "d:\\")]
+    #[test_case("dd:", "dd:")]
     #[trace]
-    fn decorate_path_tests(#[case] raw_path: &str, #[case] expected: &str) {
+    fn decorate_path_tests(raw_path: &str, expected: &str) {
         // Arrange
 
         // Act

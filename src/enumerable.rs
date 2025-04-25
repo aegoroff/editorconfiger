@@ -100,17 +100,15 @@ impl<I: Iterator> IteratorExt for I {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
+    use test_case::test_case;
 
-    #[rstest]
-    #[case(vec!["a", "b", "b", "a"], vec!["b", "a"])]
-    #[case(vec!["a", "b", "b", "a", "a"], vec!["b", "a"])]
-    #[case(vec!["a", "b", "b", "a", "a", "a"], vec!["b", "a"])]
-    #[case(vec!["a", "b", "b"], vec!["b"])]
-    #[case(vec!["a", "b"], vec![])]
-    #[case(vec![], vec![])]
-    #[trace]
-    fn only_duplicates_tests(#[case] items: Vec<&str>, #[case] expected: Vec<&str>) {
+    #[test_case(vec!["a", "b", "b", "a"], vec!["b", "a"]; "case 1")]
+    #[test_case(vec!["a", "b", "b", "a", "a"], vec!["b", "a"]; "case 2")]
+    #[test_case(vec!["a", "b", "b", "a", "a", "a"], vec!["b", "a"]; "case 3")]
+    #[test_case(vec!["a", "b", "b"], vec!["b"]; "case 4")]
+    #[test_case(vec!["a", "b"], vec![]; "case 5")]
+    #[test_case(vec![], vec![]; "case 6")]
+    fn only_duplicates_tests(items: Vec<&str>, expected: Vec<&str>) {
         // Arrange
 
         // Act
@@ -120,13 +118,11 @@ mod tests {
         assert_eq!(result, expected);
     }
 
-    #[rstest]
-    #[case(vec!["a", "a", "b", "b", "c"], vec!["a", "b", "c"])]
-    #[case(vec!["a", "b", "b"], vec!["a", "b"])]
-    #[case(vec!["a", "b"], vec!["a", "b"])]
-    #[case(vec![], vec![])]
-    #[trace]
-    fn only_unique_tests(#[case] items: Vec<&str>, #[case] expected: Vec<&str>) {
+    #[test_case(vec!["a", "a", "b", "b", "c"], vec!["a", "b", "c"]; "case 1")]
+    #[test_case(vec!["a", "b", "b"], vec!["a", "b"]; "case 2")]
+    #[test_case(vec!["a", "b"], vec!["a", "b"]; "case 3")]
+    #[test_case(vec![], vec![]; "case 4")]
+    fn only_unique_tests(items: Vec<&str>, expected: Vec<&str>) {
         // Arrange
 
         // Act

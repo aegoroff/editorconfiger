@@ -37,15 +37,13 @@ pub fn find_suffix_pairs<'a>(items: &[&'a str]) -> Vec<(&'a str, &'a str)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
+    use test_case::test_case;
 
-    #[rstest]
-    #[case(vec!["a_b_c_d", "b_c_e"], vec![])]
-    #[case(vec!["b_c", "a_b_c"], vec![("a_b_c", "b_c")])]
-    #[case(vec!["aab", "aaab", "b"], vec![ ("aab", "b"), ("aaab", "aab"), ("aaab", "b")])]
-    #[case(vec!["a_b_c", "a_b"], vec![])]
-    #[trace]
-    fn find_suffix_tests(#[case] items: Vec<&str>, #[case] expected: Vec<(&str, &str)>) {
+    #[test_case(vec!["a_b_c_d", "b_c_e"], vec![]; "case 1")]
+    #[test_case(vec!["b_c", "a_b_c"], vec![("a_b_c", "b_c")]; "case 2")]
+    #[test_case(vec!["aab", "aaab", "b"], vec![ ("aab", "b"), ("aaab", "aab"), ("aaab", "b")]; "case 3")]
+    #[test_case(vec!["a_b_c", "a_b"], vec![]; "case 4")]
+    fn find_suffix_tests(items: Vec<&str>, expected: Vec<(&str, &str)>) {
         // Arrange
 
         // Act
