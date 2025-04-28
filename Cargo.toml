@@ -26,7 +26,7 @@ clap = { version = "=4.5.36", features = ["std", "color", "suggestions", "cargo"
 clap_complete = { version = "=4.5.47", optional = true }
 bugreport = { version = "=0.5.1", optional = true }
 
-miette = { version = "=7.5.0", features = ["fancy"] }
+miette = { version = "=7.6.0", features = ["fancy"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 mimalloc = "=0.1.46"
