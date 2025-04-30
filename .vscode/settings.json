@@ -1,3 +1,4 @@
 {
     "rust-analyzer.cargo.features": "all",
+    "sarif-viewer.connectToGithubCodeScanning": "off",
 }
