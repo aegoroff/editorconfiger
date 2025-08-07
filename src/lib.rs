@@ -283,11 +283,10 @@ pub fn validate_all<V: ValidationFormatter, E: Errorer>(
         .map(|f| f.path())
         .filter(|p| p.ends_with(EDITOR_CONFIG))
         .inspect(|p| {
-            if let Some(p) = p.to_str() {
-                if let Err(e) = validate_one(p, formatter, err) {
+            if let Some(p) = p.to_str()
+                && let Err(e) = validate_one(p, formatter, err) {
                     println!(" {p}: {e:?}");
                 }
-            }
         })
         .count()
 }
@@ -336,10 +335,10 @@ pub fn compare_files<E: Errorer, F: ComparisonFormatter>(
     err: &E,
     formatter: &F,
 ) -> miette::Result<()> {
-    if let Some(c1) = read_from_file(path1, err) {
-        if let Some(c2) = read_from_file(path2, err) {
-            compare(&c1, &c2, formatter)?;
-        }
+    if let Some(c1) = read_from_file(path1, err)
+        && let Some(c2) = read_from_file(path2, err)
+    {
+        compare(&c1, &c2, formatter)?;
     }
     Ok(())
 }
