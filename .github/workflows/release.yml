@@ -204,12 +204,6 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
           files: |
-            ./linux-x64/*.tar.gz
-            ./linux-x64/*.rpm
-            ./linux-x64/*.deb
-            ./linux-aarch64/*.tar.gz
-            ./linux-aarch64/*.rpm
-            ./linux-aarch64/*.deb
+            ./linux-*/*.{tar.gz,rpm,deb}
             ./windows/*.tar.gz
-            ./macos-x64/*.tar.gz
-            ./macos-arm64/*.tar.gz
+            ./macos-*/*.tar.gz
