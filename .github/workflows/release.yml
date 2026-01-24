@@ -138,35 +138,10 @@ jobs:
           echo "using version tag ${GITHUB_REF:11}"
           echo "version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
 
-      - name: Download Linux x64 tarball
+      - name: Download artefacts
         uses: actions/download-artifact@v7
         with:
-          name: linux-x64
-          path: linux-x64
-
-      - name: Download Linux aarch64 tarball
-        uses: actions/download-artifact@v7
-        with:
-          name: linux-aarch64
-          path: linux-aarch64
-
-      - name: Download Windows tarball
-        uses: actions/download-artifact@v7
-        with:
-          name: windows
-          path: windows
-
-      - name: Download MacOS x64 tarball
-        uses: actions/download-artifact@v7
-        with:
-          name: macos-x64
-          path: macos-x64
-
-      - name: Download MacOS arm64 tarball
-        uses: actions/download-artifact@v7
-        with:
-          name: macos-arm64
-          path: macos-arm64
+          path: release
 
       - name: Download Releaser
         run: |
@@ -204,6 +179,4 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
           files: |
-            ./linux-*/*.{tar.gz,rpm,deb}
-            ./windows/*.tar.gz
-            ./macos-*/*.tar.gz
+            ./release/*.{tar.gz,rpm,deb}
