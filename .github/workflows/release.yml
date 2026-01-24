@@ -179,4 +179,4 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: "${{ needs.generate-changelog.outputs.release_body }}"
           files: |
-            ./release/*.{tar.gz,rpm,deb}
+            ./release/**/*.{tar.gz,rpm,deb}
