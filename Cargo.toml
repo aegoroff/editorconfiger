@@ -14,7 +14,7 @@ license = "MIT"
 lalrpop = "=0.22.2"
 
 [dependencies]
-lalrpop-util  = { version = "=0.22.2", features = ["lexer", "unicode"] }
+lalrpop-util  = { version = "=0.23.0", features = ["lexer", "unicode"] }
 jwalk = "=0.8.1"
 aho-corasick = "=1.1.4"
 nom = "=8.0.0"
