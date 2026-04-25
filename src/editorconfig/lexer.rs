@@ -1,9 +1,8 @@
 use miette::{LabeledSpan, Result, SourceSpan, miette};
-use nom::branch::alt;
-use nom::bytes::complete::is_not;
-use nom::error::{Error, FromExternalError, ParseError};
-use nom::{IResult, character::complete, combinator};
-use nom::{Parser, sequence};
+use winnow::Parser;
+use winnow::ascii::{line_ending, till_line_ending};
+use winnow::combinator::{alt, eof, preceded, separated_pair};
+use winnow::token::{one_of, take_till};
 
 /// Represents .editorconfig lexical token abstraction that contain necessary data
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -52,25 +51,15 @@ impl<'a> TokenIterator<'a> {
         if val.is_empty() {
             return None;
         }
-        let r = line::<'a, Error<&'a str>>(val);
+        let mut line_input = val;
+        let r = line.parse_next(&mut line_input);
         match r {
-            Ok((remain, token)) => {
-                self.not_parsed_trail = remain;
+            Ok(token) => {
+                self.not_parsed_trail = line_input;
                 Some(Ok(token))
             }
             Err(e) => {
-                let msg = match e {
-                    nom::Err::Incomplete(needed) => match needed {
-                        nom::Needed::Unknown => "not enough data in input".to_owned(),
-                        nom::Needed::Size(non_zero) => {
-                            format!("not enough {non_zero} bytes in input")
-                        }
-                    },
-                    nom::Err::Error(ref e) => {
-                        format!("error occured with '{}' code", e.code.description())
-                    }
-                    nom::Err::Failure(ref f) => f.to_string(),
-                };
+                let msg = e.to_string();
                 let span = SourceSpan::new(self.offset.into(), val.len());
                 let report = miette!(
                     labels = vec![LabeledSpan::at(
@@ -91,13 +80,14 @@ impl<'a> Iterator for TokenIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if !self.not_parsed_trail.is_empty() {
-            let parsed_comment = comment::<'a, Error<&'a str>>(self.not_parsed_trail);
+            let mut parsed_comment_input = self.not_parsed_trail;
+            let parsed_comment = comment.parse_next(&mut parsed_comment_input);
 
             self.not_parsed_trail = "";
             // if there were an error while parsing inline comment (for example it's not started from # or ;)
             // just throw it and continue parsing
             // It may be sensible to warn user about it. Should think over it.
-            if let Ok((_, inline_comment)) = parsed_comment {
+            if let Ok(inline_comment) = parsed_comment {
                 return Some(Ok(inline_comment));
             }
         }
@@ -108,9 +98,9 @@ impl<'a> Iterator for TokenIterator<'a> {
             if self.input.is_empty() {
                 break;
             }
-            let mut parser = sequence::terminated(complete::not_line_ending, complete::line_ending);
-            let parsed: IResult<&'a str, &'a str, Error<&'a str>> = parser.parse(self.input);
-            return if let Ok((trail, val)) = parsed {
+            let mut trail = self.input;
+            let parsed = full_line.parse_next(&mut trail);
+            return if let Ok(val) = parsed {
                 if let Some(token) = self.parse_line(trail, val) {
                     return Some(token);
                 }
@@ -123,56 +113,44 @@ impl<'a> Iterator for TokenIterator<'a> {
     }
 }
 
-fn line<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
-where
-    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
-{
-    alt((head::<E>, key_value::<E>, comment::<E>)).parse(input)
+fn full_line<'a>(input: &mut &'a str) -> winnow::Result<&'a str> {
+    winnow::combinator::terminated(till_line_ending, line_ending).parse_next(input)
 }
 
-fn head<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
-where
-    E: ParseError<&'a str> + std::fmt::Debug + FromExternalError<&'a str, nom::Err<char>>,
-{
-    let parser = sequence::preceded(complete::char('['), is_not("\n\r;#"));
+fn line<'a>(input: &mut &'a str) -> winnow::Result<Token<'a>> {
+    alt((head, key_value, comment)).parse_next(input)
+}
 
-    //  capture data until last ] to support brackets inside section head
-    combinator::map_res(parser, |val: &str| match val.rfind(']') {
+fn head<'a>(input: &mut &'a str) -> winnow::Result<Token<'a>> {
+    let val = preceded('[', take_till(1.., ['\n', '\r', ';', '#'])).parse_next(input)?;
+
+    // capture data until last ] to support brackets inside section head
+    match val.rfind(']') {
         Some(ix) => Ok(Token::Head(&val[..ix])),
-        None => Err(nom::Err::Failure(']')),
-    })
-    .parse(input)
+        None => Err(winnow::error::ContextError::new()),
+    }
 }
 
-fn key_value<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
-where
-    E: ParseError<&'a str> + std::fmt::Debug,
-{
-    const COMMENT_START_AND_SEPARATOR_CHARS: &str = "=;#";
-    let parser = sequence::separated_pair(
-        is_not(COMMENT_START_AND_SEPARATOR_CHARS),
-        complete::char('='),
-        alt((is_not(COMMENT_START_AND_SEPARATOR_CHARS), combinator::eof)),
-    );
-
-    combinator::map(parser, |(k, v): (&str, &str)| {
-        Token::Pair(k.trim(), v.trim())
-    })
-    .parse(input)
-}
-
-fn comment<'a, E>(input: &'a str) -> IResult<&'a str, Token<'a>, E>
-where
-    E: ParseError<&'a str> + std::fmt::Debug,
-{
-    combinator::map(
-        combinator::recognize(sequence::preceded(
-            alt((complete::char('#'), complete::char(';'))),
-            alt((is_not("\n\r"), combinator::eof)),
-        )),
-        Token::Comment,
+fn key_value<'a>(input: &mut &'a str) -> winnow::Result<Token<'a>> {
+    let (k, v): (&str, &str) = separated_pair(
+        take_till(1.., ['=', ';', '#']),
+        '=',
+        alt((take_till(0.., [';', '#']), eof.value(""))),
     )
-    .parse(input)
+    .parse_next(input)?;
+
+    Ok(Token::Pair(k.trim(), v.trim()))
+}
+
+fn comment<'a>(input: &mut &'a str) -> winnow::Result<Token<'a>> {
+    let source = *input;
+    let _ = preceded(
+        one_of(['#', ';']),
+        alt((take_till(0.., ['\n', '\r']), eof.value(""))),
+    )
+    .parse_next(input)?;
+    let len = source.len() - input.len();
+    Ok(Token::Comment(&source[..len]))
 }
 
 #[cfg(test)]

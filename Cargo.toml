@@ -17,7 +17,7 @@ lalrpop = "=0.23.1"
 lalrpop-util  = { version = "=0.23.1", features = ["lexer", "unicode"] }
 jwalk = "=0.8.1"
 aho-corasick = "=1.1.4"
-nom = "=8.0.0"
+winnow = "=1.0.2"
 num_cpus = "=1.17.0"
 
 console = {version = "=0.16.3", optional = true }
