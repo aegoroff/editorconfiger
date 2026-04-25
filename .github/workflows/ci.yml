@@ -46,7 +46,7 @@ jobs:
         with:
           components: clippy
       - name: Build
-        uses: houseabsolute/actions-rust-cross@v0
+        uses: houseabsolute/actions-rust-cross@v1
         with:
           command: "build"
           target: ${{ matrix.target }}
@@ -78,14 +78,14 @@ jobs:
 
       - name: Upload to Codecov
         if: matrix.build == 'linux-x64'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Run tests
         if: matrix.build != 'linux-x64'
-        uses: houseabsolute/actions-rust-cross@v0
+        uses: houseabsolute/actions-rust-cross@v1
         with:
           command: "test"
           target: ${{ matrix.target }}
@@ -93,13 +93,13 @@ jobs:
           args: "--release"
       - name: Run linter
         if: matrix.build == 'linux-x64'
-        uses: auguwu/clippy-action@1.4.0
+        uses: auguwu/clippy-action@1.5.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           check-args: --all-features --bin editorconfiger --release
           args: -Dwarnings
       - name: Run audit
         if: matrix.build == 'linux-x64'
-        uses: actions-rs/audit-check@v1
+        uses: rustsec/audit-check@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
