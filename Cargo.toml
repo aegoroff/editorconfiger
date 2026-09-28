@@ -32,7 +32,7 @@ miette = { version = "=7.6.0", features = ["fancy"] }
 mimalloc = "=0.1.52"
 
 [dev-dependencies]
-test-case = "=3.3.1"
+test-case = "=3.4.0"
 
 [features]
 build-binary = ["clap", "clap_complete", "console", "prettytable-rs", "bugreport"]
